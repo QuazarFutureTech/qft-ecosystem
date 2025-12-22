@@ -1,0 +1,5 @@
+.qft-table-wrap { overflow-x:auto; }
+.qft-table { width:100%; border-collapse:collapse; }
+.qft-table th, .qft-table td { padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:left; }
+.qft-table-caption { font-weight:700; margin-bottom:8px; }
+.qft-table tr:focus { outline: 2px solid var(--focus-color); }

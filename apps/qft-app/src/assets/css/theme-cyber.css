@@ -1,0 +1,55 @@
+:root[data-theme="cyber"] {
+  --bg: #0b0f1a;
+  --panel: #121826;
+  --panel-alt: #0f1422;
+  --text: #d8eaff;
+  --muted: #b9cde6;
+  --accent: #00e5ff; /* neon cyan */
+  --accent-2: #ff2ec4; /* neon magenta */
+  --accent-3: #7cf4ff; /* soft cyan */
+  --border: rgba(0, 229, 255, 0.7);
+  --shadow: 0 10px 24px rgba(0, 229, 255, 0.15);
+  --glow-shadow: 0 0 12px var(--accent), 0 0 20px var(--accent-2), 0 0 28px var(--accent);
+}
+
+/* Base background & text */
+[data-theme="cyber"] body {
+  background: radial-gradient(1200px 800px at 10% 10%, rgba(0,229,255,0.07), transparent),
+              radial-gradient(900px 600px at 90% 30%, rgba(255,46,196,0.06), transparent),
+              var(--bg);
+  color: var(--text);
+}
+
+/* Panels */
+[data-theme="cyber"] .qft-card {
+  background: linear-gradient(180deg, rgba(18,24,38,0.85), rgba(18,24,38,0.75));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+}
+
+/* Buttons */
+[data-theme="cyber"] .qft-button {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #081217;
+  border: 1px solid var(--border);
+  text-shadow: 0 0 8px rgba(0,0,0,0.35);
+}
+
+/* Neon borders + pulse */
+[data-theme="cyber"] .qft-button,
+[data-theme="cyber"] .qft-card,
+[data-theme="cyber"] .menu_icon::before {
+  box-shadow: var(--glow-shadow);
+}
+
+@keyframes cyberPulse {
+  0% { filter: drop-shadow(0 0 0 var(--accent)); }
+  50% { filter: drop-shadow(0 0 10px var(--accent)); }
+  100% { filter: drop-shadow(0 0 0 var(--accent)); }
+}
+
+[data-theme="cyber"] .qft-button.neon,
+[data-theme="cyber"] .qft-card.neon {
+  animation: cyberPulse 2.2s ease-in-out infinite;
+}

@@ -1,0 +1,153 @@
+/* ModuleGrid.css */
+/* Styling for the module grid view in Ai Modules section */
+
+.module-grid-container {
+  width: 100%;
+  padding: 0;
+}
+
+.module-category-section {
+  margin-bottom: 40px;
+}
+
+.module-category-section:last-child {
+  margin-bottom: 0;
+}
+
+.module-category-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.module-tile {
+  background: var(--color-background-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 160px;
+}
+
+.module-tile:hover {
+  border-color: var(--color-primary);
+  background: var(--color-background);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.module-tile:active {
+  transform: translateY(0);
+}
+
+.module-tile-icon {
+  font-size: 2.5rem;
+  color: var(--color-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: var(--color-primary-alpha);
+  border-radius: 12px;
+}
+
+.module-tile-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.module-tile-description {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .module-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .module-tile {
+    padding: 20px;
+    min-height: 140px;
+  }
+
+  .module-tile-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+  }
+
+  .module-tile-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .module-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .module-tile {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .module-tile-icon {
+    font-size: 1.75rem;
+    width: 45px;
+    height: 45px;
+    margin-bottom: 12px;
+  }
+
+  .module-tile-title {
+    font-size: 1rem;
+  }
+
+  .module-tile-description {
+    font-size: 0.9rem;
+  }
+
+  .module-category-title {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+  }
+
+  .module-category-section {
+    margin-bottom: 30px;
+  }
+}
+
+/* Dark mode support (if theme already handles it) */
+@media (prefers-color-scheme: dark) {
+  .module-tile {
+    background: var(--color-background-secondary, #1a1a1a);
+  }
+
+  .module-tile:hover {
+    background: var(--color-background, #0d0d0d);
+  }
+}

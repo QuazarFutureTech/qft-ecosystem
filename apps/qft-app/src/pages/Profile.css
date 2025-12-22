@@ -1,0 +1,156 @@
+/* Profile.css */
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  max-width: 900px; /* Adjust max-width as needed */
+  margin: 0 auto;
+}
+
+.profile-card {
+  padding: 20px;
+  border-radius: 12px;
+  /* background-color: var(--bg-secondary); */
+  /* box-shadow: var(--shadow-elevation-medium); */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 3px solid var(--accent-color);
+  box-shadow: var(--shadow-elevation-low);
+}
+
+.profile-username {
+  color: var(--text-color-secondary);
+  font-size: 1em;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.profile-badges {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.profile-badges h4 {
+  margin-bottom: 10px;
+  color: var(--text-color-primary);
+}
+
+.badges-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.badge-item {
+  background-color: var(--primary-color);
+  color: var(--text-color-on-primary);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  font-weight: bold;
+  box-shadow: var(--shadow-elevation-low);
+}
+
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.theme-toggle-container span {
+  font-size: 1em;
+  color: var(--text-color-primary);
+}
+
+.toggle-theme-button {
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--secondary-color);
+  color: var(--text-color-on-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.toggle-theme-button:hover {
+  background-color: var(--secondary-color-dark);
+}
+
+/* Discord Guild Channels Section Specific Styles */
+.guild-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left; /* Align text to the left within list items */
+}
+
+.guild-entry {
+  background-color: var(--bg-primary); /* Use a slightly different background for list items */
+  border: 1px solid var(--border-color);
+  margin-bottom: 8px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-elevation-extra-small);
+}
+
+.guild-entry:last-child {
+  margin-bottom: 0;
+}
+
+.guild-entry span {
+  color: var(--text-color-primary);
+}
+
+.guild-entry small {
+  color: var(--text-color-secondary);
+  font-size: 0.8em;
+}
+
+.error-message {
+  color: var(--error-color);
+  background-color: var(--error-background);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--error-color);
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 10px;
+  }
+
+  .profile-avatar {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-card {
+    padding: 15px;
+  }
+
+  .badge-item {
+    font-size: 0.8em;
+    padding: 4px 8px;
+  }
+}

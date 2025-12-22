@@ -1,0 +1,69 @@
+#qft-preloader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: var(--bg-primary); /* Use theme variable */
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-out, visibility 0.5s;
+}
+#qft-preloader img {
+  position: absolute;
+  width: 25vw;
+  height: auto;
+  opacity: 0.25;
+}
+.loader-container {
+  position: relative;
+  text-align: center;
+  display: flex;
+  width: 100px; height: 100px;
+  justify-content: center;
+  align-items: stretch;
+}
+.quasar-ring {
+  position: absolute;
+  width: 100%; height: 100%;
+  border: 4px solid transparent;
+  border-top-color: var(--accent-primary); /* Use theme variable */
+  border-bottom-color: var(--accent-secondary); /* Use theme variable */
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  box-shadow: 0 0 15px var(--accent-primary), 0 0 15px var(--accent-secondary); /* Use theme variables */
+}
+.quasar-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+  background-color: var(--text-color); /* Use theme variable */
+  border-radius: 50%;
+  box-shadow: 0 0 20px var(--accent-primary), 0 0 40px var(--accent-secondary); /* Use theme variables */
+  animation: pulse 2s ease-in-out infinite;
+}
+.loading-text {
+  color: var(--text-color); /* Use theme variable */
+  font-family: sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-top: 120px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  white-space: nowrap;
+  animation: blink 1.5s infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes pulse {
+  0%,100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+}
+@keyframes blink {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+#qft-preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}

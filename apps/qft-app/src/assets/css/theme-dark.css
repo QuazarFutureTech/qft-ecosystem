@@ -1,0 +1,27 @@
+:root[data-theme="dark"] {
+  --bg: #0b0d12;
+  --panel: #141822;
+  --text: #e5ecf6;
+  --muted: #bac5d3;
+  --accent: #4adede;
+  --accent-2: #7873f5;
+  --border: rgba(120,115,245,0.6);
+  --glow-shadow: 0 0 8px var(--accent-2);
+}
+
+[data-theme="dark"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] .qft-card {
+  background: linear-gradient(180deg, rgba(20,24,34,0.95), rgba(20,24,34,0.85));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+[data-theme="dark"] .qft-button {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  color: #0e131a;
+  border: 1px solid var(--border);
+}

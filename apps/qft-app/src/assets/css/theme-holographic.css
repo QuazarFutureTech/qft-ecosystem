@@ -1,0 +1,42 @@
+:root[data-theme="holographic"] {
+  --bg: #0f111a;
+  --panel: rgba(20, 24, 36, 0.65);
+  --text: #eaf2ff;
+  --muted: #c8d0e1;
+  --accent: #9bffef; /* pastel mint */
+  --accent-2: #f6a4ff; /* pastel pink/purple */
+  --border: rgba(155,255,239,0.7);
+  --glow-shadow: 0 0 12px var(--accent), 0 0 18px var(--accent-2);
+}
+
+[data-theme="holographic"] body {
+  background: linear-gradient(135deg, rgba(155,255,239,0.08), rgba(246,164,255,0.08)), var(--bg);
+  color: var(--text);
+}
+
+[data-theme="holographic"] .qft-card {
+  background: linear-gradient(180deg, rgba(20,24,36,0.65), rgba(20,24,36,0.45));
+  border: 1px solid var(--border);
+  backdrop-filter: saturate(1.2) hue-rotate(10deg);
+  box-shadow: 0 10px 24px rgba(155,255,239,0.12);
+  border-radius: 16px;
+}
+
+[data-theme="holographic"] .qft-button {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #0c121c;
+  border: 1px solid var(--border);
+}
+
+/* Iridescent shimmer */
+@keyframes holoShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+[data-theme="holographic"] .iridescent {
+  background: linear-gradient(90deg, rgba(155,255,239,0.4), rgba(246,164,255,0.35), rgba(155,255,239,0.4));
+  background-size: 200% 200%;
+  animation: holoShimmer 6s ease infinite;
+}

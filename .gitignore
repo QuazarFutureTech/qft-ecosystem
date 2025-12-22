@@ -1,0 +1,17 @@
+# Dependency Folders
+node_modules
+
+# Secrets and Configuration
+**/.env
+.env
+.env.*
+.DS_Store
+npm-debug.log
+
+# Build Output
+dist/
+build/
+coverage/
+
+# IDE Specific Files
+.vscode/

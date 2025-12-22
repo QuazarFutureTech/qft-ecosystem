@@ -1,0 +1,253 @@
+.main-dashpanel {
+    display: flex;
+    border-radius: 16px;
+    position:absolute;
+    min-width: 100%;
+    min-height: 100%;
+    overflow: hidden;
+    padding: 16px;
+    flex-wrap:nowrap;
+    align-content: center;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+}
+
+.dash-shell {
+    width: 100%;
+    max-width: 1400px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px 20px;
+}
+
+.dash-title {
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.dash-kicker {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.dash-subtitle {
+    margin: 4px 0 0 0;
+    color: var(--text-secondary);
+}
+
+.dash-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+widgetbot {
+    min-width: 100%;
+    min-height: 100vh;
+    height: 100vh;
+}
+
+.indicator {
+    background: rgb(44, 47, 52);
+    position: fixed;
+    left: 0;
+    bottom: 12.5%;
+    height: 75%;
+    width: 128px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0 16px 16px 0;
+    flex-direction: column;
+}
+
+.indicator ul {
+    display: flex;
+    height: 75%;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: baseline;
+}
+
+.indicator ul li {
+    display: flex;
+    position: relative;
+    list-style: none;
+    width: 64px;
+    height: 64px;
+    z-index: 1;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+
+.indicator ul li a {
+    display: flex;
+    position: relative;
+    flex-direction: row;
+    width: 100%;
+    text-align: center;
+    font-weight: 500;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    align-content: stretch;
+}
+
+.indicator ul li a.active {
+    text-decoration: none;
+}
+
+.indicator ul li a .icon {
+    color: white;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 6px solid transparent;
+    background: transparent;
+    line-height: 64px;
+    font-size: 1.5rem;
+    text-align: center;
+    transition: 0.5s;
+}
+
+.indicator ul li a:hover .icon,
+.indicator ul li a.active .icon {
+    background: rgb(44, 47, 52);
+    box-shadow: 0 0 8px rgb(0, 132, 255);
+    border: 6px solid rgb(0, 132, 255);
+    transform: translateY(-24px);
+}
+
+.indicator ul li a .text {
+    position: absolute;
+    color: white;
+    font-family: zekton;
+    font-weight: 400;
+    font-size: 1em;
+    letter-spacing: 0.05em;
+    transition: 0.5s;
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+.indicator ul li a:hover .text,
+.indicator ul li a.active .text {
+    opacity: 1;
+    transform: translateY(10px);
+}
+
+@media screen and (max-width: 640px) {
+    .main-dashpanel {
+        display: flex;
+        border: 6px solid rgb(44, 47, 52);
+        border-radius: 16px;
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        min-width: 100vw;
+        min-height: 90vh;
+        left: 0;
+        margin: 0 6.125% 0 0;
+        padding: 0 0 64px 0;
+        overflow-y: auto;
+        flex-wrap: wrap;
+        align-content: center;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: column;
+    }
+    .indicator {
+        bottom: 0;
+        height: 64px;
+        width: 100%;
+        flex-direction: row;
+        border-radius: 16px 16px 0 0;
+    }
+    .indicator ul {
+        width: 75%;
+        height: 64px;
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-items: baseline;
+    }
+    .indicator ul li {
+        position: relative;
+        list-style: none;
+        width: 64px;
+        height: 64px;
+        z-index: 1;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+    .indicator ul li a {
+        position: relative;
+        flex-direction: column;
+        width: 100%;
+        text-align: center;
+        font-weight: 500;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .indicator ul li a .icon {
+        color: white;
+        position: relative;
+        justify-content: center;
+        align-items: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 6px solid transparent;
+        background: transparent;
+        line-height: 64px;
+        font-size: 1.5rem;
+        text-align: center;
+        transition: 0.5s;
+    }
+    .indicator ul li a:hover .icon,
+    .indicator ul li a.active .icon {
+        background: rgb(44, 47, 52);
+        box-shadow: 0 0 8px rgb(0, 132, 255);
+        border: 6px solid rgb(0, 132, 255);
+        transform: translateY(-24px);
+    }
+    .indicator ul li a .text {
+        position: absolute;
+        color: white;
+        font-family: zekton;
+        font-weight: 400;
+        font-size: 1em;
+        letter-spacing: 0.05em;
+        transition: 0.5s;
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    .indicator ul li a:hover .text,
+    .indicator ul li a.active .text {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}

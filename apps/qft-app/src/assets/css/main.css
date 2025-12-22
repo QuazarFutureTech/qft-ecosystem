@@ -1,0 +1,411 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.body-bg {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* 1. The Full Screen Overlay */
+#qft-preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #050510; /* Deep space dark blue/black */
+  z-index: 99999; /* Ensures it sits on top of everything */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-out, visibility 0.5s;
+}
+#qft-preloader img {
+  position: absolute;
+  width: 25vw;
+  height: auto;
+  opacity: 0.25;
+}
+/* 2. The Container for the animation */
+.loader-container {
+  position: relative;
+  text-align: center;
+  display: flex;
+  width: 100px;
+  height: 100px;
+  justify-content: center;
+  align-items: stretch;
+  align-content: center;
+  flex-wrap: nowrap;
+  flex-direction: row;
+}
+
+/* 3. The Spinning Ring (The Quasar Event Horizon) */
+.quasar-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-top-color: #00d2ff; /* Cyan */
+  border-bottom-color: #9d00ff; /* Purple */
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+}
+
+/* 4. The Center Core (The Star) */
+.quasar-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #00d2ff, 0 0 40px #9d00ff;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* 5. The Text */
+.loading-text {
+  color: #fff;
+  font-family: sans-serif; /* Or your site's font */
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-top: 120px; /* Push text below the ring */
+  text-transform: uppercase;
+  opacity: 0.8;
+  white-space: nowrap;
+  animation: blink 1.5s infinite;
+}
+
+/* 6. Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* 7. Class to hide the loader */
+#qft-preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+footer {
+    position: relative;
+    width: 100%;
+    height: fit-content;
+    padding: 50px 100px;
+    background: #111;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+footer .container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+footer .container .sec {
+    margin-right: 30px;
+}
+
+footer .container .sec.aboutus {
+    width: 40%;
+}
+
+footer .container h2 {
+    position: relative;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+footer .container h2:before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: rgb(0, 132, 255);
+}
+
+footer .container .sec img {
+    display: flex;
+    width: 50%;
+    height: auto;
+}
+
+footer .container .sec p {
+    color: #999;
+}
+
+.sci {
+    margin-top: 20px;
+    display: flex;
+}
+
+.sci li {
+    list-style: none;
+}
+
+.sci li a {
+    display: inline-block;
+    height: 40px;
+    width: 40px;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: ease-in-out .5s;
+}
+
+.sci li a:hover {
+    background: rgb(0, 132, 255);
+    transition: ease-in-out .5s;
+}
+
+.sci li a .fa {
+    color: #fff;
+    font-size: 20px;
+}
+
+.quicklinks {
+    position: relative;
+    width: 25%;
+}
+
+.quicklinks ul li {
+    list-style: none;
+}
+
+.quicklinks ul li a {
+    color: #999;
+    text-decoration: none;
+    margin-bottom: 10px;
+    display: inline-block;
+    transition: ease-in-out .5s;
+}
+
+.quicklinks ul li a:hover {
+    color: #fff;
+    transition: ease-in-out .5s;
+}
+
+.contact {
+    width: calc(35% - 60px);
+    margin-right: 0 !important;
+}
+
+.contact .info {
+    position: relative;
+}
+
+.contact .info li {
+    display: flex;
+    margin-bottom: 16px;
+}
+
+.contact .info li span:nth-child(1) {
+    color: #fff;
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.contact .info li span {
+    color: #999;
+}
+
+.contact .info li a {
+    color: #999;
+    text-decoration: none;
+    transition: ease-in-out .5s;
+}
+
+.contact .info li a:hover {
+    color: #fff;
+    transition: ease-in-out .5s;
+}
+
+.copyright {
+    width: 100%;
+    color: #999;
+    background: #181818;
+    padding: 8px 100px;
+    text-align: center
+}
+
+@media (max-width:991px) {
+    footer {
+        padding: 40px;
+        transition: ease-in-out .5s;
+    }
+    footer .container {
+        flex-direction: column;
+        transition: ease-in-out .5s;
+    }
+    footer .container .sec {
+        margin-right: 0;
+        margin-bottom: 40px;
+        transition: ease-in-out .5s;
+    }
+    footer .container .sec.aboutus {
+        width: 100%;
+        transition: ease-in-out .5s;
+    }
+    footer .container .sec.quicklinks {
+        width: 100%;
+        transition: ease-in-out .5s;
+    }
+    footer .container .sec.contact {
+        width: 100%;
+        transition: ease-in-out .5s;
+    }
+    .copyright {
+        padding: 8px 40px;
+        transition: ease-in-out .5s;
+    }
+}
+
+
+/*Custom Scroll Elements*/
+
+::-webkit-scrollbar {
+    background: #101010;
+    width: 4px;
+    height: 4px;
+    top: 0%;
+    right: 0%;
+    border-radius: 28px;
+    position: fixed;
+    margin-left: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #101010;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgb(0, 132, 255);
+    top: 0%;
+    right: 0%;
+    margin-left: 10px;
+    position: fixed;
+    -webkit-transition: 1s;
+    transition: 1s;
+    border-radius: 28px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    mix-blend-mode: overlay;
+    -webkit-transition: 1s;
+    transition: 1s linear;
+}
+
+.footer {
+    background-color: #101010;
+}
+
+.box {
+    box-sizing: border-box;
+    background-color: #101010;
+    border: none;
+    padding: 16px;
+    margin: 16px;
+    animation: "fade_in_up" 1s;
+}
+
+.box .panel button {
+    background-color: rgba(0, 0, 0, .1);
+    border: 1px solid rgb(0, 132, 255);
+    border-radius: 10px;
+    padding: 18px;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 1.0);
+    font-family: Arial;
+    outline: none;
+    transition: ease-in-out .5s;
+}
+
+.box .panel button:hover {
+    background-color: rgba(0, 132, 255, .125);
+    box-shadow: 0px 0px 4px aqua, 0 0 8px blue, 0 0 16px violet;
+    transition: ease-in-out .5s;
+}
+
+.box .panel a {
+    background-color: rgba(0, 0, 0, .1);
+    border: 1px solid rgb(0, 132, 255);
+    border-radius: 10px;
+    margin: 4px;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 1.0);
+    font-family: Arial;
+    outline: none;
+    transition: ease-in-out .5s;
+}
+
+.box .panel a:hover {
+    background-color: rgba(0, 132, 255, .125);
+    box-shadow: 0px 0px 4px aqua, 0 0 8px blue, 0 0 16px violet;
+    transition: ease-in-out .5s;
+}
+
+.box .panel span a {
+    border: none;
+    color: rgb(0, 132, 255);
+    padding: 0px;
+}
+
+.box .panel span a:hover {
+    border: none;
+    padding: 0px;
+    color: rgba(255, 255, 255, 1.0);
+    text-shadow: 0px 0px 4px aqua, 0 0 8px blue, 0 0 16px violet;
+}
+
+p {
+    font-size: 18px;
+    /*color: rgba(255, 255, 255, 1.0);*/
+    font-family: Arial;
+}
+
+a:hover {
+    text-emphasis: none;
+    text-decoration: none;
+}
+
+section .column hr {
+    color: white;
+    border: 1px solid white;
+    box-shadow: 0 0 8px white;
+    width: 75%;
+    margin-top: 1%;
+    margin-bottom: 1%;
+}

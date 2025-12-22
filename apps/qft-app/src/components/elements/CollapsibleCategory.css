@@ -1,0 +1,58 @@
+/* Collapsible Category Component */
+
+.collapsible-category {
+  margin-bottom: 8px;
+}
+
+.category-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.15s;
+  text-align: left;
+}
+
+.category-header:hover {
+  color: var(--text-primary);
+}
+
+.category-icon {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.category-title {
+  flex: 1;
+}
+
+.category-content {
+  margin-top: 4px;
+}
+
+/* Animation for smooth expand/collapse */
+@keyframes categorySlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-content {
+  animation: categorySlideIn 0.2s ease-out;
+}

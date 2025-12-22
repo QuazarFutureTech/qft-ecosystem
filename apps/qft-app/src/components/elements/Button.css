@@ -1,0 +1,12 @@
+.qft-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-1);
+  color: var(--text-color);
+  cursor: pointer;
+  font-weight: 600;
+}
+.qft-btn.primary { background: var(--brand); color: white; }
+.qft-btn.ghost { background: transparent; border-color: transparent; }
+.qft-btn:focus { outline: 2px solid var(--focus-color); }

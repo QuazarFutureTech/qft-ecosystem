@@ -1,0 +1,5 @@
+Place the Zekton font file (zekton.ttf) in this directory.
+
+Download from: https://www.dafont.com/zekton.font
+
+The welcome image generator will automatically use this font for rendering text on welcome cards.

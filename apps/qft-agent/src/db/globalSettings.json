@@ -1,0 +1,10 @@
+{
+    "prefix": "!",
+    "logChannelId": "123456789012345678",
+    "status": {
+        "text": "test",
+        "name": null,
+        "status": "online"
+    },
+    "ownerId": "785335580241297429"
+}

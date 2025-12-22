@@ -1,0 +1,368 @@
+
+.slides {
+  display: flex;
+  min-width: 100%;
+  height: 100vh;
+  transition: transform 0.5s ease;
+  will-change: transform;
+}
+
+.mySlides {
+    min-width: 100%;
+    width: fit-content;
+    flex-shrink: 0;
+  /* keep your inner styling; remove absolute + forced translateX here */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+.mySlides .columns{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    max-width: 60%;
+    width: 100%;
+    flex-wrap: nowrap;
+    align-content: center;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-100%); }
+}
+img {
+    vertical-align: middle;
+}
+.slide-1{
+background-color: #333;
+}
+.slide-2{
+background-color: #111;
+
+}
+.slide-3{
+background-color: #222;
+
+}
+
+.bg-layer{
+    transition: transform 0.5s ease;
+    width: 75vw;
+    height: 75vh;
+    background: url("../images/3dPrintHero.png") no-repeat center center;
+    background-size: cover;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.BG-1{
+background: url("../images/3dPrintHero.png") no-repeat center center;
+    background-size: cover;
+}
+.BG-2{
+background: url("../images/DiscordChat.png") no-repeat center center;
+    background-size: cover;
+}
+.BG-3{
+background: url("../images/ServicesHero.png") no-repeat center center;
+    background-size: cover;
+}
+
+
+.slides, .mySlides, .mySlides * {
+  user-select: none;   /* prevent text selection */
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE/Edge */
+}
+/* Slideshow container */
+
+.slideshow-container {
+     position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+    display: flex;
+    min-width: 100%;
+    position: relative;
+    flex-direction: row;
+  flex-wrap: nowrap; /* prevent wrapping */
+  justify-content: flex-start; /* align slides in a row */
+  overflow: hidden; /* hide overflow */
+    align-items: stretch;
+    align-content: center;
+}
+
+
+
+
+:root {
+  --glow-shadow: 0 0 8px #ff6ec4,
+                 0 0 16px #7873f5,
+                 0 0 24px #4adede;
+}
+
+/* Arrow glyph wrapper */
+.arrow-text {
+  position: relative;
+  display: inline-block;
+  z-index: 2;
+  transition: transform 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* Line expansion (no jump) */
+.arrow-text::after {
+  content: "";
+  position: absolute;
+  top: 50%; /* slightly below glyph center */
+  left: 0%;
+  height: 2px;
+  width: 20px; /* fixed width */
+  background: #fff;
+  box-shadow: var(--glow-shadow);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s ease-in-out;
+  z-index: 1; /* behind glyph */
+}
+
+/* Controls container */
+.controls {
+  z-index: 0;
+  position: absolute;
+  bottom: 5%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0 2vw;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+/* Arrow buttons */
+.controls .prev,
+.controls .next {
+  position: relative;
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 2rem;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: transform 0.4s ease, text-shadow 0.4s ease;
+  z-index: 1001;
+}
+
+/* Glow halo */
+.controls .prev::before,
+.controls .next::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  z-index: 1;
+}
+
+.controls .prev:hover::before,
+.controls .next:hover::before {
+  box-shadow: var(--glow-shadow);
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Left arrow hover */
+.controls .prev:hover .arrow-text {
+  transform: translateX(-6px);
+  text-shadow: var(--glow-shadow);
+}
+.controls .prev:hover .arrow-text::after {
+  transform: scaleX(1) translateX(50%);
+  transform-origin: left center;
+}
+
+/* Right arrow hover */
+.controls .next:hover .arrow-text {
+  transform: translateX(6px);
+  text-shadow: var(--glow-shadow);
+}
+.controls .next:hover .arrow-text::after {
+  transform: scaleX(1) translateX(-50%);
+  transform-origin: right center;
+}
+
+
+
+
+/* Caption text */
+
+.text {
+    color: #f2f2f2;
+    font-size: 15px;
+    padding: 8px 12px;
+    position: absolute;
+    bottom: 8px;
+    margin: 0 0 16px 50%;
+    text-align: center;
+    transform: translate(-50%, 64px);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+
+/* Number text (1/3 etc) */
+
+.numbertext {
+    color: #f2f2f2;
+    font-size: 12px;
+    padding: 8px 12px;
+    position: absolute;
+    top: 0;
+    transform: translateY(-48px);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+
+/* The dots/bullets/indicators */
+
+.dots {
+    border-radius: 25%;
+    background-color: #333;
+    box-shadow: #222 0px 0px 8px;
+    position: absolute;
+    bottom: 5%;
+    right: 10%;
+    display: flex;
+    height: 24px;
+    transform: translate(50%, -50%);
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    align-content: center;
+}
+.dot {
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    margin: 0 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: visible;
+    box-shadow: #222 0px 0px 8px;
+    background-color: #333;
+    transition: transform 0.4s ease;
+}
+
+/* baseline hidden bubble */
+.dot::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 24px;
+        height: 24px;
+        border: 2px solid transparent;
+        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        transition: all 0.4s ease;
+       
+}
+
+.dot.active_dot, .dot:hover {
+     display: flex;
+        padding: 6px;
+        flex-direction: row;
+        width: 24px; height: 24px;
+        background-color: transparent;
+        transition: transform 0.4s ease;
+}
+
+/* glowing bubble when active or hover */
+.dot.active_dot::before, .dot:hover::before {
+        content: "";
+        border-radius: 50%;
+        box-shadow: 0 0 8px #ff6ec4, 0 0 10px #7873f5, 0 0 12px #4adede;
+        transform: translate(-50%, -50%) scale(1);
+}
+
+/* number text (hidden by default) */
+.dot::after {
+  content: "";
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0;
+  transition: top 0.5s ease, opacity 0.5s ease;
+}
+
+/* active number rolls in with gradient */
+.dot.active_dot::after, .dot.active_dot:hover::after {
+  content: attr(data-num);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  background: linear-gradient(90deg, #ff6ec4, #7873f5, #4adede);
+  text-shadow: 0 0 8px #ff6ec4, 0 0 10px #7873f5, 0 0 12px #4adede;
+  -webkit-background-clip: text;
+  background-clip: text; /* Added standard property for compatibility */
+  -webkit-text-fill-color: transparent;
+  opacity: 1;
+}
+
+
+
+.fade {
+    animation-name: fade_out_in;
+    animation-duration: 1.5s;
+}
+
+
+/* On smaller screens, decrease text size */
+@media only screen and (max-width: 640px) {
+    .controls {
+        display:none;
+    }
+  .mySlides, .mySlides .columns {
+    flex-direction: column;
+  } 
+  .prev,
+  .next{
+    display: none;
+  }
+.bg-layer{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width:fit-content
+}
+  .dots {
+    top: 10%;
+    right: 50%;
+    transform: translate(50%, 0%);
+  }
+}
+
+@media only screen and (max-width: 800px) {
+    .prev,
+    .next,
+    .text {
+        font-size: 16px
+    }
+}

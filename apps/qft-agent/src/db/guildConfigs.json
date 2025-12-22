@@ -1,0 +1,399 @@
+{
+    "852686745283067904": {
+        "meta": {
+            "createdAt": 1702680000000
+        },
+        "settings": {
+            "customCommands": {
+                "hello": {
+                    "response": "Hello! This is a test.",
+                    "createdAt": 1702680000000,
+                    "cooldown": 10,
+                    "roleId": null
+                }
+            },
+            "categories": {
+                "moderation": true,
+                "utility": true,
+                "tickets": true,
+                "admin": true,
+                "custom": true,
+                "automod": true
+            }
+        },
+        "history": [
+            {
+                "ts": 1765829755235,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    },
+                    "hello world": {
+                        "response": "Hello World",
+                        "createdAt": 1765829755235,
+                        "cooldown": 0,
+                        "roleId": null
+                    }
+                },
+                "meta": {}
+            },
+            {
+                "ts": 1765830957310,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    },
+                    "hello world": {
+                        "response": "Hello World",
+                        "createdAt": 1765829755235,
+                        "cooldown": 0,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765830957315,
+                "key": "categories",
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765834792141,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    },
+                    "hello world": {
+                        "response": "Hello World",
+                        "createdAt": 1765829755235,
+                        "cooldown": 0,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765834792147,
+                "key": "categories",
+                "old": {
+                    "moderation": false,
+                    "utility": true,
+                    "tickets": true,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765834817522,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {}
+            },
+            {
+                "ts": 1765835177902,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765835177904,
+                "key": "categories",
+                "old": {
+                    "moderation": false,
+                    "utility": true,
+                    "tickets": false,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765835277979,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765835277981,
+                "key": "categories",
+                "old": {
+                    "moderation": false,
+                    "utility": true,
+                    "tickets": false,
+                    "admin": true,
+                    "custom": false,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765845138802,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765845138808,
+                "key": "categories",
+                "old": {
+                    "moderation": false,
+                    "utility": true,
+                    "tickets": false,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765853347252,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    },
+                    "pace": {
+                        "response": "The FitnessGram PACER Test (Progressive Aerobic Cardiovascular Endurance Run) is a timed shuttle run that measures your cardiovascular endurance/aerobic capacity, getting progressively harder with each stage, using beeps to signal required turns as you run back and forth across a 20-meter space, indicating your fitness level relative to age/gender Healthy Fitness Zone standards. Essentially, it's the classic \"beep test\" where you keep running as long as you can match the increasing pace, and your score is the number of laps completed before you miss two turns. ",
+                        "cooldown": 0,
+                        "roleId": null,
+                        "createdAt": 1765853347252
+                    }
+                },
+                "meta": {}
+            },
+            {
+                "ts": 1765853415484,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    },
+                    "pace": {
+                        "response": "The FitnessGram PACER Test (Progressive Aerobic Cardiovascular Endurance Run) is a timed shuttle run that measures your cardiovascular endurance/aerobic capacity, getting progressively harder with each stage, using beeps to signal required turns as you run back and forth across a 20-meter space, indicating your fitness level relative to age/gender Healthy Fitness Zone standards. Essentially, it's the classic \"beep test\" where you keep running as long as you can match the increasing pace, and your score is the number of laps completed before you miss two turns. ",
+                        "cooldown": 0,
+                        "roleId": null,
+                        "createdAt": 1765853347252
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765853415491,
+                "key": "categories",
+                "old": {
+                    "moderation": true,
+                    "utility": true,
+                    "tickets": true,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1765853439306,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {}
+            },
+            {
+                "ts": 1766048721067,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1766048721073,
+                "key": "categories",
+                "old": {
+                    "moderation": true,
+                    "utility": true,
+                    "tickets": true,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1766048741350,
+                "key": "customCommands",
+                "old": {
+                    "hello": {
+                        "response": "Hello! This is a test.",
+                        "createdAt": 1702680000000,
+                        "cooldown": 10,
+                        "roleId": null
+                    }
+                },
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1766048741352,
+                "key": "categories",
+                "old": {
+                    "moderation": true,
+                    "utility": true,
+                    "tickets": true,
+                    "admin": true,
+                    "custom": false,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            }
+        ]
+    },
+    "708119280582918267": {
+        "meta": {
+            "createdAt": 1765829088943
+        },
+        "settings": {
+            "welcome": {
+                "template": "Welcome {user} to {guild}! You are member #{memberCount}."
+            }
+        },
+        "history": [
+            {
+                "ts": 1765829126384,
+                "key": "welcome",
+                "meta": {
+                    "source": "api"
+                }
+            }
+        ]
+    },
+    "1219314376985546872": {
+        "meta": {
+            "createdAt": 1765830514718
+        },
+        "settings": {
+            "categories": {
+                "moderation": false,
+                "utility": true,
+                "tickets": true,
+                "admin": true,
+                "custom": true,
+                "automod": true
+            }
+        },
+        "history": [
+            {
+                "ts": 1765830534200,
+                "key": "categories",
+                "meta": {
+                    "source": "api"
+                }
+            },
+            {
+                "ts": 1766365520457,
+                "key": "categories",
+                "old": {
+                    "moderation": false,
+                    "utility": true,
+                    "tickets": false,
+                    "admin": true,
+                    "custom": true,
+                    "automod": true
+                },
+                "meta": {
+                    "source": "api"
+                }
+            }
+        ]
+    }
+}

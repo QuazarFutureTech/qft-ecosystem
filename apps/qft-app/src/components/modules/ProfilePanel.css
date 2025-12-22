@@ -1,0 +1,212 @@
+.profile-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.profile-panel {
+  width: min(920px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--surface-1, #0f1220);
+  border: 1px solid var(--border-strong, #2b2f45);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 24px var(--accent-1, #00e0ff);
+  border-radius: 16px;
+  color: var(--text-1, #e6e8ef);
+}
+
+.profile-panel:focus {
+  outline: 2px solid var(--accent-1, #00e0ff);
+  outline-offset: -2px;
+}
+
+.profile-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-strong, #2b2f45);
+}
+
+.profile-title {
+  font-size: 1.2rem;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: transparent;
+  border: 1px solid var(--accent-1, #00e0ff);
+  color: var(--accent-1, #00e0ff);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.close-btn:hover { 
+  box-shadow: 0 0 10px var(--accent-1, #00e0ff);
+}
+.close-btn:focus {
+  outline: 2px solid var(--accent-1, #00e0ff);
+  outline-offset: 2px;
+}
+
+.panel-content {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.section {
+  background: var(--surface-2, #12152a);
+  border: 1px solid var(--border, #1e2238);
+  border-radius: 12px;
+  padding: 16px;
+}
+.section h3 { 
+  margin: 0 0 12px; 
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.field { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  margin: 12px 0; 
+  gap: 12px;
+}
+.field label { 
+  color: var(--text-2, #b6b9c6);
+  font-weight: 500;
+  min-width: fit-content;
+}
+
+.select,
+.text-input { 
+  width: 100%; 
+  padding: 10px 12px; 
+  border-radius: 10px; 
+  border: 1px solid var(--border, #1e2238); 
+  background: var(--surface-3, #0c0f1e); 
+  color: var(--text-1, #e6e8ef);
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.select:hover,
+.text-input:hover {
+  border-color: var(--accent-1, #00e0ff);
+}
+
+.select:focus,
+.text-input:focus {
+  outline: 2px solid var(--accent-1, #00e0ff);
+  outline-offset: 0;
+  border-color: var(--accent-1, #00e0ff);
+}
+
+.avatar-row { 
+  display: flex; 
+  align-items: center; 
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.avatar-preview { 
+  width: 72px; 
+  height: 72px; 
+  border-radius: 50%; 
+  border: 2px solid var(--accent-1, #00e0ff);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.actions { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.btn { 
+  padding: 10px 14px; 
+  border-radius: 10px; 
+  border: 1px solid var(--border, #1e2238); 
+  cursor: pointer; 
+  background: var(--surface-3, #0c0f1e); 
+  color: var(--text-1, #e6e8ef);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.btn:hover {
+  border-color: var(--border-strong, #2b2f45);
+  background: var(--surface-2, #12152a);
+}
+.btn:focus {
+  outline: 2px solid var(--accent-1, #00e0ff);
+  outline-offset: 2px;
+}
+.btn.primary { 
+  border-color: var(--accent-1, #00e0ff); 
+  color: var(--accent-1, #00e0ff);
+  background: rgba(0, 224, 255, 0.1);
+}
+.btn.primary:hover { 
+  background: rgba(0, 224, 255, 0.15);
+  box-shadow: 0 0 10px var(--accent-1, #00e0ff);
+}
+
+@media (max-width: 900px) {
+  .panel-content { 
+    grid-template-columns: 1fr;
+  }
+  .avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-panel {
+    width: 95vw;
+    border-radius: 12px;
+  }
+  .panel-content {
+    padding: 12px;
+    gap: 16px;
+  }
+  .field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .actions {
+    width: 100%;
+  }
+  .actions .btn {
+    flex: 1;
+  }
+}
+
+/* Scrollbar Styling */
+.profile-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-panel::-webkit-scrollbar-thumb {
+  background: var(--border, #1e2238);
+  border-radius: 4px;
+}
+
+.profile-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-1, #00e0ff);

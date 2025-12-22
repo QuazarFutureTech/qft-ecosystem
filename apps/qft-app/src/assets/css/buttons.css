@@ -1,0 +1,116 @@
+/* === Button System (Discord Inspired) === */
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: var(--surface-2, #40444b);
+  color: var(--text-1, #ffffff);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  transition: background-color 0.17s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  outline: none;
+}
+
+.btn:hover {
+  background-color: var(--surface-3, #4f545c);
+}
+
+.btn:active {
+  background-color: var(--surface-1, #3a3d42);
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-1);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Variants --- */
+
+.btn.primary {
+  background-color: var(--accent-1, #5865F2);
+  color: #ffffff;
+}
+.btn.primary:hover {
+  background-color: #4e5dcf; /* Darker Blurple */
+}
+
+.btn.success {
+  background-color: var(--accent-success, #3ba55d);
+  color: #ffffff;
+}
+.btn.success:hover {
+  background-color: #359453; /* Darker Green */
+}
+
+.btn.danger {
+  background-color: var(--accent-danger, #ed4245);
+  color: #ffffff;
+}
+.btn.danger:hover {
+  background-color: #d83c3e; /* Darker Red */
+}
+
+/* --- Sizes & Shapes --- */
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.btn.large {
+  padding: 14px 22px;
+  font-size: 1.05rem;
+}
+
+.btn.block {
+  width: 100%;
+  display: flex;
+}
+
+.btn.icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* --- Loading State --- */
+
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn.loading::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Button Group --- */
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

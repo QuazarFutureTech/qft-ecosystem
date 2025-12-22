@@ -1,0 +1,28 @@
+.qft-field { margin-bottom: 10px; }
+.qft-label { display: block; margin-bottom: 6px; font-weight: 600; }
+.qft-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-1); color: var(--text-color); }
+.qft-input:focus { outline: 2px solid var(--focus-color); }
+
+/* Multi-select specific styling */
+.qft-input[multiple] {
+  padding: 4px;
+  min-height: 120px;
+  overflow-y: auto;
+}
+
+.qft-input[multiple] option {
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin: 2px 0;
+  cursor: pointer;
+}
+
+.qft-input[multiple] option:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.qft-input[multiple] option:checked {
+  background: var(--primary-color, #5865F2);
+  color: white;
+  font-weight: 500;
+}

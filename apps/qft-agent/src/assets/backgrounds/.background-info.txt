@@ -1,0 +1,8 @@
+Place background images (.png, .jpg, .jpeg) in this directory.
+
+The default background should be named: default.png
+
+Recommended size: 1024x450 pixels
+
+Background images will be used as the base for welcome cards.
+Available backgrounds can be selected through the welcome settings.

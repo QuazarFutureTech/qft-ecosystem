@@ -1,0 +1,251 @@
+.login-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-image: url('https://www.transparenttextures.com/patterns/hexagon.png'); /* Placeholder hex grid */
+  background-color: var(--bg-primary);
+}
+
+.login-card {
+  background-color: var(--bg-secondary);
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-button {
+  background-color: var(--accent-primary);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
+.footer-links {
+  margin-top: 20px;
+}
+
+.footer-links a {
+  color: var(--text-color);
+  text-decoration: none;
+  margin: 0 10px;
+  opacity: 0.7;
+}
+
+
+
+/* --- Base Typography --- */
+:root {
+    --font-main: 'Roboto', 'Segoe UI', sans-serif;
+    --font-header: 'Zekton', sans-serif;
+    --font-code: 'Consolas', 'Courier New', monospace;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-main);
+}
+
+/* --- Global Layout --- */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: visible;
+  padding-bottom: 100px; /* Space for floating bottom nav */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile: adjust for full-width nav */
+@media (max-width: 640px) {
+  .app-main {
+    padding-bottom: 80px;
+  }
+}
+
+/* Remove old dashboard container styles */
+.dashboard-container {
+  /* Deprecated - kept for backwards compatibility */
+}
+
+/* --- Header Bar --- */
+.dashboard-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    margin-bottom: 30px;
+    border-bottom-width: 2px;
+    border-bottom-style: solid; 
+    border-bottom-color: var(--accent-secondary);
+}
+
+.dashboard-header-bar h1 {
+    font-size: 2.2em;
+    font-family: var(--font-header);
+    margin: 0;
+}
+
+/* --- Cards --- */
+.qft-card {
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Can be updated to use a variable for shadow color later */
+    margin-bottom: 25px;
+    transition: transform 0.2s;
+    background-color: var(--bg-secondary); /* Ensure cards use background variable */
+    color: var(--text-color); /* Ensure cards use text color variable */
+}
+
+.qft-card h2 {
+    font-family: var(--font-header);
+    margin-top: 0;
+    color: var(--accent-primary); /* Use accent color for card headers */
+}
+
+/* --- Buttons --- */
+.qft-button {
+    padding: 10px 22px;
+    font-size: 14px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.17s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.qft-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Primary Button */
+.qft-button.primary {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
+}
+.qft-button.primary:hover:not(:disabled) {
+    background-color: var(--button-primary-hover-bg);
+}
+
+/* Secondary Button */
+.qft-button.secondary {
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+}
+.qft-button.secondary:hover:not(:disabled) {
+    background-color: var(--button-secondary-hover-bg);
+}
+
+/* Danger Button */
+.qft-button.danger {
+    background-color: var(--button-danger-bg);
+    color: var(--button-danger-text);
+}
+.qft-button.danger:hover:not(:disabled) {
+    background-color: var(--button-danger-hover-bg);
+}
+
+/* Success Button */
+.qft-button.success {
+    background-color: var(--button-success-bg);
+    color: var(--button-success-text);
+}
+.qft-button.success:hover:not(:disabled) {
+    background-color: var(--button-success-hover-bg);
+}
+
+/* Link Button */
+.qft-button.link {
+    background-color: transparent;
+    color: var(--button-link-text);
+    padding: 10px;
+}
+.qft-button.link:hover:not(:disabled) {
+    color: var(--button-link-hover-text);
+    text-decoration: underline;
+}
+
+/* Default to secondary if no class is present */
+.qft-button:not(.primary):not(.secondary):not(.danger):not(.success):not(.link) {
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+}
+.qft-button:not(.primary):not(.secondary):not(.danger):not(.success):not(.link):hover:not(:disabled) {
+    background-color: var(--button-secondary-hover-bg);
+}
+
+
+/* --- Toggle Switch (Discord Style) --- */
+.qft-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.qft-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.qft-toggle .slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg-off);
+  transition: background-color 0.2s ease;
+  border-radius: 12px;
+}
+
+.qft-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--toggle-knob);
+  transition: transform 0.2s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.qft-toggle input:checked + .slider {
+  background-color: var(--toggle-bg-on);
+}
+
+.qft-toggle input:focus-visible + .slider {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.qft-toggle input:checked + .slider:before {
+  transform: translateX(20px);
+}

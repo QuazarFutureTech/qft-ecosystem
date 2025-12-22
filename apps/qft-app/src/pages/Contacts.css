@@ -1,0 +1,154 @@
+/* styles for Contacts.jsx */
+
+.contacts-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1200px; /* Adjust max-width as needed */
+  margin: 0 auto;
+}
+
+.search-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  /* background-color: var(--bg-secondary); */
+  /* box-shadow: var(--shadow-elevation-medium); */
+}
+
+.search-input-group,
+.filter-dropdown-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-input-group input,
+.filter-dropdown-group select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-color-primary);
+  font-size: 1em;
+}
+
+.search-input-group input::placeholder {
+  color: var(--text-color-secondary);
+}
+
+.filter-dropdown-group label {
+  font-weight: bold;
+  color: var(--text-color-primary);
+}
+
+.contacts-list-container {
+  margin-top: 20px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive grid */
+  gap: 20px;
+}
+
+.contact-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 12px;
+  /* background-color: var(--bg-secondary); */
+  /* box-shadow: var(--shadow-elevation-medium); */
+}
+
+.contact-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
+  border: 2px solid var(--accent-color);
+}
+
+.contact-info {
+  flex-grow: 1;
+}
+
+.contact-info h3 {
+  margin: 0 0 5px 0;
+  color: var(--text-color-primary);
+}
+
+.contact-info p {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-color-secondary);
+}
+
+.contact-info .status-online {
+  color: var(--success-color); /* Green for online */
+}
+
+.contact-info .status-offline {
+  color: var(--error-color); /* Red/grey for offline */
+}
+
+.contact-info .status-away {
+  color: var(--warning-color); /* Yellow/orange for away */
+}
+
+.contact-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: 15px; /* Space between info and buttons */
+}
+
+.contact-actions .qft-button {
+  padding: 8px 12px;
+  font-size: 0.9em;
+  white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .contacts-page {
+    padding: 10px;
+  }
+
+  .search-filter-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-dropdown-group {
+    align-items: flex-start;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr; /* Stack cards on small screens */
+  }
+
+  .contact-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .contact-avatar {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .contact-actions {
+    margin-top: 15px;
+    margin-left: 0;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .contact-actions .qft-button {
+    flex-grow: 1;
+  }
+}

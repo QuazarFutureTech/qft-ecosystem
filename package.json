@@ -1,0 +1,21 @@
+{
+  "name": "qft-ecosystem-monorepo",
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/qft-app",
+    "apps/qft-api-gateway",
+    "apps/qft-agent"
+  ],
+  "scripts": {
+    "landing": "http-server apps/qft-landing -p 8000 -a 0.0.0.0",
+    "start:dev": "concurrently \"npm run dev --workspace qft-app\" \"npm run start --workspace qft-api-gateway\" \"npm run start --workspace qft-agent\" \"npm run landing\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "http-server": "^14.1.1"
+  },
+  "private": true,
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -1,0 +1,69 @@
+.qft-switch-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.qft-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.qft-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.qft-switch .qft-switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg-off);
+  transition: background-color 0.2s ease;
+  border-radius: 12px;
+}
+
+.qft-switch .qft-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--toggle-knob);
+  transition: transform 0.2s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.qft-switch input:checked + .qft-switch-slider {
+  background-color: var(--toggle-bg-on);
+}
+
+.qft-switch input:focus-visible + .qft-switch-slider {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.qft-switch input:checked + .qft-switch-slider:before {
+  transform: translateX(20px);
+}
+
+.qft-switch-container:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.qft-switch-label {
+  font-size: 14px;
+  color: var(--text-color);
+  font-weight: 500;
+}
