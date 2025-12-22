@@ -1,0 +1,57 @@
+name: Deploy Landing Page
+
+on: 
+  push:
+    branches: [main, production]
+    paths:  
+      - 'apps/qft-landing/**'
+  workflow_dispatch:  # Allows manual trigger
+
+jobs: 
+  # Deploy to DEV site (from main branch)
+  deploy-dev:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: 
+      name: development
+      url: https://dev.quazarfuturetech.com
+    
+    steps:
+      - name: Checkout qft-ecosystem
+        uses: actions/checkout@v4
+      
+      - name: Deploy to qft-dev repo
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          external_repository: QuazarFutureTech/qft-dev
+          publish_branch: main
+          publish_dir: ./apps/qft-landing
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Auto-deploy DEV from qft-ecosystem main branch'
+          cname: dev.quazarfuturetech.com
+  
+  # Deploy to PRODUCTION site (from production branch)
+  deploy-prod:
+    if:  github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://quazarfuturetech.com
+    
+    steps:
+      - name:  Checkout qft-ecosystem
+        uses: actions/checkout@v4
+      
+      - name: Deploy to qft.github.io repo
+        uses: peaceiris/actions-gh-pages@v3
+        with: 
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          external_repository: QuazarFutureTech/qft.github.io
+          publish_branch: main
+          publish_dir: ./apps/qft-landing
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Auto-deploy PRODUCTION from qft-ecosystem production branch'
+          cname: quazarfuturetech.com
