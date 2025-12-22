@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: rgba (0, 0, 0, 0.1)">
+	<head>
+        <title>QFT&trade;</title>
+         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+		<style>
+			html, body {
+                background-color: #101010;
+				background-image: url("./assets/images/favicons/icon.png");
+				color: #F5F5F5;
+				text-align: center;
+                font-family: Arial;
+                background-attachment: fixed;
+	            background-position: center;
+	            background-repeat: no-repeat;
+                background-size: cover;
+                overflow: hidden;
+                height: auto;
+                box-sizing:border-box;                
+			}
+            .card-holder{ 
+                display: block;
+                position: absolute;
+                width:50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-65%, -50%);
+                box-sizing:border-box;
+			}
+			.card {
+                
+                background-color: rgba(0, 0, 0, .5);
+                backdrop-filter: blur(5px);
+                border-radius: 15px;
+                height: 100%;
+                width: 100%;
+                place-content: center;
+        padding: 15% 15% 15% 15%;
+        box-shadow: 0 0 15px #222222;
+            }
+            .card h2{
+                font-size: 2vw;
+            }
+            .card p{
+                font-size: 2vw;
+            }
+            .loader {
+                box-shadow:inset 0 0 15px  rgba(255, 165, 0, .5);
+  border: 4px solid rgba(50, 50, 50, .5); /* Light grey */
+  border-top: 4px solid orange;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: inline-block;
+  animation: spin 2s linear infinite;
+  margin:0 25%;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+		</style>
+<meta http-equiv="Refresh" content="7; url='index.html'" />    
+</head>
+	<body><section>
+		<div class="card-holder">
+			<div class="card">
+				<h1>🚧 Under Construction 🚧</h1>
+                <p>We're Sorry, but this page is still under construction.</p>
+                <div class="loader"></div>
+                <p>We are going to send you back to our Home Page now (should take about 10s)</p>
+                <img src="./assets/images/construction.jpg" alt="">
+			</div>
+        </div>
+    </section>
+        <footer>
+            <div style="display: block; width: 100%; left: 0; bottom: 0; position: absolute; background-color:rgba(0, 0, 0, .5)">
+            <p>&copy; QuazarFutureTech&trade; - 2022 (All Rights Reserved)</p>
+            </div>
+        </footer>
+	</body>
+</html>

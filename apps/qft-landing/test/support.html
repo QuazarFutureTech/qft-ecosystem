@@ -1,0 +1,127 @@
+<!DOCTYPE = html5>
+<html lang="en" style="background-color: rgba (0,0,0,0.1);">
+
+<head>
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="../assets/css/plugins.css" />
+    <link rel="stylesheet" href="../assets/css/bulma.min.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+    <link rel="stylesheet" href="../assets/css/fonts.css" />
+    <link rel="stylesheet" href="../assets/css/Accordion.css" />
+    <script src="https://kit.fontawesome.com/4f45a84be8.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../assets/css/modals.css">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicons/favicon-16x16.png" />
+    <link rel="manifest" href="../assets/images/favicons/site.webmanifest" />
+    <link rel="mask-icon" href="../assets/images/favicons/safari-pinned-tab.svg" color="#5bbad5" />
+    <link rel="shortcut icon" href="assets/images/favicons/favicon.ico" />
+    <meta name="msapplication-TileColor" content="#2b5797" />
+    <meta name="msapplication-config" content="../assets/images/favicons/browserconfig.xml" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="thumbnail" href="../assets/images/favicons/favicon.ico" />
+</head>
+
+<body>
+    <section id="Top" class="fullscreen has-text-centered bg-colored">
+        <div class="container-">
+            <div class="container-fullscreen">
+
+                <div class="container">
+                    <div class="card theme-white_glass">
+                        <h3 class="title has-text-black is-2"> This is not the page you are looking for... </h3>
+                        <p>Nothing Exists here yet please return to the <a href="../index.html">home page</a></p>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+    <div id="modalBeta" class="modal has-text-centered">
+        <!-- Modal content -->
+        <div class="beta_modal-content">
+            <div class="beta_modal-head theme-testing">
+                <span class="beta_close">&times;</span>
+                <h2 class="has-text-white theme-testing subtitle is-3"> Page Under Construction</h2>
+            </div>
+            <div class="beta_modal-body theme-lt">
+                <h4 class="has-text-centered"><i class="fa fa-warning"></i> Warning <i class="fa fa-warning"></i></h4>
+                <p>This page is still under construction, and is currently undergoing testing.</p>
+                <p>As a result many features and functionality of this page may be limited. <br> We highly recommend revisiting later!</p>
+
+                <a href="#" class="b theme-btn-dark" onclick="closeBetaModal()"><i class="fa fa-caret-right" aria-hidden="true"></i> Proceed</a>
+                <a href="../index.html" class="b theme-btn-dark"><i class="fa fa-backward" aria-hidden="true"></i> Go back</a>
+
+            </div>
+            <div class="beta_modal-foot theme-testing">
+                <h3 class="has-text-white is-5 ">The Page you are looking for will be up soon!</h3>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div class="container">
+            <div class="sec aboutus">
+                <img src="../assets/images/logo.png" alt="Logo" class="mb-3">
+                <hr style="background-color: rgb(0, 132, 255); border-color: rgb(0, 132, 255); border-radius: 0px; height: 1px;" />
+                <p>QFT&trade; | QuazarFutureTech&trade; - Better Technology For a Better Future! <br>We are a next-genreation technology development organization based in Florida [U.S.A.] <br> Our main goal is to create new technologies, and challenge the
+                    impossible!
+                </p>
+                <ul class="sci">
+                    <li><a href="#"><i class="fa fa-twitch" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-youtube-play" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-facebook-f" aria-hidden="true"></i></a></li>
+                </ul>
+            </div>
+
+            <div class="sec quicklinks">
+                <h2>Quick Links</h2>
+                <ul>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Jobs <span style="color: #43b581;">- We're hiring!</span></a> </li>
+                    <li><a href="#">Status</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="sec contact">
+                <h2>Contact Info</h2>
+                <ul class="info">
+                    <li>
+                        <span><i class="fa fa-phone" aria-hidden="true"></i></span>
+                        <p><a href="tel:13527275820">+1(352)727-5820</a></p>
+                    </li>
+                    <li>
+                        <span><i class="fa fa-envelope" aria-hidden="true"></i></span>
+                        <p><a href="mailto:quazarfuturetech@gmail.com ">quazarfuturetech@gmail.com</a></p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    <div class="copyright">&copy; QuazarFutureTech&trade; 2022 - All Rights Reserved </div>
+    <a href="#" id="ScrollTop"><i class="fa fa-arrow-up" aria-hidden="true"></i></a>
+    <script src="../src/plugins/particles/particles.js"></script>
+    <script src="../assets/js/modals.js"></script>
+    <script src="../src/plugins/particles/particles-dots.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/@widgetbot/crate@3' async defer>
+        const button = new Crate({
+            server: '708119280582918267',
+            channel: '1020697610899701920',
+            glyph: ['https://cdn.discordapp.com/attachments/929406105459761222/929487974729666610/com_jiochat_jiochatapp.png', '100%']
+        })
+
+        button.notify('__Need Help?__\n```js\n Leave us a message.\n```')
+    </script>
+
+</body>
+</body>
+
+</html>

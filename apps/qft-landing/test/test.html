@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Ring Carousel — Fixed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+.services-carousel {
+  perspective: 1000px;
+  overflow: hidden;
+  position: relative;
+  height: 420px;
+  touch-action: pan-y; /* allow vertical scroll, we handle horizontal */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.carousel-track {
+  transform-style: preserve-3d;
+  transition: transform 0.8s ease-in-out-bezier(.2,.7,.2,1); /* smoother easing */
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  z-index: 1; /* keep track behind controls */
+  pointer-events: none; /* inner cards handle clicks */
+}
+
+.service-card {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  left: 25%;
+  top: 40px;
+  transform-origin: center center;
+  pointer-events: none; /* only inner is interactive */
+}
+
+/* Inner wrapper for scaling/shadow */
+.card-inner {
+  width: 100%;
+  height: 100%;
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: auto; /* clickable/touchable */
+  cursor: pointer;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-content: center;
+}
+
+/* Active card highlight */
+.service-card.qft-active .card-inner {
+  transform: scale(1.08);
+  box-shadow: 0 16px 32px rgba(0,255,255,0.22);
+}
+
+/* Dragging feedback */
+.services-carousel.qft-dragging .card-inner {
+  transform: scale(0.94);
+}
+
+:root {
+  --glow-shadow: 0 0 8px #ff6ec4,
+                 0 0 10px #7873f5,
+                 0 0 12px #4adede;
+}
+
+/* Controls container */
+.carousel-controls {
+  position: absolute;
+  display: flex;
+  bottom: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 10000;
+  pointer-events: auto;
+  justify-content: space-between;
+  flex-direction: row;
+}
+
+/* Button base */
+.carousel-controls button,
+.carousel-controls .prev_card,
+.carousel-controls .next_card {
+  position: relative;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  color: white;
+  font-weight: bold;
+  font-size: 2rem;
+  line-height: 1;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  user-select: none;
+  z-index: 2; /* above halo */
+}
+
+/* Arrow text wrapper */
+.arrow-text {
+  position: relative;
+  display: inline-block;
+  transition: transform 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* Neon glow halo */
+.carousel-controls .prev_card::before,
+.carousel-controls .next_card::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  z-index: 1;
+}
+
+.carousel-controls .prev_card:hover::before,
+.carousel-controls .next_card:hover::before {
+  box-shadow: var(--glow-shadow);
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Text-only hover motion */
+.prev_card:hover .arrow-text {
+  transform: translateX(-6px);
+  text-shadow: var(--glow-shadow);
+}
+
+.next_card:hover .arrow-text {
+  transform: translateX(6px);
+  text-shadow: var(--glow-shadow);
+}
+
+.arrow-text {
+  position: relative;
+  display: inline-block;
+  transition: transform 0.4s ease, text-shadow 0.4s ease;
+  z-index: 2;
+}
+
+/* Line pseudo-element */
+.arrow-text::after {
+  content: "";
+  position: absolute;
+  top: 60%; /* slightly lower than exact center */
+  height: 4px;
+  width: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: var(--glow-shadow);
+  transition: width 0.4s ease, transform 0.4s ease;
+  transform: translateY(-50%);
+}
+
+/* Left arrow line */
+.prev_card .arrow-text::after {
+  left: 50%;
+  transform-origin: left center;
+}
+
+.prev_card:hover .arrow-text {
+  transform: translateX(-6px);
+  text-shadow: var(--glow-shadow);
+}
+
+.prev_card:hover .arrow-text::after {
+  width: 20px;
+  left: 0;
+}
+
+/* Right arrow line */
+.next_card .arrow-text::after {
+  right: 50%;
+  transform-origin: right center;
+}
+
+.next_card:hover .arrow-text {
+  transform: translateX(6px);
+  text-shadow: var(--glow-shadow);
+}
+
+.next_card:hover .arrow-text::after {
+  width: 20px;
+  right: 0;
+}
+
+
+/* Keyboard/touch feedback */
+.carousel-controls .prev_card:focus-visible .arrow-text,
+.carousel-controls .next_card:focus-visible .arrow-text,
+.carousel-controls .prev_card:active .arrow-text,
+.carousel-controls .next_card:active .arrow-text {
+  text-shadow: var(--glow-shadow);
+}
+
+/* Swipe arrows */
+.swipe-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3rem;
+  color: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
+  z-index: 9999;
+}
+
+.swipe-left { left: 20px; }
+.swipe-right { right: 20px; }
+
+.swipe-arrow.show {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+  text-shadow: var(--glow-shadow);
+}
+
+/* Active card highlight */
+.service-card.qft-active .card-inner {
+  transform: scale(1.08);
+  box-shadow: var(--glow-shadow);
+  text-shadow: var(--glow-shadow);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .carousel-controls { display: none; }
+
+  .services-carousel { perspective: 160px; }
+  .service-card {
+    width: 240px; height: 300px; left: calc(50% - 120px);
+  }
+  .service-card:not(.qft-active) .card-inner {
+    transform: rotateY(5deg) scale(0.9);
+    opacity: 0.6;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+  }
+  .service-card.qft-active .card-inner {
+    transform: scale(1.1);
+    opacity: 1;
+    box-shadow: var(--glow-shadow);
+  }
+}
+  </style>
+</head>
+<body>
+
+  <h1>Our Services</h1>
+    <div class="qft-ring-carousel services-carousel">
+        <!-- Inside .qft-ring-carousel or .slide-carousel -->
+<div class="swipe-arrow swipe-left">‹</div>
+<div class="swipe-arrow swipe-right">›</div>
+
+        <div class="qft-carousel-track carousel-track">
+            
+            <div class="qft-service-card service-card">
+                <div class="qft-card-inner card-inner">
+                    <h2> 3D Printing</h2>
+                    <hr>
+                    <p>From prototypes to production, we bring ideas into physical form.</p>
+                </div>
+            </div>
+            <div class="qft-service-card service-card">
+                <div class="qft-card-inner card-inner">
+                    <h2>App &amp; Software Development</h2>
+                    <hr>
+                    <p>Custom digital solutions tailored to your business needs.</p>
+                </div>
+            </div>
+            <div class="qft-service-card service-card">
+                <div class="qft-card-inner card-inner">
+                    <h2>Graphic Design</h2>
+                    <hr>
+                    <p>Creative visuals that communicate your brand's story effectively.</p>
+                </div>
+            </div>
+            <div class="qft-service-card service-card">
+                <div class="qft-card-inner card-inner">
+                    <h2>Systems Architecture</h2>
+                    <hr>
+                    <p>Designing robust and scalable IT infrastructures for your business.</p>
+                </div>
+            </div>
+        </div>
+
+<div class="qft-carousel-controls carousel-controls">
+  <button class="qft-prev prev_card" type="button" aria-label="Previous">
+    <span class="arrow-text">‹</span>
+  </button>
+  <button class="qft-next next_card" type="button" aria-label="Next">
+    <span class="arrow-text">›</span>
+  </button>
+</div>
+</div>
+
+  <div class="carousel-container" id="carousel">
+    <div class="carousel-track" id="carouselTrack">
+      <div class="service-card"><div class="card-inner">Software Development</div></div>
+      <div class="service-card"><div class="card-inner">Graphic Design</div></div>
+      <div class="service-card"><div class="card-inner">Systems Architecture</div></div>
+      <div class="service-card"><div class="card-inner">3D Printing</div></div>
+      <div class="service-card"><div class="card-inner">Platform Engineering</div></div>
+    </div>
+    <div class="carousel-controls">
+      <button class="prev_card" type="button" aria-label="Previous">‹</button>
+      <button class="next_card" type="button" aria-label="Next">›</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  function initRingCarousel(container, options = {}){
+    if(!container) return null;
+    const cfg = Object.assign({
+      sensitivity: 4.0,
+      projectionMs: 80,
+      baseDuration: 800,   // slightly longer for smoother feel
+      maxExtra: 800,
+      radiusAttr: '--radius'
+    }, options);
+
+    const track = container.querySelector('.qft-carousel-track');
+    if(!track) return null;
+    const cards = Array.from(track.querySelectorAll('.qft-service-card'));
+    if(!cards.length) return null;
+
+    const controls = container.querySelector('.qft-carousel-controls');
+    const nextBtn = controls?.querySelector('.qft-next');
+    const prevBtn = controls?.querySelector('.qft-prev');
+
+    const leftArrow = container.querySelector('.swipe-left');
+    const rightArrow = container.querySelector('.swipe-right');
+
+    let angle = 0;
+    const count = cards.length;
+    const step = 360 / count;
+    const radius = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(cfg.radiusAttr)) || 500;
+
+    // Position cards around the ring
+    cards.forEach((card,i)=>{
+      const theta = i * step;
+      card.style.transform = `rotateY(${theta}deg) translateZ(${radius}px)`;
+    });
+    track.style.transform = `translateZ(-${radius}px) rotateY(${angle}deg)`;
+
+    function updateActive(currentAngle = angle){
+      const normalized = ((-currentAngle % 360) + 360) % 360;
+      const index = Math.round(normalized / step) % count;
+      cards.forEach((card,i)=> card.classList.toggle('qft-active', i === index));
+    }
+// --- Autoplay ---
+let autoplayId = null;
+const autoplayDelay = 10000; // 10 seconds between slides
+
+function startAutoplay() {
+  stopAutoplay(); // clear any existing loop
+  autoplayId = setInterval(() => {
+    const target = angle - step; // move forward one step
+    animateTo(target, cfg.baseDuration);
+  }, autoplayDelay);
+}
+
+function stopAutoplay() {
+  if (autoplayId) {
+    clearInterval(autoplayId);
+    autoplayId = null;
+  }
+}
+
+// Start autoplay when initialized
+startAutoplay();
+
+// Pause autoplay while dragging or hovering controls
+container.addEventListener('mouseenter', stopAutoplay);
+container.addEventListener('mouseleave', startAutoplay);
+
+    // Smooth animation
+    function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+    function animateTo(target, duration){
+      cancelAnimationFrame(rafId);
+      const start = performance.now(); const from = angle;
+      function frame(now){
+        const p = Math.min(1, (now - start) / duration);
+        const eased = easeOutCubic(p);
+        angle = from + (target - from) * eased;
+        track.style.transform = `translateZ(-${radius}px) rotateY(${angle}deg)`;
+        updateActive();
+        if(p < 1) rafId = requestAnimationFrame(frame);
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    // Button navigation → smooth
+    nextBtn?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const target = angle - step;
+      animateTo(target, cfg.baseDuration);
+    });
+    prevBtn?.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const target = angle + step;
+      animateTo(target, cfg.baseDuration);
+    });
+
+    // Swipe arrow feedback
+    function showSwipeArrow(direction){
+      if (direction === 'left') {
+        leftArrow?.classList.add('show');
+        rightArrow?.classList.remove('show');
+      } else if (direction === 'right') {
+        rightArrow?.classList.add('show');
+        leftArrow?.classList.remove('show');
+      }
+      setTimeout(() => {
+        leftArrow?.classList.remove('show');
+        rightArrow?.classList.remove('show');
+      }, 400);
+    }
+
+    // Drag logic
+    let startX = null, lastX = null, lastTime = 0, dragging = false, degPerMs = 0, rafId = null;
+
+    function onStart(e){
+      e.preventDefault();
+      const tgt = e.target || e.srcElement;
+      if (tgt && tgt.closest && tgt.closest('.qft-carousel-controls')) return;
+      dragging = true; container.classList.add('qft-dragging');
+      const x = (e.touches?.[0]?.clientX ?? e.clientX);
+      startX = x; lastX = x; lastTime = performance.now(); degPerMs = 0;
+      cancelAnimationFrame(rafId);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+    }
+
+    function onMove(e){
+      if(!dragging) return;
+      const x = (e.touches?.[0]?.clientX ?? e.clientX);
+      const now = performance.now();
+      const dx = x - lastX;
+      if (Math.abs(dx) > 4) {
+        showSwipeArrow(dx < 0 ? 'left' : 'right');
+      }
+      lastX = x;
+
+      const dAngle = dx / cfg.sensitivity;
+      angle += dAngle;
+      track.style.transform = `translateZ(-${radius}px) rotateY(${angle}deg)`;
+
+      const dt = Math.max(1, now - lastTime);
+      degPerMs = dAngle / dt;
+      lastTime = now;
+
+      updateActive(angle);
+    }
+
+    function snapToNearestFrom(a){
+      const normalized = ((-a % 360) + 360) % 360;
+      const nearestIndex = Math.round(normalized / step) % count;
+      return -nearestIndex * step;
+    }
+
+    function onEnd(){
+      if(!dragging) return;
+      dragging = false; container.classList.remove('qft-dragging');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+
+      const projectedAngle = angle + degPerMs * cfg.projectionMs;
+      const baseTarget = snapToNearestFrom(projectedAngle);
+      let target = baseTarget;
+      while (target - angle > 180) target -= 360;
+      while (target - angle < -180) target += 360;
+
+      const extra = Math.min(cfg.maxExtra, Math.abs(degPerMs) * 600);
+      const duration = Math.max(180, cfg.baseDuration + extra);
+      animateTo(target, duration);
+
+      startX = null; lastX = null; degPerMs = 0;
+    }
+
+    container.addEventListener('touchstart', onStart, { passive: true });
+    container.addEventListener('touchmove', onMove, { passive: false });
+    container.addEventListener('touchend', onEnd);
+    container.addEventListener('mousedown', onStart);
+
+    function destroy(){
+      cancelAnimationFrame(rafId);
+      container.removeEventListener('touchstart', onStart);
+      container.removeEventListener('touchmove', onMove);
+      container.removeEventListener('touchend', onEnd);
+      container.removeEventListener('mousedown', onStart);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      nextBtn?.removeEventListener('click', animateTo);
+      prevBtn?.removeEventListener('click', animateTo);
+    }
+
+    updateActive();
+    return { destroy };
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('.qft-ring-carousel').forEach(el => initRingCarousel(el));
+  });
+
+  window.qftRingCarousel = { init: initRingCarousel };
+})();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+
+<body>
+    <div id="mySidenav" class="sidenav bg-opaque">
+        <a href="index.html" class="title ">
+            <img src="https://media.discordapp.net/attachments/765697291604328479/961613264775680020/unknown.png" width="125em" alt="icon" />
+        </a>
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&otimes;</a
+        >
+  <button class="side_dropdown-btn"><i class="fa fa-home"></i> Home
+  </button>
+  <div class="side_dropdown-container">
+    <a href="#section-portal" onclick="closeNav()"><i class="fa fa-dashboard" aria-hidden="true"></i> Portal</a>
+        <a href="#section-about" onclick="closeNav()"><i class="fa fa-users" aria-hidden="true"></i> About Us</a>
+        <hr>
+    </div>
+    <button class="side_dropdown-btn" style="display: none;"><i class="fa fa-shopping-cart"></i> Shop
+  </button>
+    <div class="side_dropdown-container">
+        <a href="pages/Products.html" onclick="closeNav()"><i class="fa fa-boxes" aria-hidden="true"></i> Products </a>
+        <a href="pages/Services.html" onclick="closeNav()"><i class="fa fa-toolbox" aria-hidden="true"></i> Services</a>
+        <hr>
+    </div>
+    <button class="side_dropdown-btn"><i class="fa fa-users" aria-hidden="true"></i> People
+  </button>
+    <div class="side_dropdown-container">
+        <a href="pages/Community.html"><i class="fa fa-users" aria-hidden="true"></i> Community</a>
+        <a href="pages/jobs.html" style="display: none;"><i class="fa fa-briefcase"></i> Careers</a>
+        <a href="pages/Affiliates.html" style="display: none;"><i class="fa fa-hand-holding"></i> Affiliates</a>
+        <hr>
+    </div>
+    <button class="side_dropdown-btn"><i class="fa fa-folder-o"  aria-hidden="true"></i> Resources</button>
+    <div class="side_dropdown-container">
+        <a href="pages/Downloads.html" style="display: none;" onclick="closeNav()"><i class="fa fa-download"></i> Downloads</a>
+        <a href="https://sites.google.com/view/qft-faqs/faqs"><i class="fa fa-external-link"  aria-hidden="true"></i> FAQs</a>
+        <a href="pages/Projects.html" style="display: none;"><i class="fa fa-gears"></i> Projects</a>
+        <a href="pages/status.html" style="display: none;"><i class="fa fa-warning" aria-hidden="true"></i> Status</a>
+    </div>
+    <button class="side_dropdown-btn" style="display: none;"><i class="fa fa-envelope-o"></i> Contact Us
+  </button>
+    <div class="side_dropdown-container">
+        <a href="pages/support.html" onclick="closeNav()"><i class="fa fa-ticket" aria-hidden="true"></i> Support</a>
+        <a href="pages/Security.html" onclick="closeNav()"><i class="fa fa-shield" aria-hidden="true"></i> Security</a>
+        <a href="pages/Directory.html" onclick="closeNav()"><i class="fa fa-book" aria-hidden="true"></i> Directory</a>
+        <hr>
+    </div>
+    </div>
+
+    <div class="main">
+        <div id="navbar">
+            <a href="#"><img src="https://media.discordapp.net/attachments/765697291604328479/961613264775680020/unknown.png" width="125em" alt="icon" />
+                <p id="logo"></p>
+            </a>
+            <button href="#" class="active" onclick="openNav()">
+            <i class="fa fa-bars"></i>
+          </button>
+
+
+            <div class="hov-drpdwn" style="display: none;">
+                <button class="hov-drpbtn"> <i class="fa fa-envelope-o"></i> Contact Us
+    </button>
+                <div class="hov-drpdwn-content theme-blk_glass">
+                    <a href="pages/support.html"><i class="fa fa-ticket" aria-hidden="true"></i> Support</a>
+                    <a href="pages/Security.html"><i class="fa fa-shield" aria-hidden="true"></i> Security</a>
+                    <a id="PopBtn" href="pages/Directory.html"><i class="fa fa-book" aria-hidden="true"></i> Directory</a>
+                </div>
+            </div>
+
+            <div class="hov-drpdwn">
+                <button class="hov-drpbtn"> <i class="fa fa-folder-o" aria-hidden="true"></i> Resources
+        </button>
+                <div class="hov-drpdwn-content theme-blk_glass">
+                    <a href="pages/Downloads.html" style="display: none;"><i class="fa fa-download"></i> Downloads </a>
+                    <a href="https://sites.google.com/view/qft-faqs/faqs"><i class="fa fa-external-link"  aria-hidden="true"></i> FAQs </a>
+                    <a href="pages/Projects.html" style="display: none;"><i class="fa fa-gears"></i> Projects</a>
+                    <a href="pages/status.html" style="display: none;"><i class="fa fa-warning" aria-hidden="true"></i> Status</a>
+                </div>
+            </div>
+            <div class="hov-drpdwn" style="display: none;">
+                <button class="hov-drpbtn"> <i class="fa fa-shopping-cart" aria-hidden="true"></i> Shop
+        </button>
+                <div class="hov-drpdwn-content theme-blk_glass">
+                    <a href="pages/Products.html"><i class="fa fa-boxes"></i> Products </a>
+                    <a href="pages/Services.html"><i class="fa fa-toolbox"></i> Services </a>
+                </div>
+            </div>
+
+            <div class="hov-drpdwn">
+                <button class="hov-drpbtn"> <i class="fa fa-users" aria-hidden="true"></i> People
+        </button>
+                <div class="hov-drpdwn-content theme-blk_glass">
+                    <a href="pages/Affiliates.html" style="display: none;"><i class="fa fa-hand-holding"></i> Affilates</a>
+                    <a href="pages/jobs.html" style="display: none;"><i class="fa fa-briefcase"></i> Careers</a>
+                    <a href="pages/Community.html"><i class="fa fa-users" aria-hidden="true"></i> Community</a>
+                </div>
+            </div>
+            <div class="hov-drpdwn">
+                <button class="hov-drpbtn"> <i class="fa fa-home"></i> Home
+        </button>
+                <div class="hov-drpdwn-content theme-blk_glass">
+                    <a href="#section-portal"><i class="fa fa-dashboard" aria-hidden="true"></i> Portal</a>
+                    <a href="#section-about"><i class="fa fa-users" aria-hidden="true"></i> About Us</a>
+                </div>
+            </div>
+
+        </div>
+        <script src="assets/js/app.js"></script>
+</body>
+
+</html>

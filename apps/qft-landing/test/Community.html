@@ -1,0 +1,303 @@
+<!DOCTYPE = html5>
+<html lang="en" style="background-color: rgba (0,0,0,0.1);">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="QuazarFutureTech&trade;" />
+    <meta property="og:image" content="https://cdn.discordapp.com/attachments/929406105459761222/968539104994279425/QFT_MainBanner.gif" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="../assets/css/plugins.css" />
+    <link rel="stylesheet" href="../assets/css/bulma.min.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+    <link rel="stylesheet" href="../assets/css/fonts.css" />
+    <link rel="stylesheet" href="../assets/css/Accordion.css" />
+    <script src="https://kit.fontawesome.com/4f45a84be8.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../assets/css/modals.css">
+    <link rel="stylesheet" href="../assets/css/Views.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicons/favicon-16x16.png" />
+    <link rel="manifest" href="../assets/images/favicons/site.webmanifest" />
+    <link rel="mask-icon" href="../assets/images/favicons/safari-pinned-tab.svg" color="#5bbad5" />
+    <link rel="shortcut icon" href="../assets/images/favicons/favicon.ico" />
+    <meta name="msapplication-TileColor" content="#2b5797" />
+    <meta name="msapplication-config" content="../assets/images/favicons/browserconfig.xml" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="thumbnail" href="../assets/images/favicons/favicon.ico" />
+</head>
+
+<body class="body-bg bg-colored">
+    <header>
+        <div id="mySidenav" class="sidenav bg-opaque">
+            <a href="index.html" class="title ">
+                <img src="https://media.discordapp.net/attachments/765697291604328479/961613264775680020/unknown.png" width="125em" alt="icon" />
+            </a>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&otimes;</a
+        >
+  <button class="side_dropdown-btn"><i class="fa fa-home"></i> Home
+  </button>
+  <div class="side_dropdown-container">
+    <a href="../index.html#section-portal" onclick="closeNav()"><i class="fa fa-dashboard" aria-hidden="true"></i> Portal</a>
+            <a href="../index.html#section-about" onclick="closeNav()"><i class="fa fa-users" aria-hidden="true"></i> About Us</a>
+            <hr>
+        </div>
+        <button class="side_dropdown-btn" style="display: none;"><i class="fa fa-shopping-cart"></i> Shop
+  </button>
+        <div class="side_dropdown-container">
+            <a href="pages/Products.html" onclick="closeNav()"><i class="fa fa-boxes" aria-hidden="true"></i> Products </a>
+            <a href="pages/Services.html" onclick="closeNav()"><i class="fa fa-toolbox" aria-hidden="true"></i> Services</a>
+            <hr>
+        </div>
+        <button class="side_dropdown-btn"><i class="fa fa-folder-o"  aria-hidden="true"></i> Resources</button>
+        <div class="side_dropdown-container">
+            <a href="pages/Downloads.html" style="display: none;" onclick="closeNav()"><i class="fa fa-download"></i> Downloads</a>
+            <a href="https://sites.google.com/view/qft-faqs/faqs"><i class="fa fa-question"></i> FAQs</a>
+            <a href="pages/Projects.html" style="display: none;"><i class="fa fa-gears"></i> Projects</a>
+            <a href="pages/status.html" style="display: none;"><i class="fa fa-warning" aria-hidden="true"></i> Status</a>
+        </div>
+        <button class="side_dropdown-btn"><i class="fa fa-users" aria-hidden="true"></i> People
+  </button>
+        <div class="side_dropdown-container">
+            <a href="pages/Community.html"><i class="fa fa-users" aria-hidden="true"></i> Community</a>
+            <a href="pages/jobs.html" style="display: none;"><i class="fa fa-briefcase"></i> Careers</a>
+            <a href="pages/Affiliates.html" style="display: none;"><i class="fa fa-hand-holding"></i> Affiliates</a>
+            <hr>
+        </div>
+        <button class="side_dropdown-btn"><i class="fa fa-envelope-o"></i> Contact Us
+  </button>
+        <div class="side_dropdown-container" style="display: none;">
+            <a href="pages/support.html" onclick="closeNav()"><i class="fa fa-ticket" aria-hidden="true"></i> Support</a>
+            <a href="pages/Security.html" onclick="closeNav()"><i class="fa fa-shield" aria-hidden="true"></i> Security</a>
+            <a href="pages/Directory.html" onclick="closeNav()"><i class="fa fa-book" aria-hidden="true"></i> Directory</a>
+            <hr>
+        </div>
+        </div>
+
+        <div class="main">
+            <div id="navbar">
+                <a href="#"><img src="https://media.discordapp.net/attachments/765697291604328479/961613264775680020/unknown.png" width="125em" alt="icon" />
+                    <p id="logo"></p>
+                </a>
+                <button href="#" class="active" onclick="openNav()">
+            <i class="fa fa-bars"></i>
+          </button>
+
+
+                <div class="hov-drpdwn" style="display: none;">
+                    <button class="hov-drpbtn"> <i class="fa fa-envelope-o"></i> Contact Us
+    </button>
+                    <div class="hov-drpdwn-content theme-blk_glass">
+                        <a href="pages/support.html"><i class="fa fa-ticket" aria-hidden="true"></i> Support</a>
+                        <a href="pages/Security.html"><i class="fa fa-shield" aria-hidden="true"></i> Security</a>
+                        <a id="PopBtn" href="pages/Directory.html"><i class="fa fa-book" aria-hidden="true"></i> Directory</a>
+                    </div>
+                </div>
+
+                <div class="hov-drpdwn">
+                    <button class="hov-drpbtn"> <i class="fa fa-users" aria-hidden="true"></i> People
+        </button>
+                    <div class="hov-drpdwn-content theme-blk_glass">
+                        <a href="pages/Affiliates.html" style="display: none;"><i class="fa fa-hand-holding"></i> Affilates</a>
+                        <a href="pages/jobs.html" style="display: none;"><i class="fa fa-briefcase"></i> Careers</a>
+                        <a href="pages/Community.html"><i class="fa fa-users" aria-hidden="true"></i> Community</a>
+                    </div>
+                </div>
+                <div class="hov-drpdwn">
+                    <button class="hov-drpbtn"> <i class="fa fa-folder-o" aria-hidden="true"></i> Resources
+        </button>
+                    <div class="hov-drpdwn-content theme-blk_glass">
+                        <a href="Downloads.html" style="display: none;"><i class="fa fa-download"></i> Downloads </a>
+                        <a href="https://sites.google.com/view/qft-faqs/faqs"><i class="fa fa-question"></i> FAQs </a>
+                        <a href="Projects.html" style="display: none;"><i class="fa fa-gears"></i> Projects</a>
+                        <a href="status.html" style="display: none;"><i class="fa fa-warning" aria-hidden="true"></i> Status</a>
+                    </div>
+                </div>
+                <div class="hov-drpdwn" style="display: none;">
+                    <button class="hov-drpbtn"> <i class="fa fa-shopping-cart" aria-hidden="true"></i> Shop
+        </button>
+                    <div class="hov-drpdwn-content theme-blk_glass">
+                        <a href="pages/Products.html"><i class="fa fa-boxes"></i> Products </a>
+                        <a href="pages/Services.html"><i class="fa fa-toolbox"></i> Services </a>
+                    </div>
+                </div>
+                <div class="hov-drpdwn">
+                    <button class="hov-drpbtn"> <i class="fa fa-home"></i> Home
+        </button>
+                    <div class="hov-drpdwn-content theme-blk_glass">
+                        <a href="Home.html#section-portal"><i class="fa fa-dashboard" aria-hidden="true"></i> Portal</a>
+                        <a href="Home.html#section-about"><i class="fa fa-users" aria-hidden="true"></i> About Us</a>
+                    </div>
+                </div>
+
+            </div>
+    </header>
+
+    <section id="Top" class="fullscreen has-text-centered">
+        <div class="flex_view ">
+            <img src="../assets/images/favicons/icon.png" alt="QFT-Icon">
+            <div class="card theme-white_glass " style=" animation-name: text-spand; animation-duration: 1.5s;">
+                <div class="columns">
+                    <div class="column has-text-white">
+
+                        <h1 class="title is-3 has-text-white theme-grad_text-2">
+                            Join Our Community
+
+                        </h1>
+                        <hr>
+                        <p class="has-text-white">
+                            Become a part of our growing community today and gain access to VIP perks, Discounts & More! <br> Don't wait! Join us today!
+                        </p>
+
+                        <a href="#section-perks" class="b theme-main_cta"><i class="fa fa-fire" aria-hidden="true"></i> Join Now!</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="section-perks" style="padding-top: 64px;">
+
+        <div class="container has-text-centered ">
+
+            <div class="card theme-white_glass reveal">
+                <p class="title is-3 has-text-white" style="margin-top: 20px"> Join us on discord!</p>
+                <hr>
+                <p class="subtitle has-text-white" style="margin-top: 20px">We use Discord to run our organization, since it offers great tools and services!</p>
+                <a href="#" id="myBtn" class="b theme-join" style="margin-bottom: 5px"><i class="fa fa-user-plus" aria-hidden="true"></i>
+                     Join Us
+                  </a>
+            </div>
+            <h2 class="title is-2 has-text-white">Why Join Us?
+                <hr>
+            </h2>
+
+            <div class="container has-text-centered">
+                <div class="columns ">
+                    <div class="column card theme-white_glass  has-text-white reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-comments" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">Socially Responsive</h3>
+                        <hr>
+                        <p>We always try and respond to social media posts and hashtags. Additionally we are present on many different platforms! So tag us, tweet us, mention us, we are there!</p>
+
+                    </div>
+                    <div class="column card theme-white_glass  has-text-white reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-info-circle" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">Transparency</h3>
+                        <hr>
+                        <p>Unlike many corporations, and organizations we are very transparent. We understand how important your data is. That's why we promise to keep you informed on what we are doing, how we process data, etc.</p>
+
+                    </div>
+                    <div class="column card theme-white_glass  has-text-white reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-clock-o" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">24/7 Availability!</h3>
+                        <hr>
+                        <p>We mainly operate online. As a result we are available across multiple timezones and are able to assist with a 24/7 uptime!(some holidays may not be included)</p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="columns ">
+                    <div class="column card theme-white_glass has-text-white reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-server" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">Quality Performance</h3>
+                        <hr>
+                        <p>Our staff team is highly responsive, and dedicated to their craft, resulting in quality service and tailor built custom solutions that are rarely seen elsewhere</p>
+                    </div>
+                    <div class="column card theme-white_glass has-text-white  reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-globe" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">Resourceful & Adaptive</h3>
+                        <hr>
+                        <p>We work to build custom solutions, however we also fill in the gaps by utilizing all available resources. Allowing us to grow & adapt to your needs at a moments notice!</p>
+
+                    </div>
+                    <div class="column card theme-white_glass has-text-white reveal">
+                        <h2 class=" has-text-centered"><i class="fa fa-users" aria-hidden="true"></i></h2>
+                        <h3 class=" has-text-centered">Welcoming Community</h3>
+                        <hr>
+                        <p>We have a <a href="pages/Community.html">community</a> of people who are friendly and supportive, we are always there to make things simple and easy for you (and maybe even a little fun)!</p>
+
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+    </section>
+    <div id="modalJoin" class="modal-style has-text-centered">
+        <!-- Modal content -->
+        <div class="modal-container">
+            <div class="modal-head">
+                <span class="close">&times;</span>
+                <h2 class="has-text-white has-text-centered subtitle is-3 theme-beta">Are you Ready?</h2>
+            </div>
+            <div class="modal-body theme-dk">
+                <p class="has-text-white ">All Done Here?<br> You are about to be sent to our discord server! (which may prompt you to create an account if you don't already have one.) We look forwards to seeing you there! </p>
+                <a href="https://discord.gg/qft" class="b theme-join">Join Now</a>
+                <p class="has-text-white ">Link not working? try <a href="https://discord.gg/VpTDz3JrQC">this one</a></p>
+            </div>
+            <div class="modal-foot theme-beta">
+                <h3 class="has-text-white has-text-centered is-5">Thanks for visiting us!</h3>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div class="container">
+            <div class="sec aboutus">
+                <img src="../assets/images/logo.png" alt="Logo" class="mb-3">
+                <hr style="background-color: rgb(0, 132, 255); border-color: rgb(0, 132, 255); border-radius: 0px; height: 1px;" />
+                <ul class="sci">
+                    <li><a href="#"><i class="fa fa-twitch" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-youtube-play" aria-hidden="true"></i></a></li>
+                    <li><a href="#"><i class="fa fa-facebook-f" aria-hidden="true"></i></a></li>
+                </ul>
+            </div>
+
+            <div class="sec quicklinks">
+                <h2>Quick Links</h2>
+                <ul>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Jobs <span style="color: #43b581;">- We're hiring!</span></a> </li>
+                    <li><a href="#">Status</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="sec contact">
+                <h2>Contact Info</h2>
+                <ul class="info">
+                    <li>
+                        <span><i class="fa fa-phone" aria-hidden="true"></i></span>
+                        <p><a href="tel:13527275820">+1(352)727-5820</a></p>
+                    </li>
+                    <li>
+                        <span><i class="fa fa-envelope" aria-hidden="true"></i></span>
+                        <p><a href="mailto:quazarfuturetech@gmail.com ">quazarfuturetech@gmail.com</a></p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+    <div class="copyright">&copy; QuazarFutureTech&trade; 2022 - All Rights Reserved </div>
+    <a href="#" id="ScrollTop"><i class="fa fa-arrow-up" aria-hidden="true"></i></a>
+    <script src="../assets/js/modals.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/@widgetbot/crate@3' async defer>
+        const button = new Crate({
+            server: '708119280582918267',
+            channel: '1020697610899701920',
+            glyph: ['https://cdn.discordapp.com/attachments/929406105459761222/929487974729666610/com_jiochat_jiochatapp.png', '100%']
+        })
+
+        button.notify('__Need Help?__\n```js\n Leave us a message.\n```')
+    </script>
+
+</body>
+</body>
+
+</html>
