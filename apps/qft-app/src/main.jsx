@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, useSearchParams, useNavigate, Navigate } 
 import Login from './Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Chat from './pages/Chat.jsx'; // Renamed from Feed
-import Users from './pages/Users.jsx';
 import CommandCenter from './pages/CommandCenter.jsx';
 import Commands from './pages/Commands.jsx';
 import ControlPanel from './pages/ControlPanel.jsx';
@@ -126,11 +125,14 @@ function AppContent() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/chat" element={<Chat />} /> {/* Renamed from /feed */}
         <Route path="/feed" element={<Chat />} /> {/* Redirect old route */}
-        <Route path="/users" element={<Users />} />
+        {/* <Route path="/users" element={<Navigate to="/control-panel/users" replace />} /> */}
         <Route path="/command-center" element={<CommandCenter />} />
         <Route path="/commands" element={<Commands />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/control-panel" element={<ControlPanel />} />
+        <Route path="/control-panel/users" element={<ControlPanel />} />
+        <Route path="/control-panel/users/:userId" element={<ControlPanel />} />
+        <Route path="/control-panel/permissions" element={<ControlPanel />} />
         {/* Ai Modules - Platform-first architecture */}
         <Route path="/control-panel/ai-modules" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform" element={<AiModules />} />

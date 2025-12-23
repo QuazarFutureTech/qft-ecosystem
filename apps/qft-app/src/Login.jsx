@@ -6,17 +6,16 @@ const DISCORD_CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID;
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const FACEBOOK_CLIENT_ID = import.meta.env.VITE_FACEBOOK_CLIENT_ID;
 
-// The URL of your running API Gateway that handles the redirect
-const API_GATEWAY_URL = 'http://localhost:3001'; 
+// ✅ THE FIX: Use the Environment Variable
+// If VITE_API_URL is set (on Vercel), use it. Otherwise, default to localhost.
+const API_GATEWAY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Update the URLs to use this dynamic variable
 const DISCORD_OAUTH_URL = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=${API_GATEWAY_URL}/auth/discord/callback&scope=identify%20guilds%20email`;
 
-// Placeholder for Google OAuth2 URL format
 const GOOGLE_OAUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${GOOGLE_CLIENT_ID}&scope=openid%20profile%20email&redirect_uri=${API_GATEWAY_URL}/auth/google/callback`;
 
-// Placeholder for Facebook OAuth2 URL format
 const FACEBOOK_OAUTH_URL = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${FACEBOOK_CLIENT_ID}&redirect_uri=${API_GATEWAY_URL}/auth/facebook/callback&scope=email,public_profile`;
-
 
 function Login() {
   // Simple function to redirect the user to Discord's authorization page

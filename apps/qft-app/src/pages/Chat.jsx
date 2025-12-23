@@ -205,20 +205,20 @@ function Chat() {
   return (
     <div className="page-wrapper">
       <div className="page-header">
-        <Breadcrumbs currentLabel={currentLabel} />
+        
         <div>
           <h1><FaComments /> Chat</h1>
           <p>Community discussions, announcements, and support threads</p>
         </div>
-        
-        <div className="header-actions">
+        <Breadcrumbs currentLabel={currentLabel} />
+        {/*<div className="header-actions">
           <button 
             className="qft-button primary"
             onClick={handleOpenPostModal}
           >
             <FaPlus /> New Post
           </button>
-        </div>
+        </div>*/}
         
         <button 
           className="sidebar-toggle"
@@ -267,11 +267,11 @@ function Chat() {
                 {/* Channels List */}
                 <div className="sidebar-section">
                   <h3 className="sidebar-section-title">Channels</h3>
-                  {channels.map(channel => {
+                  {channels.map((channel, idx) => {
                     const IconComponent = channel.icon;
                     return (
                       <button
-                        key={channel.id}
+                        key={channel.id || idx}
                         className={`channel-item ${activeChannel === channel.id ? 'active' : ''}`}
                         onClick={() => { setActiveChannel(channel.id); closeSidebar(); }}
                       >
@@ -288,9 +288,9 @@ function Chat() {
                     <FaUsers /> Online Users ({onlineUsers.length})
                   </h3>
                   <div className="online-users-list">
-                    {onlineUsers.map(user => (
+                    {onlineUsers.map((user, idx) => (
                       <button
-                        key={user.qft_uuid}
+                        key={user.qft_uuid || idx}
                         className="online-user-item"
                         onClick={() => handleUserClick(user)}
                       >
@@ -346,8 +346,8 @@ function Chat() {
               </div>
             ) : (
               <div className="posts-list">
-                {filteredPosts.map(post => (
-                  <div key={post.id} className="qft-card chat-post-card">
+                {filteredPosts.map((post, idx) => (
+                  <div key={post.id || idx} className="qft-card chat-post-card">
                     <div className="post-author">
                       <div className="author-avatar">
                         <FaUser />
@@ -364,8 +364,8 @@ function Chat() {
                       <p className="post-text">{post.content}</p>
                       {post.attachments && post.attachments.length > 0 && (
                         <div className="post-attachments">
-                          {post.attachments.map(att => (
-                            <div key={att.id} className="attachment-item">
+                          {post.attachments.map((att, idx) => (
+                            <div key={att.id || idx} className="attachment-item">
                               {att.type === 'link' && <FaLink />}
                               {att.type === 'image' && <FaImage />}
                               {att.type === 'file' && <FaFile />}

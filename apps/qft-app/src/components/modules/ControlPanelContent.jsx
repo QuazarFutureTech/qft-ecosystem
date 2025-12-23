@@ -9,7 +9,8 @@ import TicketDashboard from './TicketDashboard';
 import EmbedBuilderModule from './EmbedBuilderModule';
 import WorkerBuilder from './WorkerBuilder';
 import PermissionsModule from './PermissionsModule';
-import UserManagementModule from './UserManagementModule';
+import UsersSection from '../../pages/Users.jsx';
+import ControlPanelModulesGrid from './ControlPanelModulesGrid.jsx';
 import ModuleManagerModule from './ModuleManagerModule';
 import SystemLogsModule from './SystemLogsModule';
 import RegistryModule from './RegistryModule';
@@ -48,8 +49,9 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
     qftRole, // Get qftRole from context
   } = useUser();
 
-  const [activeSection, setActiveSection] = useState('users');
+  const [activeSection, setActiveSection] = useState('modules');
   const [activeModule, setActiveModule] = useState('commands'); // Track active bot module
+  const [selectedUserId, setSelectedUserId] = useState(null); // For Users section
   
   // Wrapper function to update both state and URL when section changes
   const handleSectionChange = (newSection) => {
@@ -58,16 +60,25 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
       navigate('/control-panel/ai-modules');
       return;
     }
-    
+
     setActiveSection(newSection);
     setActiveModule('commands'); // Reset module when section changes
-    
-    // Update URL to reflect section change
-    if (newSection === 'users') {
-      navigate('/control-panel');
-    } else {
-      navigate(`/control-panel?section=${newSection}`);
-    }
+    setSelectedUserId(null); // Reset selected user when section changes
+
+    const sectionRoutes = {
+      users: '/control-panel/users',
+      permissions: '/control-panel/permissions',
+      'bot-control': '/control-panel?section=bot-control',
+      logs: '/control-panel?section=logs',
+      registry: '/control-panel?section=registry',
+      'module-manager': '/control-panel?section=module-manager',
+      database: '/control-panel?section=database',
+      analytics: '/control-panel?section=analytics',
+      tools: '/control-panel?section=tools'
+    };
+
+    const target = sectionRoutes[newSection] || `/control-panel?section=${newSection}`;
+    navigate(target);
   };
   
   // Wrapper function to update both state and URL when module changes
@@ -80,17 +91,31 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const sectionFromUrl = params.get('section');
-    
-    if (sectionFromUrl) {
-      // If there's a section parameter, set it as active
-      setActiveSection(sectionFromUrl);
-      // When section changes via breadcrumb, reset module to default
+    const pathSection = location.pathname.startsWith('/control-panel/')
+      ? location.pathname.split('/')[2]
+      : null;
+
+    // If exactly /control-panel, always show grid
+    if (location.pathname === '/control-panel') {
+      setActiveSection('modules');
       setActiveModule('commands');
-    } else {
-      // No section parameter means we're at /control-panel root, show 'users' section
-      setActiveSection('users');
-      setActiveModule('commands');
+      setSelectedUserId(null);
+      return;
     }
+
+    let derivedSection = pathSection || sectionFromUrl;
+    if (!derivedSection || derivedSection === '') {
+      derivedSection = 'modules';
+    }
+    // Extract userId if present
+    const pathParts = location.pathname.split('/');
+    let userId = null;
+    if (pathParts.length > 3 && pathParts[2] === 'users') {
+      userId = pathParts[3];
+    }
+    setActiveSection(derivedSection);
+    setActiveModule('commands');
+    setSelectedUserId(userId);
   }, [location.search, location.pathname]);
   
   // Close sidebar on mobile when item clicked
@@ -169,36 +194,80 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
   // Breadcrumbs include full navigation paths and reset context when clicked
   const breadcrumbItems = useMemo(() => {
     const navContext = determineNavContext(activeSection);
-    
+    if (activeSection === 'modules') {
+      return [
+        { label: 'Control Panel', path: '/control-panel', onClick: () => {
+            setActiveSection('modules');
+            setSelectedUserId(null);
+            setSidebarOpen(false);
+            navigate('/control-panel');
+          }
+        }
+      ];
+    }
     if (navContext === NAV_CONTEXT.BOT_CONTROL_MODULES) {
       // Bot Control context - show module in breadcrumbs
       const moduleLabel = getActiveItemLabel(navContext, activeModule);
       return [
-        { label: 'Control Panel', path: '/control-panel' },
+        { label: 'Control Panel', path: '/control-panel', onClick: () => {
+            setActiveSection('modules');
+            setSelectedUserId(null);
+            setSidebarOpen(false);
+            navigate('/control-panel');
+          }
+        },
         { label: 'Bot Control', path: '/control-panel?section=bot-control' },
         { label: moduleLabel, path: null } // Current module, non-clickable
       ];
     }
-    
     // Control Panel root context
     const sectionLabel = getActiveItemLabel(NAV_CONTEXT.CONTROL_PANEL_ROOT, activeSection);
-    const sectionPath = activeSection === 'users' 
-      ? '/control-panel' 
-      : `/control-panel?section=${activeSection}`;
-    
+    const sectionPath = activeSection === 'users'
+      ? '/control-panel/users'
+      : activeSection === 'permissions'
+        ? '/control-panel/permissions'
+        : `/control-panel?section=${activeSection}`;
     return [
-      { label: 'Control Panel', path: '/control-panel' },
+      { label: 'Control Panel', path: '/control-panel', onClick: () => {
+          setActiveSection('modules');
+          setSelectedUserId(null);
+          setSidebarOpen(false);
+          navigate('/control-panel');
+        }
+      },
       { label: sectionLabel || activeSection, path: null } // Current section, non-clickable
     ];
-  }, [activeSection, activeModule]);
+  }, [activeSection, activeModule, navigate]);
 
   
 
 
+  // Render sidebar for Users section
+  const renderSidebar = () => {
+    // For 'users' section, sidebar is handled inside UsersSection
+    if (activeSection === 'users') {
+      return null;
+    }
+    // Always show sidebar (AdaptiveNavigation) for modules grid and other sections
+    return (
+      <AdaptiveNavigation
+        activeSection={activeSection}
+        activeModule={activeModule}
+        onSectionChange={handleSectionChange}
+        onModuleChange={handleModuleChange}
+        sidebarOpen={sidebarOpen}
+        onCloseSidebar={closeSidebar}
+      />
+    );
+  };
+
   const renderActiveSection = () => {
     switch (activeSection) {
+      case 'modules':
+        return <ControlPanelModulesGrid />;
       case 'users':
-        return <UserManagementModule />;
+        // Render UsersSection as a top-level page, not nested in Control Panel layout
+        return <UsersSection userId={selectedUserId} onUserSelect={setSelectedUserId} />;
       case 'permissions':
         return <PermissionsModule />;
       case 'bot-control':
@@ -247,11 +316,14 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
     }
   };
 
+  // If users section, render as top-level (not nested in Control Panel layout)
+  if (activeSection === 'users') {
+    return renderActiveSection();
+  }
   return (
     <>
       <div className="page-wrapper">
         <div className="page-header">
-          
           <div>
             <h1>Control Panel</h1>
             <p>System administration for privileged staff - Manage users, permissions, and platform settings</p>
@@ -269,23 +341,13 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
           </button>
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-        
         {/* Sidebar Overlay */}
         <div 
           className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
           onClick={() => setSidebarOpen(false)}
         />
-
         <div className="page-layout">
-          <AdaptiveNavigation
-            activeSection={activeSection}
-            activeModule={activeModule}
-            onSectionChange={handleSectionChange}
-            onModuleChange={handleModuleChange}
-            sidebarOpen={sidebarOpen}
-            onCloseSidebar={closeSidebar}
-          />
-
+          {renderSidebar()}
           <main className="page-content">
             {renderActiveSection()}
           </main>

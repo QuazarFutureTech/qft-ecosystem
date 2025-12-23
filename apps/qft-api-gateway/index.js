@@ -1,4 +1,8 @@
 // qft-api-gateway/index.js
+console.log("🔥 Starting QFT API Gateway...");
+console.log("🔥 PORT:", process.env.PORT);
+console.log("🔥 NODE_ENV:", process.env.NODE_ENV);
+console.log("🔥 Starting DB sync...");
 
 require('dotenv').config();
 const express = require('express');
@@ -16,8 +20,28 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // --- Middleware Setup ---
+const allowedOrigins = [
+  'http://localhost:5173', 
+  process.env.FRONTEND_URL // We will set this in Cloud Run later
+];
 app.use(express.json()); // Body parser
-app.use(cors({ origin: 'http://localhost:5173' })); // Frontend URL
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      // If the origin isn't in the list, allow it anyway ONLY if we haven't set a production URL yet
+      if (!process.env.FRONTEND_URL) return callback(null, true);
+      
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true // Crucial for passing cookies/headers if needed
+}));
+
+
 
 // --- QFT Config ---
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
@@ -606,52 +630,34 @@ try {
 } catch (err) {
     console.error('❌ Failed to load moderation routes:', err.message);
 }
+// ... (Keep all your routes above) ...
 
-// --- Server Startup ---
+// --- FAIL-SAFE SERVER STARTUP ---
+// 1. Start listening IMMEDIATELY so Cloud Run knows we are alive.
+//    Crucial: Listen on '0.0.0.0' for Docker/Cloud Run binding.
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 QFT API Gateway LISTENING on port ${PORT}`);
+    console.log(`⏳ Waiting for Database Connection...`);
+});
+
+// 2. Attempt Database Connection in the background
 db.syncDatabase()
     .then(() => syncDatabaseProduction())
     .then(() => {
-        // Start the command scheduler
-        const schedulerService = require('./src/services/schedulerService');
-        schedulerService.start();
+        console.log('✅ Database Synced & Ready');
         
-        app.listen(PORT, () => {
-            console.log(`🚀 QFT API Gateway running on port ${PORT}`);
-        });
+        // Start the command scheduler only after DB is ready
+        try {
+            const schedulerService = require('./src/services/schedulerService');
+            schedulerService.start();
+            console.log('✅ Scheduler Started');
+        } catch (e) {
+            console.error('⚠️ Scheduler failed to start:', e.message);
+        }
     })
     .catch(err => {
-        console.error('Failed to start server due to database error. Check connection.', err.message);
-        process.exit(1);
+        console.error('❌ CRITICAL DB ERROR:', err.message);
+        console.error('⚠️ Server is running, but DB features will fail.');
+        // Do NOT process.exit(1) here. Let the server stay alive 
+        // so you can read these error logs in the Cloud Console!
     });
-
-// Persist guild-level config (forward to bot internal API)
-app.put('/api/v1/guilds/:guildId/config', authenticateToken, async (req, res) => {
-    try {
-        const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-        const resp = await fetch(`${botUrl}/api/guilds/${req.params.guildId}/config`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Internal-Secret': process.env.INTERNAL_BOT_SECRET
-            },
-            body: JSON.stringify(req.body)
-        });
-        const data = await resp.json();
-        return res.status(resp.status).json(data);
-    } catch (err) {
-        console.error('Failed to persist guild config via bot API:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-});
-
-app.get('/api/v1/guilds/:guildId/config', authenticateToken, async (req, res) => {
-    try {
-        const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-        const resp = await fetch(`${botUrl}/api/guilds/${req.params.guildId}/config`, { headers: { 'Internal-Secret': process.env.INTERNAL_BOT_SECRET } });
-        const data = await resp.json();
-        return res.status(resp.status).json(data);
-    } catch (err) {
-        console.error('Failed to fetch guild config via bot API:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-});

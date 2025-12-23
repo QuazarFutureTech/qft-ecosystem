@@ -18,10 +18,6 @@ export const routeMap = {
     label: 'Shop',
     parent: '/'
   },
-  '/users': {
-    label: 'Users',
-    parent: '/'
-  },
   '/commands': {
     label: 'Commands',
     parent: '/'
