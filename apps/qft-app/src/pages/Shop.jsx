@@ -58,12 +58,20 @@ function Shop() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <Breadcrumbs items={breadcrumbItems} />
+      <div className="page-header">      
         <div>
           <h1>QFT Shop</h1>
           <p>Browse products, services, and manage your contracts with QFT Ecosystem</p>
         </div>
+                {userStatus && (
+          <div className="user-contract-badge" style={{ marginTop: '10px' }}>
+            <span className="badge-label">Your Plan:</span>
+            <span className={`contract-tier ${userStatus.contractTier || 'free'}`}>
+              {userStatus.contractTier ? userStatus.contractTier.toUpperCase() : 'FREE'}
+            </span>
+          </div>
+        )}
+        <Breadcrumbs items={breadcrumbItems} />
         {/* Mobile Sidebar Toggle */}
         <button 
           className="sidebar-toggle"
@@ -81,14 +89,6 @@ function Shop() {
       />
 
       <div className="page-layout">
-        {userStatus && (
-          <div className="user-contract-badge" style={{ marginTop: '10px' }}>
-            <span className="badge-label">Your Plan:</span>
-            <span className={`contract-tier ${userStatus.contractTier || 'free'}`}>
-              {userStatus.contractTier ? userStatus.contractTier.toUpperCase() : 'FREE'}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Mobile Sidebar Toggle */}

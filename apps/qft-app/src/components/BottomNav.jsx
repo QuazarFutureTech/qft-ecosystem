@@ -1,7 +1,7 @@
 // components/BottomNav.jsx
 import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaComments, FaUsers, FaCog, FaTasks, FaShoppingCart, FaHome } from 'react-icons/fa';
+import { FaComments, FaCog, FaTasks, FaShoppingCart, FaTachometerAlt } from 'react-icons/fa';
 import { useUser } from '../contexts/UserContext.jsx';
 import { isPrivilegedStaff, isStaffMember } from '../utils/clearance.js';
 import './BottomNav.css';
@@ -22,9 +22,9 @@ function BottomNav() {
 
   return (
     <nav className="bottom-nav fade-in" ref={navRef}>
-      <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Home">
-        <FaHome />
-        <span className="nav-label">Home</span>
+      <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Dashboard">
+        <FaTachometerAlt />
+        <span className="nav-label">Dashboard</span>
       </NavLink>
       
       <NavLink to="/chat" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Chat">
@@ -35,11 +35,6 @@ function BottomNav() {
       <NavLink to="/shop" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Shop">
         <FaShoppingCart />
         <span className="nav-label">Shop</span>
-      </NavLink>
-      
-      <NavLink to="/users" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Users">
-        <FaUsers />
-        <span className="nav-label">Users</span>
       </NavLink>
       
       {isStaff && (

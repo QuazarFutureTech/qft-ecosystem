@@ -107,11 +107,11 @@ function CommandCenter() {
   return (
     <div className="page-wrapper">
       <div className="page-header">
-        <Breadcrumbs items={breadcrumbItems} />
         <div>
           <h1>Command Center</h1>
           <p>Staff operations hub for task management, team coordination, and resources</p>
         </div>
+        <Breadcrumbs items={breadcrumbItems} />
         {/* Mobile Sidebar Toggle */}
         <button 
           className="sidebar-toggle"

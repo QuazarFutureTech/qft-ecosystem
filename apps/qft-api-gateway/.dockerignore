@@ -1,0 +1,2 @@
+//ignore environent variable files for deployment.
+.env

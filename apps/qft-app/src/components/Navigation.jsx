@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom'; // Import NavLink
-import { FaHome, FaEnvelope, FaCog, FaBars, FaTimes, FaTasks, FaRobot, FaShoppingCart, FaUser } from 'react-icons/fa';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { FaTachometerAlt, FaEnvelope, FaCog, FaBars, FaTimes, FaTasks, FaRobot, FaShoppingCart } from 'react-icons/fa';
 import { useUser } from '../contexts/UserContext.jsx'; // Import useUser
 import { isPrivilegedStaff } from '../utils/clearance.js';
 import './Navigation.css';
 import ProfileModal from './elements/ProfileModal.jsx';
 
 function Navigation() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const { userStatus, qftRole } = useUser(); // Get userStatus and qftRole from context
@@ -33,7 +34,7 @@ function Navigation() {
             onClick={toggleNavbar}
             className={({ isActive }) => (isActive ? 'active-link' : undefined)}
           >
-            <FaHome /> Dashboard
+            <FaTachometerAlt /> Dashboard
           </NavLink>
         </li>
         <li>
@@ -54,15 +55,6 @@ function Navigation() {
             <FaShoppingCart /> Shop
           </NavLink>
         </li>
-        <li>
-          <NavLink
-            to="/users"
-            onClick={toggleNavbar}
-            className={({ isActive }) => (isActive ? 'active-link' : undefined)}
-          >
-            <FaUser /> Users
-          </NavLink>
-        </li>
         {isStaffMember && (<li>
           <NavLink
             to="/command-center"
@@ -72,22 +64,15 @@ function Navigation() {
             <FaTasks /> Command Center
           </NavLink>
         </li>)}
-        {hasPrivilegedAccess && (
-          <li>
-            <NavLink
-              to="/bot-management"
-              onClick={toggleNavbar}
-              className={({ isActive }) => (isActive ? 'active-link' : undefined)}
-            >
-              <FaRobot /> Bot Management
-            </NavLink>
-          </li>
-        )}
         {hasPrivilegedAccess && ( // Conditionally render Control Panel based on privilege
           <li>
             <NavLink
               to="/control-panel"
-              onClick={toggleNavbar}
+              onClick={e => {
+                e.preventDefault();
+                navigate('/control-panel');
+                toggleNavbar();
+              }}
               className={({ isActive }) => (isActive ? 'active-link' : undefined)}
             >
               <FaCog /> Control Panel
