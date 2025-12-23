@@ -1,6 +1,6 @@
 // services/accountSync.js - Account Sync API calls
 
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const syncGuildAccounts = async (guildId, token) => {
   try {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const UserContext = createContext(null);
 
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const UserProvider = ({ children }) => { // Removed handleLogout from props
   const navigate = useNavigate(); // Get navigate for logout

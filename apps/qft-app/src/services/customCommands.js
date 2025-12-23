@@ -1,7 +1,7 @@
 // apps/qft-app/src/services/customCommands.js
 // API service for YAGPDB-style custom commands
 
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export async function listCommands(guildId, token) {
   try {

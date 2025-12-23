@@ -1,6 +1,6 @@
 // services/users.js - User management API calls
 
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const getAllUsers = async (token) => {
   // Development-friendly fallback: if token is missing or API unreachable,

@@ -1,5 +1,5 @@
 // src/services/user.js
-const API_GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_GATEWAY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Enrich raw API response with derived flags
 export const enrichUserStatus = (data) => ({

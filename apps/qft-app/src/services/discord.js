@@ -1,6 +1,6 @@
 // apps/qft-app/src/services/discord.js
 
-const API_GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_GATEWAY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const sendRpcActivity = async (activity, token) => {
     try {

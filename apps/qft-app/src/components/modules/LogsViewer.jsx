@@ -15,7 +15,7 @@ export default function LogsViewer() {
   const { modalState, showAlert, closeModal } = useModal();
 
   const token = localStorage.getItem('qft-token');
-  const API_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   // Only staff/admins can access
   if (qftRole !== 'admin' && qftRole !== 'staff') {

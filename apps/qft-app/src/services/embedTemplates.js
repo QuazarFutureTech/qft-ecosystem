@@ -1,7 +1,7 @@
 // qft-app/src/services/embedTemplates.js
 // API calls for embed template management
 
-const API_BASE_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const saveEmbedTemplate = async (guildId, templateName, embedData, token) => {
   try {
