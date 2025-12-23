@@ -110,13 +110,22 @@ app.get('/auth/discord/callback', async (req, res) => {
         );
         const qftUuid = result.rows[0].qft_uuid;
         
-        // Final Redirect to Frontend with Placeholder Token
-        // Frontend uses this UUID as a simple JWT placeholder for now
-        res.redirect(`http://localhost:5173/dashboard?token=QFT_IDENTITY_${qftUuid}`);
+        // ✅ DYNAMIC URL:
+        // Reads the 'FRONTEND_URL' from Cloud Run settings.
+        // If missing (like on your PC), defaults to localhost.
+        const CLIENT_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+        console.log(`DEBUG: Redirecting to ${CLIENT_URL}`); // Helpful for logs
+
+        // Final Redirect using the dynamic variable
+        res.redirect(`${CLIENT_URL}/dashboard?token=QFT_IDENTITY_${qftUuid}`);
 
     } catch (error) {
         console.error('Discord Auth Error:', error);
-        res.redirect('http://localhost:5173/?error=auth_failed');
+        
+        // Also fix the error redirect!
+        const CLIENT_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${CLIENT_URL}/?error=auth_failed`);
     }
 });
 
