@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.jsx';
 import { isStaffMember, isPrivilegedStaff, isClient, isAffiliate } from '../utils/clearance';
-import { FaHome, FaTasks, FaShoppingCart, FaBell, FaChartLine, FaRobot, FaClock, FaCheckCircle, FaExclamationTriangle, FaEnvelope, FaUsers, FaFileInvoiceDollar, FaDollarSign } from 'react-icons/fa';
+import { FaHome, FaTasks, FaShoppingCart, FaBell, FaChartLine, FaRobot, FaClock, FaCheckCircle, FaExclamationTriangle, FaEnvelope, FaUsers, FaFileInvoiceDollar, FaDollarSign, FaTachometerAlt } from 'react-icons/fa';
 import './Dashboard.css';
 import '../assets/css/dashboard.css';
 
@@ -80,7 +80,7 @@ function Dashboard() {
 
   return (
     <div className="main-dashpanel">
-      <nav className="indicator">
+      {/* <nav className="indicator">
         <ul>
           {quickNav.map(item => {
             const Icon = item.icon;
@@ -94,14 +94,14 @@ function Dashboard() {
             );
           })}
         </ul>
-      </nav>
+      </nav>*/}
 
       <div className="dash-shell">
         <header className="dash-header">
           <div>
             <p className="dash-kicker">QFT ecosystem</p>
-            <h1 className="dash-title"><FaHome /> Welcome back, {userDisplayName}</h1>
-            <p className="dash-subtitle">Live snapshot of operations, user activity, and actions to keep moving.</p>
+            <h1 className="dash-title"><FaTachometerAlt /> Dashboard</h1>
+            <p className="dash-subtitle">Welcome back, {userDisplayName}. Here is your current operational snapshot.</p>
           </div>
           <div className="dash-actions">
             {isStaff && <Link to="/control-panel" className="view-all-link">Control Panel</Link>}
@@ -292,7 +292,6 @@ function Dashboard() {
             <div className="dashboard-card" id="notifications">
               <div className="card-header">
                 <h2><FaBell /> Notifications</h2>
-                <button className="mark-read-btn">Mark All Read</button>
               </div>
               <div className="card-content">
                 {dashboardData.notifications.length > 0 ? (
@@ -318,7 +317,6 @@ function Dashboard() {
             <div className="dashboard-card" id="activity">
               <div className="card-header">
                 <h2><FaChartLine /> Recent Activity</h2>
-                <button className="view-all-link">Refresh</button>
               </div>
               <div className="card-content activity-list">
                 {dashboardData.recentActivity.length > 0 ? (
@@ -358,10 +356,12 @@ function Dashboard() {
                     <FaShoppingCart />
                     <span>Browse Shop</span>
                   </Link>
-                  <Link to="/bot-management" className="quick-action-btn">
-                    <FaRobot />
-                    <span>Bot Settings</span>
-                  </Link>
+                  {isPrivileged && (
+                    <Link to="/control-panel/users" className="quick-action-btn">
+                      <FaRobot />
+                      <span>Control Panel</span>
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Switch from '../elements/Switch';
-import { FaShieldAlt, FaUser, FaUsers, FaCrown, FaStar, FaKey, FaLock } from 'react-icons/fa';
+import { FaShieldAlt, FaUsers, FaCrown, FaStar, FaKey, FaLock } from 'react-icons/fa';
 import { CLEARANCE_LEVELS, ACCOUNT_TYPES, getClearanceLabel } from '../../utils/clearance';
 import { getRoles, getPermissions, getRolePermissions, updateRolePermissions } from '../../services/permissions';
 import { useUser } from '../../contexts/UserContext.jsx';
@@ -10,8 +10,6 @@ function PermissionsModule() {
   const { userStatus } = useUser();
   const token = localStorage.getItem('qft-token');
   const [selectedRole, setSelectedRole] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [viewMode, setViewMode] = useState('roles'); // 'roles' or 'users'
   
   const [roles, setRoles] = useState([]);
   const [allPermissions, setAllPermissions] = useState([]);
@@ -103,27 +101,16 @@ function PermissionsModule() {
       case '3': return <FaShieldAlt />;
       case '2': return <FaKey />;
       case '1': return <FaLock />;
-      default: return <FaUser />;
+      default: return <FaShieldAlt />;
     }
   };
 
   return (
     <div className="permissions-module">
       <div className="permissions-header">
-        <h2><FaShieldAlt /> Permissions & Roles</h2>
-        <div className="view-toggle">
-          <button 
-            className={`toggle-btn ${viewMode === 'roles' ? 'active' : ''}`}
-            onClick={() => setViewMode('roles')}
-          >
-            <FaUsers /> Roles
-          </button>
-          <button 
-            className={`toggle-btn ${viewMode === 'users' ? 'active' : ''}`}
-            onClick={() => setViewMode('users')}
-          >
-            <FaUser /> Users
-          </button>
+        <div>
+          <h2><FaShieldAlt /> Permissions & Roles</h2>
+          <p className="permissions-subtitle">Manage role-level access; user management now lives in Control Panel</p>
         </div>
       </div>
 
@@ -131,13 +118,13 @@ function PermissionsModule() {
         {/* Left Sidebar - Role/User List */}
         <div className="permissions-sidebar">
           <div className="sidebar-header">
-            <h3>{viewMode === 'roles' ? 'Roles' : 'Users'}</h3>
-            <button className="qft-button secondary small">
-              + New {viewMode === 'roles' ? 'Role' : 'User'}
+            <h3>Roles</h3>
+            <button className="qft-button secondary small" disabled title="Role creation coming soon">
+              + New Role
             </button>
           </div>
           <div className="sidebar-list">
-            {viewMode === 'roles' && roles.map(role => (
+            {roles.map(role => (
               <div
                 key={role.id}
                 className={`role-item ${selectedRole?.id === role.id ? 'active' : ''}`}

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FaHistory, FaFilter, FaDownload, FaSearch, FaUser, FaClock, FaServer } from 'react-icons/fa';
-import { getActivityLogs, getActivityStats } from '../../services/activityLogs';
+import { FaHistory, FaFilter, FaDownload, FaSearch, FaUser, FaClock, FaServer } from 'react-icons/fa'
+;import { getActivityLogs, getActivityStats } from '../../services/activityLogs';
 import { useUser } from '../../contexts/UserContext.jsx';
 import './SystemLogsModule.css';
 
 function SystemLogsModule() {
   const { userStatus } = useUser();
   const token = localStorage.getItem('qft-token');
-  
+
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ function SystemLogsModule() {
     if (!timestamp) return 'Unknown';
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) return 'Invalid date';
-    
+
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
@@ -101,7 +101,7 @@ function SystemLogsModule() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
+
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -143,8 +143,8 @@ function SystemLogsModule() {
           </div>
         </div>
         <div className="header-actions">
-          <button 
-            className={`qft-button ${showFilters ? 'active' : 'secondary'}`} 
+          <button
+            className={`qft-button ${showFilters ? 'active' : 'secondary'}`}
             onClick={() => setShowFilters(!showFilters)}
           >
             <FaFilter /> {showFilters ? 'Hide' : 'Show'} Filters
@@ -159,7 +159,7 @@ function SystemLogsModule() {
       {stats && (
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon" style={{ background: '#667eea20', color: '#667eea' }}>
+            <div className="stat-icon" style={{ background: '#667eea20', color: '#667eea' }}>        
               <FaHistory />
             </div>
             <div className="stat-content">
@@ -168,7 +168,7 @@ function SystemLogsModule() {
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon" style={{ background: '#28a74520', color: '#28a745' }}>
+            <div className="stat-icon" style={{ background: '#28a74520', color: '#28a745' }}>        
               <FaUser />
             </div>
             <div className="stat-content">
@@ -177,7 +177,7 @@ function SystemLogsModule() {
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon" style={{ background: '#ffc10720', color: '#ffc107' }}>
+            <div className="stat-icon" style={{ background: '#ffc10720', color: '#ffc107' }}>        
               <FaServer />
             </div>
             <div className="stat-content">
@@ -186,7 +186,7 @@ function SystemLogsModule() {
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon" style={{ background: '#17a2b820', color: '#17a2b8' }}>
+            <div className="stat-icon" style={{ background: '#17a2b820', color: '#17a2b8' }}>        
               <FaClock />
             </div>
             <div className="stat-content">
@@ -316,8 +316,8 @@ function SystemLogsModule() {
                       <span>{log.username || `User ${log.user_discord_id || log.user_id || 'Unknown'}`}</span>
                     </div>
                     <div className="col-action">
-                      <span 
-                        className="action-badge" 
+                      <span
+                        className="action-badge"
                         style={{ background: `${actionColors[log.action] || '#6c757d'}20`, color: actionColors[log.action] || '#6c757d' }}
                       >
                         {log.action}

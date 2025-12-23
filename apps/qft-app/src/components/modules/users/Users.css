@@ -1,0 +1,28 @@
+
+.user-detail-view .qft-card {
+    margin-bottom: 20px;
+}
+
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-profile-header .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.user-profile-header .user-id {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.guild-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 10px;
+}

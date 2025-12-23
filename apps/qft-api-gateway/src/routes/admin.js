@@ -7,18 +7,29 @@ const authenticateToken = require('../middleware/auth');
 // For now, let's assume anyone with a role other than 'level_0_standard' is a managed user.
 router.get('/users', authenticateToken, async (req, res) => {
     try {
-        // This is a placeholder. We need to define what an "admin user" is.
-        // Is it based on qft_role? Let's assume so for now.
+        // Return all users, including Discord info and roles
         const users = await db.query(
-            `SELECT qft_uuid as id, username as name, email, qft_role as clearance, 'Active' as status 
-             FROM users 
-             WHERE qft_role != 'level_0_standard'
-             ORDER BY username`
+            `SELECT 
+                u.qft_uuid as id, 
+                u.username as name, 
+                u.email, 
+                u.qft_role as clearance, 
+                'Active' as status, 
+                u.discord_id, 
+                u.avatar, 
+                (u.connections->>'global_name') as display_name,
+                ARRAY(
+                  SELECT r.name FROM user_roles ur
+                  JOIN roles r ON ur.role_id = r.id
+                  WHERE ur.user_discord_id = u.discord_id
+                ) as roles
+             FROM users u
+             ORDER BY u.username`
         );
         res.json(users.rows);
     } catch (error) {
-        console.error('Error fetching admin users:', error);
-        res.status(500).json({ message: 'Failed to retrieve admin users.' });
+        console.error('Error fetching users:', error);
+        res.status(500).json({ message: 'Failed to retrieve users.' });
     }
 });
 

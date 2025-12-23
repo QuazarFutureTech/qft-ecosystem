@@ -58,3 +58,41 @@ export const timeoutUser = async (guildId, userId, reason, duration = 60, token)
     return { success: false, error: error.message };
   }
 };
+
+export const warnUser = async (guildId, userId, reason, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/moderation/guilds/${guildId}/members/${userId}/warn`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error warning user:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const unbanUser = async (guildId, userId, reason, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/moderation/guilds/${guildId}/members/${userId}/unban`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    return { success: false, error: error.message };
+  }
+};
