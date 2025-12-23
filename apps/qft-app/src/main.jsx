@@ -36,48 +36,60 @@ function AppContent() {
     qftUuid, setQftUuid,
     discordClientId, setDiscordClientId,
     userGuilds, setUserGuilds,
-    qftRole, setQftRole, // Destructure setQftRole
-    roleName, setRoleName, // Destructure role name setters
+    qftRole, setQftRole,
+    roleName, setRoleName,
     setAllRoles,
     isLoadingUser, setIsLoadingUser,
     logout,
   } = useUser();
 
-  // useCallback to memoize loadUserData
-      const loadUserData = useCallback(async (token) => {
-      setIsLoadingUser(true);
+  const loadUserData = useCallback(async (token) => {
+    setIsLoadingUser(true);
+    try {
       const fetchedStatus = await fetchUserStatus(token);
       if (fetchedStatus) {
         setUserStatus(enrichUserStatus(fetchedStatus));
         setDiscordClientId(fetchedStatus.discord_client_id);
-        setQftRole(fetchedStatus.qft_role); // Set the qftRole from fetched status
-        setRoleName(fetchedStatus.role_name); // Set primary role name
-        setAllRoles(fetchedStatus.all_roles || []); // Set all roles
+        setQftRole(fetchedStatus.qft_role);
+        setRoleName(fetchedStatus.role_name);
+        setAllRoles(fetchedStatus.all_roles || []);
+        
+        // Fetch guilds only if auth succeeded
         const fetchedGuilds = await fetchUserGuilds(token);
         setUserGuilds(fetchedGuilds);
       } else {
-        logout(); // Use the logout from context on fetch failure
+        logout();
       }
+    } catch (error) {
+      console.error("Failed to load user data", error);
+      logout();
+    } finally {
       setIsLoadingUser(false);
-    }, [setUserStatus, setDiscordClientId, setQftRole, setRoleName, setAllRoles, setUserGuilds, setIsLoadingUser, logout]); // Dependencies for useCallback
+    }
+  }, [setUserStatus, setDiscordClientId, setQftRole, setRoleName, setAllRoles, setUserGuilds, setIsLoadingUser, logout]);
+
   useEffect(() => {
     const tokenFromUrl = searchParams.get('token');
     const tokenFromStorage = localStorage.getItem('qft-token');
     let activeToken = null;
 
     if (tokenFromUrl) {
+      // 1. Found a new token! Save it.
       localStorage.setItem('qft-token', tokenFromUrl);
       const uuid = tokenFromUrl.replace('QFT_IDENTITY_', '');
       setQftUuid(uuid);
       activeToken = tokenFromUrl;
+      
+      // 2. Clear the token from the URL so it looks clean
       navigate('/', { replace: true });
     } else if (tokenFromStorage) {
+      // 3. Found an old token in storage
       const uuid = tokenFromStorage.replace('QFT_IDENTITY_', '');
       setQftUuid(uuid);
       activeToken = tokenFromStorage;
     }
 
-    // Only load user data if an active token is present and userStatus is not already loaded
+    // 4. If we have a token but no user data yet, fetch it!
     if (activeToken && !userStatus) {
       loadUserData(activeToken).then(() => {
         sendRpcActivity({
@@ -90,17 +102,19 @@ function AppContent() {
         }, activeToken).catch(console.error);
       });
     } else if (!activeToken && window.location.pathname !== '/login') {
-      // If no active token and not on login page, redirect to login
       navigate('/login');
       setIsLoadingUser(false);
     } else if (!activeToken && window.location.pathname === '/login') {
-      // If no active token and on login page, stop loading
       setIsLoadingUser(false);
     }
-  }, [searchParams, navigate, setQftUuid, loadUserData, userStatus, sendRpcActivity]);
+  }, [searchParams, navigate, setQftUuid, loadUserData, userStatus, sendRpcActivity, setIsLoadingUser]);
 
+  // ✅ THE FIX IS HERE:
+  // If we are loading OR if there is a token in the URL, show the preloader.
+  // This prevents the "Not Logged In" screen from flashing while we process the token.
+  const isProcessingToken = !!searchParams.get('token');
 
-  if (isLoadingUser) {
+  if (isLoadingUser || isProcessingToken) {
     return <QFTPreloader />;
   }
 
@@ -120,12 +134,11 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route element={<ErrorBoundary><Layout /></ErrorBoundary>}> {/* Wrap Layout with ErrorBoundary */}
+      <Route element={<ErrorBoundary><Layout /></ErrorBoundary>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/chat" element={<Chat />} /> {/* Renamed from /feed */}
-        <Route path="/feed" element={<Chat />} /> {/* Redirect old route */}
-        {/* <Route path="/users" element={<Navigate to="/control-panel/users" replace />} /> */}
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/feed" element={<Chat />} />
         <Route path="/command-center" element={<CommandCenter />} />
         <Route path="/commands" element={<Commands />} />
         <Route path="/shop" element={<Shop />} />
@@ -133,11 +146,9 @@ function AppContent() {
         <Route path="/control-panel/users" element={<ControlPanel />} />
         <Route path="/control-panel/users/:userId" element={<ControlPanel />} />
         <Route path="/control-panel/permissions" element={<ControlPanel />} />
-        {/* Ai Modules - Platform-first architecture */}
         <Route path="/control-panel/ai-modules" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform/:module" element={<AiModules />} />
-        {/* Legacy route - redirect to Control Panel */}
         <Route path="/bot-management" element={<Navigate to="/control-panel" replace />} />
       </Route>
     </Routes>
