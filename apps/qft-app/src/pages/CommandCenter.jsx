@@ -1,11 +1,12 @@
 // apps/qft-app/src/pages/CommandCenter.jsx
 // Staff Operations Hub - Task Management, Team Coordination, Resources
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useUser } from '../contexts/UserContext.jsx';
+import { useHeader } from '../contexts/HeaderContext.jsx';
 import QFTPreloader from '../components/QFTPreloader';
 import CollapsibleCategory from '../components/elements/CollapsibleCategory';
-import Breadcrumbs from '../components/elements/Breadcrumbs';
+import Breadcrumbs from '../components/elements/Breadcrumbs'; // Keep for now, will move to Header.jsx
 import { isPrivilegedStaff, isStaffMember } from '../utils/clearance.js';
 import { FaTasks, FaUsers, FaChartLine, FaCalendar, FaComments, FaFolder, FaBars, FaBriefcase, FaClipboardList, FaHistory, FaUserTie, FaCogs } from 'react-icons/fa';
 
@@ -20,38 +21,16 @@ import SystemLogsModule from '../components/modules/SystemLogsModule';
 
 function CommandCenter() {
   const { isLoadingUser, qftRole, roleName, allRoles, userStatus } = useUser();
+  const { setHeaderContent } = useHeader();
   const [activeSection, setActiveSection] = useState('tasks');
   
-  // Sidebar state for mobile
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   const isPrivileged = isPrivilegedStaff(qftRole);
-  const isStaff = isStaffMember(roleName, allRoles); // Check if user is QFT staff
-  
-  // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
-    if (window.innerWidth <= 768) {
-      setSidebarOpen(false);
-    }
-  };
+  const isStaff = isStaffMember(roleName, allRoles);
 
-  if (isLoadingUser) {
-    return <QFTPreloader />;
-  }
-
-  if (!isStaff) {
-    return (
-      <div className="page-content">
-        <div className="qft-card">
-          <h2>Command Center</h2>
-          <p>Staff access required. This area is for QFT team operations and coordination.</p>
-          <p>Contact your administrator if you believe you should have access.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Define sections with categories
+  // Section categories and allSections must be declared before use
   const sectionCategories = [
     {
       title: 'Operations',
@@ -86,53 +65,76 @@ function CommandCenter() {
     }
   ];
 
-  // Flatten for access control and lookup
-  const allSections = sectionCategories.flatMap(cat => cat.sections);
 
-  // Filter sections based on privileges
-  const availableSections = allSections.filter(section => !section.privileged || isPrivileged);
+  const closeSidebar = useCallback(() => {
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
 
-  const ActiveComponent = availableSections.find(s => s.id === activeSection)?.component;
-  
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
   const breadcrumbItems = useMemo(() => {
-    const currentSection = availableSections.find(s => s.id === activeSection);
+    const currentSection = allSections.find(s => s.id === activeSection);
     return [
       { label: 'Command Center', path: '/command-center' },
       ...(currentSection ? [{ label: currentSection.label, path: null }] : [])
     ];
-  }, [activeSection, availableSections]);
-  
-  
+  }, [activeSection, allSections]);
 
-  return (
-    <div className="page-wrapper">
-      <div className="page-header">
-        <div>
-          <h1>Command Center</h1>
-          <p>Staff operations hub for task management, team coordination, and resources</p>
-        </div>
-        <Breadcrumbs items={breadcrumbItems} />
-        {/* Mobile Sidebar Toggle */}
+  useEffect(() => {
+    setHeaderContent({
+      title: 'Command Center',
+      subtitle: 'Staff operations hub for task management, team coordination, and resources',
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+      actions: (
         <button 
           className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+          onClick={toggleSidebar}
           aria-label="Toggle sidebar"
         >
           <FaBars />
         </button>
-      </div>
+      ),
+    });
 
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, breadcrumbItems, toggleSidebar]);
+
+  if (isLoadingUser) {
+    return <QFTPreloader />;
+  }
+
+  if (!isStaff) {
+    return (
+      <div className="page-content">
+        <div className="qft-card">
+          <h2>Command Center</h2>
+          <p>Staff access required. This area is for QFT team operations and coordination.</p>
+          <p>Contact your administrator if you believe you should have access.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const allSections = sectionCategories.flatMap(cat => cat.sections);
+  const availableSections = allSections.filter(section => !section.privileged || isPrivileged);
+  const ActiveComponent = availableSections.find(s => s.id === activeSection)?.component;
+  
+  return (
+    <div className="page-wrapper">
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => closeSidebar()}
       />
 
       <div className="page-layout">
         <aside className={`page-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <nav className="sidebar-nav">
             {sectionCategories.map((category, idx) => {
-              // Filter category sections by privilege
               const visibleSections = category.sections.filter(s => !s.privileged || isPrivileged);
               if (visibleSections.length === 0) return null;
               

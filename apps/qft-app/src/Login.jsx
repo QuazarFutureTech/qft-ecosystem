@@ -54,15 +54,15 @@ function Login() {
         <h1>QFT App</h1>
         <p>Log in with your preferred service to continue.</p>
         
-        <button onClick={handleDiscordLogin} className="login-button" style={{ marginBottom: '10px' }}>
+        <button onClick={handleDiscordLogin} className="login-button">
           Login with Discord
         </button>
         
-        <button onClick={handleGoogleLogin} className="login-button" style={{ marginBottom: '10px', backgroundColor: '#DB4437' }}>
+        <button onClick={handleGoogleLogin} className="login-button google">
           Login with Google
         </button>
 
-        <button onClick={handleFacebookLogin} className="login-button" style={{ backgroundColor: '#4267B2' }}>
+        <button onClick={handleFacebookLogin} className="login-button facebook">
           Login with Facebook
         </button>
 

@@ -1,14 +1,4 @@
-/**
- * AiModules Page
- * Platform-first architecture for managing AI integrations across Discord, Reddit, YouTube, etc.
- * 
- * Routes:
- * - /control-panel/ai-modules → Platform selector view
- * - /control-panel/ai-modules/:platform → Module grid view
- * - /control-panel/ai-modules/:platform/:module → Module detail view
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import PlatformSelector from '../components/modules/ai-modules/PlatformSelector';
 import ModuleGrid from '../components/modules/ai-modules/ModuleGrid';
@@ -17,6 +7,7 @@ import ModuleDetailView from '../components/modules/ai-modules/ModuleDetailView'
 import Breadcrumbs from '../components/elements/Breadcrumbs';
 import { FaBars } from 'react-icons/fa';
 import { useUser } from '../contexts/UserContext';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import { useSelectedGuild } from '../contexts/SelectedGuildContext';
 import { isPrivilegedStaff, getClearanceLabel } from '../utils/clearance';
 import '../Layout.css';
@@ -33,6 +24,7 @@ function AiModules() {
   const location = useLocation();
   const navigate = useNavigate();
   const { qftRole, userGuilds } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -47,13 +39,15 @@ function AiModules() {
   const hasAccess = isPrivilegedStaff(qftRole);
 
   // Close sidebar on mobile
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
-  };
+  }, []);
 
-  
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   // Build breadcrumbs based on current route
   const breadcrumbItems = React.useMemo(() => {
@@ -83,17 +77,65 @@ function AiModules() {
     return items;
   }, [platform, module]);
 
+  useEffect(() => {
+    if (!hasAccess) {
+      setHeaderContent({
+        title: 'Access Denied',
+        subtitle: 'You need elevated permissions to access Ai Modules.',
+      });
+    } else {
+      setHeaderContent({
+        title: 'Ai Modules',
+        subtitle: 
+          currentContext === AI_MODULES_CONTEXT.PLATFORM_SELECTOR ? 'Platform-first AI integration management' :
+          currentContext === AI_MODULES_CONTEXT.MODULE_GRID ? `Configure ${platform.charAt(0).toUpperCase() + platform.slice(1)} modules` :
+          currentContext === AI_MODULES_CONTEXT.MODULE_DETAIL ? 'Module configuration panel' : '',
+        breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+        actions: (
+          <>
+            <div className="clearance-badge" style={{ marginTop: '10px' }}>
+              <span>Your Clearance: <strong>{getClearanceLabel(qftRole)}</strong></span>
+            </div>
+            {platform === 'discord' && userGuilds && userGuilds.length > 0 && (
+              <div className="header-actions">
+                <div className="guild-selector-header">
+                  <label>Server:</label>
+                  <select
+                    value={selectedGuildId || ''}
+                    onChange={(e) => setSelectedGuildId(e.target.value)}
+                    className="qft-select"
+                  >
+                    {userGuilds.map(guild => (
+                      <option key={guild.id} value={guild.id}>
+                        {guild.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+            <button 
+              className="sidebar-toggle"
+              onClick={toggleSidebar}
+              aria-label="Toggle sidebar"
+            >
+              <FaBars />
+            </button>
+          </>
+        ),
+      });
+    }
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, hasAccess, currentContext, platform, breadcrumbItems, qftRole, userGuilds, selectedGuildId, setSelectedGuildId, toggleSidebar]);
+
   // Access control
   if (!hasAccess) {
     return (
       <div className="page-wrapper">
-        <div className="page-header">     
-          <h1>Access Denied</h1>
-        </div>
         <div className="qft-card">
           <p>You need elevated permissions to access Ai Modules.</p>
         </div>
-        <Breadcrumbs items={breadcrumbItems} />
       </div>
     );
   }
@@ -179,51 +221,6 @@ function AiModules() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <div>
-          <h1>Ai Modules</h1>
-          <p>
-            {currentContext === AI_MODULES_CONTEXT.PLATFORM_SELECTOR && 
-              'Platform-first AI integration management'}
-            {currentContext === AI_MODULES_CONTEXT.MODULE_GRID && 
-              `Configure ${platform.charAt(0).toUpperCase() + platform.slice(1)} modules`}
-            {currentContext === AI_MODULES_CONTEXT.MODULE_DETAIL && 
-              'Module configuration panel'}
-          </p>
-          <div className="clearance-badge" style={{ marginTop: '10px' }}>
-            <span>Your Clearance: <strong>{getClearanceLabel(qftRole)}</strong></span>
-          </div>
-        </div>
-        <Breadcrumbs items={breadcrumbItems} />
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <FaBars />
-        </button>
-
-        {platform === 'discord' && userGuilds && userGuilds.length > 0 && (
-          <div className="header-actions">
-            <div className="guild-selector-header">
-              <label>Server:</label>
-              <select
-                value={selectedGuildId || ''}
-                onChange={(e) => setSelectedGuildId(e.target.value)}
-                className="qft-select"
-              >
-                {userGuilds.map(guild => (
-                  <option key={guild.id} value={guild.id}>
-                    {guild.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}

@@ -20,7 +20,7 @@ import AdaptiveNavigation from './AdaptiveNavigation';
 import Breadcrumbs from '../elements/Breadcrumbs';
 import { useModal } from '../../hooks/useModal';
 import ConfirmModal from '../elements/ConfirmModal';
-import { FaBars } from 'react-icons/fa';
+// FaBars is removed from here as it's now managed by parent ControlPanel.jsx
 import { isPrivilegedStaff, getClearanceLabel } from '../../utils/clearance';
 import { buildControlPanelBreadcrumbs } from '../../utils/routeMap';
 import { determineNavContext, NAV_CONTEXT, getActiveItemLabel } from '../../utils/navigationController';
@@ -37,7 +37,7 @@ import { useUser } from '../../contexts/UserContext.jsx';
 const BOT_PERMISSIONS = '8';
 const BOT_SCOPES = 'bot%20applications.commands';
 
-function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
+function ControlPanelContent({ sidebarOpen, setSidebarOpen, setHeaderContentForControlPanel, toggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -116,15 +116,8 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
     setActiveSection(derivedSection);
     setActiveModule('commands');
     setSelectedUserId(userId);
-  }, [location.search, location.pathname]);
+  }, [location.search, location.pathname, navigate]);
   
-  // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
-    if (window.innerWidth <= 768) {
-      setSidebarOpen(false);
-    }
-  };
-
   // State for Discord Guild Channels section
   const [selectedGuildId, setSelectedGuildId] = useState('');
   const [channels, setChannels] = useState([]);
@@ -148,7 +141,7 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
       // Automatically select the first mutual guild if none is selected
       setSelectedGuildId(userGuilds[0].id);
     }
-  }, [userStatus, userGuilds, selectedGuildId]);
+  }, [userStatus, userGuilds, selectedGuildId, setSelectedGuildId]);
 
   useEffect(() => {
     const getChannels = async () => {
@@ -237,10 +230,24 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
       },
       { label: sectionLabel || activeSection, path: null } // Current section, non-clickable
     ];
-  }, [activeSection, activeModule, navigate]);
+  }, [activeSection, activeModule, navigate, setSidebarOpen]);
 
-  
+  useEffect(() => {
+    setHeaderContentForControlPanel({
+      title: 'Control Panel',
+      subtitle: 'System administration for privileged staff - Manage users, permissions, and platform settings',
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+      actions: (
+        <>
+          <div className="clearance-badge" style={{ marginTop: '10px' }}>
+            <span>Your Clearance: <strong>{getClearanceLabel(qftRole)}</strong></span>
+          </div>
+        </>
+      ),
+    });
 
+    return () => setHeaderContentForControlPanel(null);
+  }, [setHeaderContentForControlPanel, breadcrumbItems, qftRole]);
 
   // Render sidebar for Users section
   const renderSidebar = () => {
@@ -256,7 +263,7 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
         onSectionChange={handleSectionChange}
         onModuleChange={handleModuleChange}
         sidebarOpen={sidebarOpen}
-        onCloseSidebar={closeSidebar}
+        onCloseSidebar={setSidebarOpen} // Directly pass setSidebarOpen
       />
     );
   };
@@ -323,24 +330,6 @@ function ControlPanelContent({ sidebarOpen, setSidebarOpen }) {
   return (
     <>
       <div className="page-wrapper">
-        <div className="page-header">
-          <div>
-            <h1>Control Panel</h1>
-            <p>System administration for privileged staff - Manage users, permissions, and platform settings</p>
-            <div className="clearance-badge" style={{ marginTop: '10px' }}>
-              <span>Your Clearance: <strong>{getClearanceLabel(qftRole)}</strong></span>
-            </div>
-          </div>
-          {/* Mobile Sidebar Toggle */}
-          <button 
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle sidebar"
-          >
-            <FaBars />
-          </button>
-          <Breadcrumbs items={breadcrumbItems} />
-        </div>
         {/* Sidebar Overlay */}
         <div 
           className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}

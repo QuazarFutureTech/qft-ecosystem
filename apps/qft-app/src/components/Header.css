@@ -1,20 +1,21 @@
-/* Header.css - User bar at top */
+/* Header.css - User bar at top (Mobile-First) */
 
 .user-bar {
-  background-color: rgba(var(--bg-secondary-rgb, 30, 32, 50), 0.9);
+  background-color: var(--bg-secondary); /* Assuming --bg-secondary-rgb is defined or will be */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-md); /* Mobile compact padding */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+  transition: all var(--transition-base);
   position: sticky;
   top: 0;
   z-index: 999;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: var(--border-width) solid var(--border-color);
+  min-height: 56px; /* Ensure sufficient tap target */
 }
 
 .user-bar-left {
@@ -30,54 +31,55 @@
 .app-logo {
   color: var(--text-color);
   text-decoration: none;
-  font-size: 1.3rem;
+  font-size: var(--font-size-lg); /* Mobile font size */
   font-weight: bold;
-  transition: all cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+  transition: all var(--transition-base);
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-xs);
 }
 
 .app-logo:hover {
-  color: var(--primary-color);
+  color: var(--accent-primary);
   transform: scale(1.02);
 }
 
 .qft-icon {
-  width: 32px;
-  height: 32px;
+  width: var(--size-icon-xl);
+  height: var(--size-icon-xl);
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(88, 101, 242, 0.5));
-  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 var(--spacing-xs) rgba(88, 101, 242, 0.5));
+  transition: all var(--transition-base);
 }
 
 .app-logo:hover .qft-icon {
-  filter: drop-shadow(0 0 12px rgba(88, 101, 242, 0.8));
+  filter: drop-shadow(0 0 var(--spacing-sm) rgba(88, 101, 242, 0.8));
   transform: rotate(360deg);
 }
 
 .profile-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-xs);
   background-color: var(--bg-primary);
-  border-radius: 24px;
-  padding: 6px 16px 6px 6px;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xxs) var(--spacing-sm); /* Mobile compact padding */
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+  border: var(--border-width) solid var(--border-color);
+  min-height: 44px; /* Ensure tap target */
 }
 
 .profile-container:hover {
-  background-color: var(--bg-hover);
-  border-color: var(--primary-color);
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-primary);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.2);
+  box-shadow: 0 2px var(--spacing-xs) rgba(88, 101, 242, 0.2);
 }
 
 .avatar-small {
-  width: 32px;
-  height: 32px;
+  width: var(--size-icon-xl);
+  height: var(--size-icon-xl);
   border-radius: 50%;
   object-fit: cover;
 }
@@ -85,25 +87,26 @@
 .username-label {
   font-weight: 500;
   letter-spacing: 0.3px;
-  color: var(--text-primary);
-  font-size: 14px;
+  color: var(--text-color);
+  font-size: var(--font-size-sm);
+  display: none; /* Hidden on mobile by default */
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Desktop adjustments */
+@media (min-width: var(--breakpoint-md)) {
   .user-bar {
-    padding: 10px 16px;
+    padding: var(--spacing-md) var(--spacing-lg); /* More spacious desktop padding */
   }
 
   .app-logo {
-    font-size: 1.1rem;
+    font-size: var(--font-size-xxl); /* Larger font for desktop */
   }
 
   .username-label {
-    display: none;
+    display: block; /* Show on desktop */
   }
 
   .profile-container {
-    padding: 6px;
+    padding: var(--spacing-xxs) var(--spacing-md) var(--spacing-xxs) var(--spacing-xxs); /* Desktop padding */
   }
 }

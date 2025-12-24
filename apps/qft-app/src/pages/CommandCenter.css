@@ -1,0 +1,28 @@
+.command-center-layout {
+  display: flex;
+  height: 100%;
+}
+
+.command-center-sidebar {
+  width: 280px;
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.command-center-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .command-center-layout {
+    flex-direction: column;
+  }
+  .command-center-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}

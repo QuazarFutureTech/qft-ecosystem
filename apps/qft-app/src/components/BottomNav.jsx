@@ -1,7 +1,7 @@
 // components/BottomNav.jsx
 import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaComments, FaCog, FaTasks, FaShoppingCart, FaTachometerAlt } from 'react-icons/fa';
+import { FaComments, FaCog, FaTasks, FaShoppingCart, FaTachometerAlt, FaBell, FaUserCircle } from 'react-icons/fa';
 import { useUser } from '../contexts/UserContext.jsx';
 import { isPrivilegedStaff, isStaffMember } from '../utils/clearance.js';
 import './BottomNav.css';
@@ -35,6 +35,16 @@ function BottomNav() {
       <NavLink to="/shop" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Shop">
         <FaShoppingCart />
         <span className="nav-label">Shop</span>
+      </NavLink>
+      
+      <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Notifications">
+        <FaBell />
+        <span className="nav-label">Notifications</span>
+      </NavLink>
+
+      <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Profile">
+        <FaUserCircle />
+        <span className="nav-label">Profile</span>
       </NavLink>
       
       {isStaff && (

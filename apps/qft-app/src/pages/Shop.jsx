@@ -1,8 +1,9 @@
 // apps/qft-app/src/pages/Shop.jsx
 // Client-Facing Commerce Platform - Products, Services, Contracts
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useUser } from '../contexts/UserContext.jsx';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import QFTPreloader from '../components/QFTPreloader';
 import CollapsibleCategory from '../components/elements/CollapsibleCategory';
 import Breadcrumbs from '../components/elements/Breadcrumbs';
@@ -15,17 +16,22 @@ import ContractsModule from '../components/modules/ContractsModule';
 
 function Shop() {
   const { isLoadingUser, userStatus } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const [activeSection, setActiveSection] = useState('products');
   
   // Sidebar state for mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
-  };
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   if (isLoadingUser) {
     return <QFTPreloader />;
@@ -53,57 +59,42 @@ function Shop() {
       ...(currentSection ? [{ label: currentSection.label, path: null }] : [])
     ];
   }, [activeSection, allSections]);
-  
-  
 
+  useEffect(() => {
+    setHeaderContent({
+      title: 'QFT Shop',
+      subtitle: 'Browse products, services, and manage your contracts with QFT Ecosystem',
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+      actions: (
+        <>
+          {userStatus && (
+            <div className="user-contract-badge" style={{ marginTop: '10px' }}>
+              <span className="badge-label">Your Plan:</span>
+              <span className={`contract-tier ${userStatus.contractTier || 'free'}`}>
+                {userStatus.contractTier ? userStatus.contractTier.toUpperCase() : 'FREE'}
+              </span>
+            </div>
+          )}
+          <button 
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <FaBars />
+          </button>
+        </>
+      ),
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, breadcrumbItems, userStatus, toggleSidebar]);
+  
   return (
     <div className="page-wrapper">
-      <div className="page-header">      
-        <div>
-          <h1>QFT Shop</h1>
-          <p>Browse products, services, and manage your contracts with QFT Ecosystem</p>
-        </div>
-                {userStatus && (
-          <div className="user-contract-badge" style={{ marginTop: '10px' }}>
-            <span className="badge-label">Your Plan:</span>
-            <span className={`contract-tier ${userStatus.contractTier || 'free'}`}>
-              {userStatus.contractTier ? userStatus.contractTier.toUpperCase() : 'FREE'}
-            </span>
-          </div>
-        )}
-        <Breadcrumbs items={breadcrumbItems} />
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <FaBars />
-        </button>
-      </div>
-        
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
-      />
-
-      <div className="page-layout">
-      </div>
-
-      {/* Mobile Sidebar Toggle */}
-      <button 
-        className="sidebar-toggle"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        aria-label="Toggle sidebar"
-      >
-        <FaBars />
-      </button>
-      
-      {/* Sidebar Overlay */}
-      <div 
-        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => closeSidebar()}
       />
 
       <div className="page-layout">

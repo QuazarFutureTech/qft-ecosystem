@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import SidebarNav from './SidebarNav';
 import BottomNav from './BottomNav';
-import BreadcrumbNav from './BreadcrumbNav';
+// import BreadcrumbNav from './BreadcrumbNav'; // Remove this import
 import { HeaderProvider } from '../contexts/HeaderContext.jsx';
 import { useUser } from '../contexts/UserContext.jsx'; // Import useUser
 import '../Layout.css';
@@ -11,17 +11,6 @@ import '../Layout.css';
 function Layout() {
   const { userStatus, qftUuid } = useUser();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  const handleResize = () => {
-    const mobile = window.innerWidth <= 768;
-    setIsMobile(mobile);
-  };
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (userStatus && qftUuid) {
@@ -33,14 +22,14 @@ function Layout() {
     <HeaderProvider>
       <div className="app-layout">
         <Header />
-        <BreadcrumbNav />
+        {/* <BreadcrumbNav /> Removed */}
         <div className="app-body">
-          {isMobile ? null : <SidebarNav />}
+          <SidebarNav /> {/* Always render, CSS will control visibility */}
           <main className="app-main">
             <Outlet />
           </main>
         </div>
-        {isMobile && <BottomNav />}
+        <BottomNav /> {/* Always render, CSS will control visibility */}
       </div>
     </HeaderProvider>
   );

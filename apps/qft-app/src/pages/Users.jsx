@@ -1,13 +1,16 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import { isPrivilegedStaff } from '../utils/clearance';
 import UserDetailView from '../components/modules/users/UserDetailView.jsx';
+import Breadcrumbs from '../components/elements/Breadcrumbs'; // Ensure Breadcrumbs is imported for local use before passing as prop
 
 function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUserSelect }) {
   const navigate = useNavigate();
   const { qftRole } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const hasAccess = isPrivilegedStaff(qftRole);
 
   // Live user data state
@@ -56,7 +59,7 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
     if (users.length > 0 && internalSelectedUserId === null) {
       setInternalSelectedUserId(users[0].qft_uuid);
     }
-  }, [users]);
+  }, [users, internalSelectedUserId]);
 
   const activeUserId =
     controlledUserId !== undefined ? controlledUserId : internalSelectedUserId;
@@ -116,13 +119,16 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
   const activeUser = users.find((u) => u.qft_uuid === activeUserId);
 
   // Breadcrumbs logic
-  const breadcrumbs = [
-    { label: 'Control Panel', path: '/control-panel' },
-    { label: 'User Management', path: '/control-panel/users' },
-  ];
-  if (activeUser) {
-    breadcrumbs.push({ label: activeUser.discord_username, path: null });
-  }
+  const breadcrumbItems = useMemo(() => {
+    const items = [
+      { label: 'Control Panel', path: '/control-panel' },
+      { label: 'User Management', path: '/control-panel/users' },
+    ];
+    if (activeUser) {
+      items.push({ label: activeUser.discord_username, path: null });
+    }
+    return items;
+  }, [activeUser]);
 
   // Header logic
   const headerTitle = activeUser
@@ -137,40 +143,19 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
       )
     : 'Manage users, roles, and moderation.';
 
+  useEffect(() => {
+    setHeaderContent({
+      title: headerTitle,
+      subtitle: headerDesc,
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} navigate={navigate} />,
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, headerTitle, headerDesc, breadcrumbItems, navigate]);
+
+
   return (
     <>
-      <div className="page-header">
-        <div>
-          <h1>{headerTitle}</h1>
-          <p>{headerDesc}</p>
-        </div>
-        <nav className="breadcrumbs">
-          <ol className="breadcrumbs-list">
-            {breadcrumbs.map((b, i) => (
-              <li className="breadcrumb-item" key={b.label}>
-                {i > 0 && <span className="breadcrumb-separator">&gt;</span>}
-                {b.path && i !== breadcrumbs.length - 1 ? (
-                  <button
-                    className="breadcrumb-link"
-                    type="button"
-                    onClick={() => {
-                      if (b.path === '/control-panel') {
-                        navigate('/control-panel');
-                      } else if (b.path) {
-                        navigate(b.path);
-                      }
-                    }}
-                  >
-                    {b.label}
-                  </button>
-                ) : (
-                  <span className="breadcrumb-current">{b.label}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      </div>
       <div className="page-layout">
         {/* Sidebar */}
         <aside className="page-sidebar">

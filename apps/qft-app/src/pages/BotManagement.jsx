@@ -1,8 +1,9 @@
 // apps/qft-app/src/pages/BotManagement.jsx
 // Dedicated page for bot configuration with larger, organized layout
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useUser } from '../contexts/UserContext.jsx';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import { useSelectedGuild } from '../contexts/SelectedGuildContext.jsx';
 import QFTPreloader from '../components/QFTPreloader';
 import CollapsibleCategory from '../components/elements/CollapsibleCategory';
@@ -21,6 +22,7 @@ import { FaCode, FaShieldAlt, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVi
 
 function BotManagement() {
   const { isLoadingUser, qftRole, userGuilds, userStatus } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const [activeModule, setActiveModule] = useState('commands');
   
@@ -31,11 +33,15 @@ function BotManagement() {
   const hasAdminAccess = qftRole && ['α', 'Ω', '3', '2', '1'].includes(qftRole);
   
   // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
-  };
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   if (isLoadingUser) {
     return <QFTPreloader />;
@@ -98,52 +104,54 @@ function BotManagement() {
       ...(currentModule ? [{ label: currentModule.label, path: null }] : [])
     ];
   }, [activeModule, allModules]);
+
+  useEffect(() => {
+    setHeaderContent({
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+      title: 'Bot Management',
+      subtitle: 'Configure your Discord bot\'s behavior, commands, and automated features',
+      actions: (
+        <>
+          {userGuilds && userGuilds.length > 0 && (
+            <div className="header-actions">
+              <div className="guild-selector-header">
+                <label>Server:</label>
+                <select
+                  value={selectedGuildId || ''}
+                  onChange={(e) => setSelectedGuildId(e.target.value)}
+                  className="qft-select"
+                >
+                  {userGuilds.map(guild => (
+                    <option key={guild.id} value={guild.id}>
+                      {guild.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+          <button 
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <FaBars />
+          </button>
+        </>
+      ),
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, breadcrumbItems, userGuilds, selectedGuildId, setSelectedGuildId, toggleSidebar]);
   
   
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <Breadcrumbs items={breadcrumbItems} />
-        <div>
-          <h1>Bot Management</h1>
-          <p>Configure your Discord bot's behavior, commands, and automated features</p>
-        </div>
-        
-        {/* Server Selector in Header */}
-        {userGuilds && userGuilds.length > 0 && (
-          <div className="header-actions">
-            <div className="guild-selector-header">
-              <label>Server:</label>
-              <select
-                value={selectedGuildId || ''}
-                onChange={(e) => setSelectedGuildId(e.target.value)}
-                className="qft-select"
-              >
-                {userGuilds.map(guild => (
-                  <option key={guild.id} value={guild.id}>
-                    {guild.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-        
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <FaBars />
-        </button>
-      </div>
-        
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => closeSidebar()}
       />
 
       <div className="page-layout">
@@ -183,3 +191,4 @@ function BotManagement() {
 }
 
 export default BotManagement;
+

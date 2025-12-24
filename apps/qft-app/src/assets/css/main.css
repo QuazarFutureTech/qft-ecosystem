@@ -4,6 +4,10 @@ html, body {
   height: 100%;
 }
 
+body {
+  overflow: hidden; /* Prevent body from scrolling, content areas will manage their own overflow */
+}
+
 .body-bg {
   min-height: 100vh;
   box-sizing: border-box;
@@ -29,7 +33,8 @@ html, body {
 }
 #qft-preloader img {
   position: absolute;
-  width: 25vw;
+  width: 50vw; /* Responsive width */
+  max-width: 250px; /* Limit max size */
   height: auto;
   opacity: 0.25;
 }
@@ -109,30 +114,34 @@ html, body {
   visibility: hidden;
 }
 
+/* Footer - Mobile First */
 footer {
     position: relative;
     width: 100%;
     height: fit-content;
-    padding: 50px 100px;
+    padding: 40px 20px; /* Mobile padding */
     background: #111;
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
+    flex-direction: column; /* Stack on mobile */
 }
 
 footer .container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column; /* Stack on mobile */
     flex-wrap: wrap;
-    flex-direction: row;
+    justify-content: space-between;
 }
 
 footer .container .sec {
-    margin-right: 30px;
+    margin-right: 0;
+    margin-bottom: 30px; /* Spacing between stacked sections */
+    width: 100%; /* Full width on mobile */
 }
 
 footer .container .sec.aboutus {
-    width: 40%;
+    width: 100%;
 }
 
 footer .container h2 {
@@ -196,7 +205,7 @@ footer .container .sec p {
 
 .quicklinks {
     position: relative;
-    width: 25%;
+    width: 100%; /* Full width on mobile */
 }
 
 .quicklinks ul li {
@@ -217,7 +226,7 @@ footer .container .sec p {
 }
 
 .contact {
-    width: calc(35% - 60px);
+    width: 100%; /* Full width on mobile */
     margin-right: 0 !important;
 }
 
@@ -255,42 +264,37 @@ footer .container .sec p {
     width: 100%;
     color: #999;
     background: #181818;
-    padding: 8px 100px;
+    padding: 8px 20px; /* Mobile padding */
     text-align: center
 }
 
-@media (max-width:991px) {
+/* Medium devices (md) and up - Desktop Layout for Footer */
+@media (min-width: var(--breakpoint-md)) {
     footer {
-        padding: 40px;
-        transition: ease-in-out .5s;
+        padding: 50px 100px; /* Desktop padding */
+        flex-direction: row; /* Horizontal layout for desktop */
     }
     footer .container {
-        flex-direction: column;
-        transition: ease-in-out .5s;
+        flex-direction: row; /* Horizontal layout for container sections */
     }
     footer .container .sec {
-        margin-right: 0;
-        margin-bottom: 40px;
-        transition: ease-in-out .5s;
+        margin-right: 30px;
+        margin-bottom: 0;
+        width: auto; /* Reset width for desktop */
     }
     footer .container .sec.aboutus {
-        width: 100%;
-        transition: ease-in-out .5s;
+        width: 40%;
     }
-    footer .container .sec.quicklinks {
-        width: 100%;
-        transition: ease-in-out .5s;
+    .quicklinks {
+        width: 25%;
     }
-    footer .container .sec.contact {
-        width: 100%;
-        transition: ease-in-out .5s;
+    .contact {
+        width: calc(35% - 60px);
     }
     .copyright {
-        padding: 8px 40px;
-        transition: ease-in-out .5s;
+        padding: 8px 100px; /* Desktop padding */
     }
 }
-
 
 /*Custom Scroll Elements*/
 
@@ -316,7 +320,7 @@ footer .container .sec p {
     margin-left: 10px;
     position: fixed;
     -webkit-transition: 1s;
-    transition: 1s;
+    transition: 1s linear;
     border-radius: 28px;
 }
 
@@ -326,7 +330,7 @@ footer .container .sec p {
     transition: 1s linear;
 }
 
-.footer {
+.footer { /* This duplicates the footer selector above, can be removed if moved to the single footer block */
     background-color: #101010;
 }
 

@@ -1,26 +1,26 @@
-/* BottomNav.css - Pill-style bottom navigation bar */
+/* BottomNav.css - Pill-style bottom navigation bar (Mobile-First) */
 
 .bottom-nav {
   position: fixed;
-  bottom: 20px;
+  bottom: var(--spacing-md);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(var(--bg-secondary-rgb, 30, 32, 50), 0.95);
+  background-color: var(--bg-secondary); /* Assuming --bg-secondary-rgb is defined or will be */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-lg); /* Larger border-radius for pill shape */
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  z-index: 950; /* Lower than modal overlay */
+  gap: var(--spacing-xxs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  z-index: 950;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
-  max-width: calc(100vw - 40px);
+  max-width: calc(100vw - var(--spacing-xl)); /* 100vw - 40px */
   overflow-x: auto;
   scrollbar-width: none;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+  transition: transform var(--transition-base), opacity var(--transition-base);
 }
 
 body.modal-open .bottom-nav {
@@ -47,13 +47,14 @@ body.modal-open .bottom-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 14px;
-  color: var(--text-secondary);
+  gap: var(--spacing-xs);
+  padding: 10px 14px; /* Using explicit px for fine-tuning */
+  color: var(--text-muted);
   text-decoration: none;
-  border-radius: 18px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 44px;
+  border-radius: var(--border-radius-lg); /* Match parent or define specific */
+  transition: all var(--transition-fast);
+  min-width: 48px; /* Larger tap target */
+  min-height: 48px; /* Larger tap target */
   cursor: pointer;
   position: relative;
   white-space: nowrap;
@@ -61,24 +62,24 @@ body.modal-open .bottom-nav {
 }
 
 .bottom-nav .nav-item svg {
-  font-size: 20px;
-  transition: transform 0.2s ease;
+  font-size: var(--font-size-xl);
+  transition: transform var(--transition-fast);
   flex-shrink: 0;
 }
 
 .bottom-nav .nav-item .nav-label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   letter-spacing: 0.3px;
   opacity: 0;
   width: 0;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-fast);
 }
 
 .bottom-nav .nav-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-color);
   transform: translateY(-2px);
 }
 
@@ -87,51 +88,24 @@ body.modal-open .bottom-nav {
 }
 
 .bottom-nav .nav-item.active {
-  color: white;
-  background: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
-  padding: 10px 16px;
+  color: var(--button-primary-text);
+  background: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(var(--accent-primary-shadow-rgb), 0.4);
+  padding: 10px var(--spacing-md); /* Adjusted padding */
 }
 
 .bottom-nav .nav-item.active .nav-label {
   opacity: 1;
   width: auto;
-  margin-left: 4px;
+  margin-left: var(--spacing-xxs);
 }
 
 .bottom-nav .nav-item.active svg {
   transform: scale(1.05);
 }
 
-/* Tablet and smaller desktops */
-@media (max-width: 900px) {
-  .bottom-nav {
-    bottom: 12px;
-    max-width: calc(100vw - 24px);
-    padding: 6px 10px;
-    gap: 2px;
-  }
-
-  .bottom-nav .nav-item {
-    padding: 8px 10px;
-    min-width: 40px;
-  }
-
-  .bottom-nav .nav-item svg {
-    font-size: 18px;
-  }
-
-  .bottom-nav .nav-item .nav-label {
-    font-size: 12px;
-  }
-
-  .bottom-nav .nav-item.active {
-    padding: 8px 12px;
-  }
-}
-
-/* Mobile: Full width snackbar */
-@media (max-width: 640px) {
+/* Small devices (sm) adjustments */
+@media (max-width: var(--breakpoint-sm)) { /* 640px */
   .bottom-nav {
     bottom: 0;
     left: 0;
@@ -139,21 +113,21 @@ body.modal-open .bottom-nav {
     transform: none;
     border-radius: 0;
     border: none;
-    border-top: 1px solid var(--border-color);
+    border-top: var(--border-width) solid var(--border-color);
     max-width: 100%;
     width: 100%;
-    padding: 6px 4px max(6px, env(safe-area-inset-bottom));
+    padding: var(--spacing-xxs) var(--spacing-xxs) max(var(--spacing-xxs), env(safe-area-inset-bottom));
     justify-content: space-around;
-    gap: 2px;
+    gap: var(--spacing-xxs);
     overflow-x: visible;
   }
 
   .bottom-nav .nav-item {
     flex-direction: column;
-    gap: 2px;
-    padding: 8px 4px;
+    gap: var(--spacing-xxs);
+    padding: var(--spacing-xxs);
     min-width: 56px;
-    border-radius: 10px;
+    border-radius: var(--border-radius-sm);
     flex: 1;
     max-width: 80px;
   }
@@ -161,17 +135,17 @@ body.modal-open .bottom-nav {
   .bottom-nav .nav-item .nav-label {
     opacity: 0;
     height: 0;
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     margin-left: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
   }
 
   .bottom-nav .nav-item.active {
-    padding: 6px 4px;
+    padding: var(--spacing-xxs);
   }
 
   .bottom-nav .nav-item.active .nav-label {
@@ -180,7 +154,7 @@ body.modal-open .bottom-nav {
   }
 
   .bottom-nav .nav-item svg {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
   }
 
   .bottom-nav .nav-item:hover {
@@ -188,28 +162,35 @@ body.modal-open .bottom-nav {
   }
 }
 
-/* Very small mobile screens */
+/* Medium devices (md) and up - Hide on desktop */
+@media (min-width: var(--breakpoint-md)) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
+/* Specific adjustments for very small screens (keeping original intent) */
 @media (max-width: 480px) {
   .bottom-nav {
-    padding: 4px 2px max(4px, env(safe-area-inset-bottom));
+    padding: var(--spacing-xxs) var(--spacing-xxs) max(var(--spacing-xxs), env(safe-area-inset-bottom));
   }
 
   .bottom-nav .nav-item {
-    padding: 8px 2px;
+    padding: var(--spacing-xxs) 1px;
     min-width: 48px;
     gap: 1px;
   }
 
   .bottom-nav .nav-item .nav-label {
-    font-size: 9px;
+    font-size: 8px; /* Very small font for very small screens */
   }
 
   .bottom-nav .nav-item svg {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
 }
 
-/* Extra small screens (very old or small phones) */
+/* Extra small screens (very old or small phones, keeping original intent) */
 @media (max-width: 360px) {
   .bottom-nav .nav-item {
     padding: 7px 1px;
@@ -221,6 +202,6 @@ body.modal-open .bottom-nav {
   }
 
   .bottom-nav .nav-item svg {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
 }

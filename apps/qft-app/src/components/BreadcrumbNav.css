@@ -1,0 +1,57 @@
+/* BreadcrumbNav.css - Mobile-First Responsive Styles */
+
+.breadcrumb-nav {
+  padding: var(--spacing-sm) var(--spacing-md); /* Compact padding for mobile */
+  background-color: var(--bg-secondary);
+  border-bottom: var(--border-width) solid var(--border-color);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  overflow-x: auto; /* Allow horizontal scrolling for long breadcrumbs on mobile */
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.breadcrumb-nav::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Webkit browsers */
+}
+
+.breadcrumb-nav-item {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-nav-item:hover {
+  color: var(--text-color);
+}
+
+.breadcrumb-nav-item.active {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  margin: 0 var(--spacing-xxs);
+  color: var(--text-muted);
+}
+
+/* Desktop adjustments */
+@media (min-width: var(--breakpoint-md)) {
+  .breadcrumb-nav {
+    padding: var(--spacing-md) var(--spacing-lg); /* More spacious padding for desktop */
+    overflow-x: visible; /* No horizontal scrolling needed */
+    white-space: normal;
+  }
+}
+
+/* Hide breadcrumbs on very small mobile for more screen real estate, if needed */
+/* @media (max-width: 360px) {
+  .breadcrumb-nav {
+    display: none;
+  }
+} */

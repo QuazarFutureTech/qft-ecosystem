@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fetchPosts, createPost } from '../services/feed';
 import { useUser } from '../contexts/UserContext.jsx';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import { getAvatarUrl } from '../services/user.js';
 import Modal from '../components/elements/Modal.jsx';
 import CollapsibleCategory from '../components/elements/CollapsibleCategory';
@@ -13,6 +14,7 @@ function Feed() {
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const { userStatus } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   
   // Filter and sort states
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -25,11 +27,15 @@ function Feed() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
-  };
+  }, []);
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [modalConfirmAction, setModalConfirmAction] = useState(null);
@@ -120,6 +126,26 @@ function Feed() {
     setFilteredPosts(filtered);
   }, [posts, selectedCategory, sortBy]);
 
+  // Set header content
+  useEffect(() => {
+    setHeaderContent({
+      title: (<h1><FaRss /> Activity Feed</h1>),
+      subtitle: 'Stay updated with the latest posts, announcements, and bot activities',
+      actions: (
+        <button
+          className="sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
+        >
+          <FaBars />
+        </button>
+      ),
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, toggleSidebar]);
+
+
   const avatarUrl = userStatus ? getAvatarUrl(userStatus) : null;
 
   if (loading) {
@@ -146,25 +172,10 @@ function Feed() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <div>
-          <h1><FaRss /> Activity Feed</h1>
-          <p>Stay updated with the latest posts, announcements, and bot activities</p>
-        </div>
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <FaBars />
-        </button>
-      </div>
-      
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => closeSidebar()}
       />
 
       <div className="page-layout">

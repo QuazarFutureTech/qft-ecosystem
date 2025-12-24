@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaCode } from 'react-icons/fa';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 
 function Commands() {
   const [commands, setCommands] = useState([]);
@@ -8,6 +9,7 @@ function Commands() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTriggerType, setFilterTriggerType] = useState('all');
   const [selectedGuild, setSelectedGuild] = useState('');
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
 
   useEffect(() => {
     fetchCommands();
@@ -16,6 +18,16 @@ function Commands() {
   useEffect(() => {
     applyFilters();
   }, [commands, searchTerm, filterTriggerType]);
+
+  // Set header content
+  useEffect(() => {
+    setHeaderContent({
+      title: (<h1><FaCode /> Custom Commands</h1>),
+      subtitle: 'View and manage all custom commands for your guild',
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent]);
 
   const fetchCommands = async () => {
     if (!selectedGuild) return;
@@ -104,11 +116,6 @@ function Commands() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <h1><FaCode /> Custom Commands</h1>
-        <p>View and manage all custom commands for your guild</p>
-      </div>
-
       <div className="page-layout no-sidebar">
         <main className="page-content no-sidebar">
           <div className="commands-filters">
@@ -216,3 +223,4 @@ function Commands() {
 }
 
 export default Commands;
+

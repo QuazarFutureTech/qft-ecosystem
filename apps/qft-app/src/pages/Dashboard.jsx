@@ -1,18 +1,35 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.jsx';
+import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
 import { isStaffMember, isPrivilegedStaff, isClient, isAffiliate } from '../utils/clearance';
 import { FaHome, FaTasks, FaShoppingCart, FaBell, FaChartLine, FaRobot, FaClock, FaCheckCircle, FaExclamationTriangle, FaEnvelope, FaUsers, FaFileInvoiceDollar, FaDollarSign, FaTachometerAlt } from 'react-icons/fa';
 import './Dashboard.css';
-import '../assets/css/dashboard.css';
 
 function Dashboard() {
   const { userStatus, roleName } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const isStaff = isStaffMember(roleName);
   const isPrivileged = isPrivilegedStaff(roleName);
   const isClientUser = isClient(roleName);
   const isAffiliateUser = isAffiliate(roleName);
   const userDisplayName = userStatus?.username || userStatus?.global_name || 'Operator';
+
+  useEffect(() => {
+    setHeaderContent({
+      kicker: 'QFT ecosystem',
+      title: <><FaTachometerAlt /> Dashboard</>,
+      subtitle: `Welcome back, ${userDisplayName}. Here is your current operational snapshot.`,
+      actions: (
+        <>
+          {isStaff && <Link to="/control-panel" className="header-action-link">Control Panel</Link>}
+          {isPrivileged && <Link to="/bot-management" className="header-action-link">Bot Management</Link>}
+        </>
+      ),
+    });
+    // Clear header content when component unmounts or dependencies change
+    return () => setHeaderContent(null);
+  }, [isStaff, isPrivileged, userDisplayName, setHeaderContent]); // Add setHeaderContent to dependencies
 
   const quickNav = useMemo(
     () => [
@@ -79,296 +96,263 @@ function Dashboard() {
   );
 
   return (
-    <div className="main-dashpanel">
-      {/* <nav className="indicator">
-        <ul>
-          {quickNav.map(item => {
-            const Icon = item.icon;
-            return (
-              <li key={item.id}>
-                <a href={`#${item.id}`} className={item.id === 'overview' ? 'active' : ''}>
-                  <span className="icon"><Icon /></span>
-                  <span className="text">{item.label}</span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>*/}
+    <>
+      {/* Page header content now set via HeaderContext and rendered in Header.jsx */}
 
-      <div className="dash-shell">
-        <header className="dash-header">
-          <div>
-            <p className="dash-kicker">QFT ecosystem</p>
-            <h1 className="dash-title"><FaTachometerAlt /> Dashboard</h1>
-            <p className="dash-subtitle">Welcome back, {userDisplayName}. Here is your current operational snapshot.</p>
-          </div>
-          <div className="dash-actions">
-            {isStaff && <Link to="/control-panel" className="view-all-link">Control Panel</Link>}
-            {isPrivileged && <Link to="/bot-management" className="view-all-link">Bot Management</Link>}
-          </div>
-        </header>
-
-        <div className="dashboard-container">
-          <section id="overview" className="dashboard-section">
-            <div className="stats-grid">
-              {/* Staff Stats */}
-              {isStaff && (
-                <>
-                  <div className="stat-card">
-                    <div className="stat-icon tasks"><FaTasks /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.openTasks}</h3>
-                      <p>Open Tasks</p>
-                    </div>
+      <div className="page-content dashboard-content">
+        <section className="dashboard-section stats-section">
+          <div className="stats-grid">
+            {/* Staff Stats */}
+            {isStaff && (
+              <>
+                <div className="stat-card">
+                  <div className="stat-icon tasks"><FaTasks /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.openTasks}</h3>
+                    <p>Open Tasks</p>
                   </div>
-                  <div className="stat-card">
-                    <div className="stat-icon users"><FaUsers /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.newMessages}</h3>
-                      <p>New Messages</p>
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Client Stats */}
-              {isClientUser && (
-                <>
-                  <div className="stat-card">
-                    <div className="stat-icon orders"><FaFileInvoiceDollar /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.activeProjects}</h3>
-                      <p>Active Projects</p>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon messages"><FaBell /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.invoicesDue}</h3>
-                      <p>Invoices Due</p>
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Affiliate Stats */}
-              {isAffiliateUser && (
-                <>
-                  <div className="stat-card">
-                    <div className="stat-icon tasks"><FaUsers /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.referrals}</h3>
-                      <p>Total Referrals</p>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon orders"><FaDollarSign /></div>
-                    <div className="stat-info">
-                      <h3>{dashboardData.stats.earnings}</h3>
-                      <p>Total Earnings</p>
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Universal Stats */}
-              <div className="stat-card">
-                <div className="stat-icon orders"><FaShoppingCart /></div>
-                <div className="stat-info">
-                  <h3>{dashboardData.stats.pendingOrders}</h3>
-                  <p>Pending Orders</p>
                 </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon events"><FaClock /></div>
-                <div className="stat-info">
-                  <h3>{dashboardData.stats.upcomingEvents}</h3>
-                  <p>Upcoming Events</p>
+                <div className="stat-card">
+                  <div className="stat-icon users"><FaUsers /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.newMessages}</h3>
+                    <p>New Messages</p>
+                  </div>
                 </div>
+              </>
+            )}
+            {/* Client Stats */}
+            {isClientUser && (
+              <>
+                <div className="stat-card">
+                  <div className="stat-icon orders"><FaFileInvoiceDollar /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.activeProjects}</h3>
+                    <p>Active Projects</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon messages"><FaBell /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.invoicesDue}</h3>
+                    <p>Invoices Due</p>
+                  </div>
+                </div>
+              </>
+            )}
+            {/* Affiliate Stats */}
+            {isAffiliateUser && (
+              <>
+                <div className="stat-card">
+                  <div className="stat-icon tasks"><FaUsers /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.referrals}</h3>
+                    <p>Total Referrals</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon orders"><FaDollarSign /></div>
+                  <div className="stat-info">
+                    <h3>{dashboardData.stats.earnings}</h3>
+                    <p>Total Earnings</p>
+                  </div>
+                </div>
+              </>
+            )}
+            {/* Universal Stats */}
+            <div className="stat-card">
+              <div className="stat-icon orders"><FaShoppingCart /></div>
+              <div className="stat-info">
+                <h3>{dashboardData.stats.pendingOrders}</h3>
+                <p>Pending Orders</p>
               </div>
             </div>
-          </section>
-
-          <div className="dashboard-grid">
-            {isStaff && (
-              <div className="dashboard-card" id="tasks">
-                <div className="card-header">
-                  <h2><FaTasks /> Your Tasks</h2>
-                  <Link to="/command-center" className="view-all-link">View All</Link>
-                </div>
-                <div className="card-content">
-                  {dashboardData.tasks.map(task => (
-                    <div key={task.id} className="task-item">
-                      <div className={`task-priority ${task.priority}`}></div>
-                      <div className="task-info">
-                        <h4>{task.title}</h4>
-                        <p className="task-meta">
-                          <FaClock /> Due: {task.dueDate}
-                          <span className={`task-status ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span>
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="stat-card">
+              <div className="stat-icon events"><FaClock /></div>
+              <div className="stat-info">
+                <h3>{dashboardData.stats.upcomingEvents}</h3>
+                <p>Upcoming Events</p>
               </div>
-            )}
+            </div>
+          </div>
+        </section>
 
-            {/* Client-Specific: Active Projects */}
-            {isClientUser && (
-              <div className="dashboard-card" id="projects">
-                <div className="card-header">
-                  <h2><FaTasks /> Your Projects</h2>
-                  <Link to="/shop" className="view-all-link">View All</Link>
-                </div>
-                <div className="card-content">
-                  {dashboardData.projects.map(project => (
-                    <div key={project.id} className="project-item">
-                      <div className="project-info">
-                        <h4>{project.name}</h4>
-                        <div className="project-progress">
-                          <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: `${project.progress}%` }}></div>
-                          </div>
-                          <span className="progress-text">{project.progress}%</span>
-                        </div>
-                        <p className="project-meta">
-                          Status: <span className={`project-status ${project.status.toLowerCase().replace(' ', '-')}`}>{project.status}</span>
-                          <FaClock /> Due: {project.dueDate}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Affiliate-Specific: Referral Performance */}
-            {isAffiliateUser && (
-              <div className="dashboard-card" id="referrals">
-                <div className="card-header">
-                  <h2><FaDollarSign /> Referral Performance</h2>
-                  <Link to="/shop" className="view-all-link">View Details</Link>
-                </div>
-                <div className="card-content">
-                  {dashboardData.referralStats.map((stat, idx) => (
-                    <div key={idx} className="referral-stat-item">
-                      <div className="referral-month">{stat.month}</div>
-                      <div className="referral-details">
-                        <span className="referral-conversions">{stat.conversions} conversions</span>
-                        <span className="referral-earnings">{stat.earnings}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="affiliate-summary">
-                    <p><strong>Total Referrals:</strong> {dashboardData.stats.referrals}</p>
-                    <p><strong>Total Earnings:</strong> {dashboardData.stats.earnings}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="dashboard-card" id="orders">
+        <div className="dashboard-grid">
+          {/* ...existing code for dashboard cards... */}
+          {/* This section remains unchanged, just moved up one level */}
+          {isStaff && (
+            <div className="dashboard-card" id="tasks">
               <div className="card-header">
-                <h2><FaShoppingCart /> Recent Orders</h2>
-                <Link to="/shop" className="view-all-link">View All</Link>
+                <h2><FaTasks /> Your Tasks</h2>
+                <Link to="/command-center" className="view-all-link">View All</Link>
               </div>
               <div className="card-content">
-                {dashboardData.orders.map(order => (
-                  <div key={order.id} className="order-item">
-                    <div className="order-info">
-                      <h4>{order.name}</h4>
-                      <p className="order-meta">Order #{order.id} • {order.date}</p>
-                    </div>
-                    <div className="order-right">
-                      <span className={`order-status ${order.status}`}>{order.status}</span>
-                      <span className="order-total">{order.total}</span>
+                {dashboardData.tasks.map(task => (
+                  <div key={task.id} className="task-item">
+                    <div className={`task-priority ${task.priority}`}></div>
+                    <div className="task-info">
+                      <h4>{task.title}</h4>
+                      <p className="task-meta">
+                        <FaClock /> Due: {task.dueDate}
+                        <span className={`task-status ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span>
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="dashboard-card" id="notifications">
+          )}
+          {/* ...rest of dashboard cards unchanged... */}
+          {/* Client-Specific: Active Projects */}
+          {isClientUser && (
+            <div className="dashboard-card" id="projects">
               <div className="card-header">
-                <h2><FaBell /> Notifications</h2>
+                <h2><FaTasks /> Your Projects</h2>
+                <Link to="/shop" className="view-all-link">View All</Link>
               </div>
               <div className="card-content">
-                {dashboardData.notifications.length > 0 ? (
-                  dashboardData.notifications.map(notif => (
-                    <div key={notif.id} className={`notification-item ${notif.type}`}>
-                      <div className="notif-icon">
-                        {notif.type === 'success' && <FaCheckCircle />}
-                        {notif.type === 'warning' && <FaExclamationTriangle />}
-                        {notif.type === 'info' && <FaBell />}
+                {dashboardData.projects.map(project => (
+                  <div key={project.id} className="project-item">
+                    <div className="project-info">
+                      <h4>{project.name}</h4>
+                      <div className="project-progress">
+                        <div className="progress-bar">
+                          <div className="progress-fill" style={{ width: `${project.progress}%` }}></div>
+                        </div>
+                        <span className="progress-text">{project.progress}%</span>
                       </div>
-                      <div className="notif-content">
-                        <p>{notif.message}</p>
-                        <span className="notif-time">{notif.time}</span>
-                      </div>
+                      <p className="project-meta">
+                        Status: <span className={`project-status ${project.status.toLowerCase().replace(' ', '-')}`}>{project.status}</span>
+                        <FaClock /> Due: {project.dueDate}
+                      </p>
                     </div>
-                  ))
-                ) : (
-                  <p>No notifications</p>
-                )}
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="dashboard-card" id="activity">
+          )}
+          {/* Affiliate-Specific: Referral Performance */}
+          {isAffiliateUser && (
+            <div className="dashboard-card" id="referrals">
               <div className="card-header">
-                <h2><FaChartLine /> Recent Activity</h2>
+                <h2><FaDollarSign /> Referral Performance</h2>
+                <Link to="/shop" className="view-all-link">View Details</Link>
               </div>
-              <div className="card-content activity-list">
-                {dashboardData.recentActivity.length > 0 ? (
-                  dashboardData.recentActivity.map(activity => (
-                    <div key={activity.id} className="activity-item">
-                      <span className="activity-action">{activity.action}</span>
-                      <span className="activity-time">{activity.time}</span>
+              <div className="card-content">
+                {dashboardData.referralStats.map((stat, idx) => (
+                  <div key={idx} className="referral-stat-item">
+                    <div className="referral-month">{stat.month}</div>
+                    <div className="referral-details">
+                      <span className="referral-conversions">{stat.conversions} conversions</span>
+                      <span className="referral-earnings">{stat.earnings}</span>
                     </div>
-                  ))
-                ) : (
-                  <p>No recent activity</p>
-                )}
+                  </div>
+                ))}
+                <div className="affiliate-summary">
+                  <p><strong>Total Referrals:</strong> {dashboardData.stats.referrals}</p>
+                  <p><strong>Total Earnings:</strong> {dashboardData.stats.earnings}</p>
+                </div>
               </div>
+            </div>
+          )}
+          <div className="dashboard-card" id="orders">
+            <div className="card-header">
+              <h2><FaShoppingCart /> Recent Orders</h2>
+              <Link to="/shop" className="view-all-link">View All</Link>
+            </div>
+            <div className="card-content">
+              {dashboardData.orders.map(order => (
+                <div key={order.id} className="order-item">
+                  <div className="order-info">
+                    <h4>{order.name}</h4>
+                    <p className="order-meta">Order #{order.id} • {order.date}</p>
+                  </div>
+                  <div className="order-right">
+                    <span className={`order-status ${order.status}`}>{order.status}</span>
+                    <span className="order-total">{order.total}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+          <div className="dashboard-card" id="notifications">
+            <div className="card-header">
+              <h2><FaBell /> Notifications</h2>
+            </div>
+            <div className="card-content">
+              {dashboardData.notifications.length > 0 ? (
+                dashboardData.notifications.map(notif => (
+                  <div key={notif.id} className={`notification-item ${notif.type}`}>
+                    <div className="notif-icon">
+                      {notif.type === 'success' && <FaCheckCircle />}
+                      {notif.type === 'warning' && <FaExclamationTriangle />}
+                      {notif.type === 'info' && <FaBell />}
+                    </div>
+                    <div className="notif-content">
+                      <p>{notif.message}</p>
+                      <span className="notif-time">{notif.time}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No notifications</p>
+              )}
+            </div>
+          </div>
+          <div className="dashboard-card" id="activity">
+            <div className="card-header">
+              <h2><FaChartLine /> Recent Activity</h2>
+            </div>
+            <div className="card-content activity-list">
+              {dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.map(activity => (
+                  <div key={activity.id} className="activity-item">
+                    <span className="activity-action">{activity.action}</span>
+                    <span className="activity-time">{activity.time}</span>
+                  </div>
+                ))
+              ) : (
+                <p>No recent activity</p>
+              )}
+            </div>
+          </div>
+        </div>
 
-          <div className="dashboard-grid" id="actions">
-            <div className="dashboard-card quick-actions">
-              <div className="card-header">
-                <h2>Quick Actions</h2>
-              </div>
-              <div className="card-content">
-                <div className="quick-actions-grid">
-                  {isStaff && (
-                    <>
-                      <Link to="/command-center" className="quick-action-btn">
-                        <FaTasks />
-                        <span>Manage Tasks</span>
-                      </Link>
-                      <Link to="/control-panel" className="quick-action-btn">
-                        <FaRobot />
-                        <span>Command Center</span>
-                      </Link>
-                    </>
-                  )}
-                  <Link to="/shop" className="quick-action-btn">
-                    <FaShoppingCart />
-                    <span>Browse Shop</span>
-                  </Link>
-                  {isPrivileged && (
-                    <Link to="/control-panel/users" className="quick-action-btn">
-                      <FaRobot />
-                      <span>Control Panel</span>
+        <div className="dashboard-grid" id="actions">
+          <div className="dashboard-card quick-actions">
+            <div className="card-header">
+              <h2>Quick Actions</h2>
+            </div>
+            <div className="card-content">
+              <div className="quick-actions-grid">
+                {isStaff && (
+                  <>
+                    <Link to="/command-center" className="quick-action-btn">
+                      <FaTasks />
+                      <span>Manage Tasks</span>
                     </Link>
-                  )}
-                </div>
+                    <Link to="/control-panel" className="quick-action-btn">
+                      <FaRobot />
+                      <span>Command Center</span>
+                    </Link>
+                  </>
+                )}
+                <Link to="/shop" className="quick-action-btn">
+                  <FaShoppingCart />
+                  <span>Browse Shop</span>
+                </Link>
+                {isPrivileged && (
+                  <Link to="/control-panel/users" className="quick-action-btn">
+                    <FaRobot />
+                    <span>Control Panel</span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

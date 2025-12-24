@@ -1,9 +1,10 @@
 // Control Panel Users - Live user management and profile viewing
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaUser, FaIdCard, FaShieldAlt, FaClock, FaTimes, FaDiscord, FaEnvelope, FaBan, FaBars } from 'react-icons/fa';
 import { getAllUsers } from '../../services/users';
 import { banUser, kickUser, timeoutUser } from '../../services/moderation';
 import { useUser } from '../../contexts/UserContext.jsx';
+import { useHeader } from '../../contexts/HeaderContext.jsx'; // Import useHeader
 import { useSelectedGuild } from '../../contexts/SelectedGuildContext.jsx';
 import { isPrivilegedStaff, getRoleLabel } from '../../utils/clearance';
 import Breadcrumbs from '../../components/elements/Breadcrumbs';
@@ -13,6 +14,7 @@ import './Users.css';
 
 function ControlPanelUsers() {
   const { userStatus, qftRole } = useUser();
+  const { setHeaderContent } = useHeader(); // Use setHeaderContent
   const { selectedGuildId } = useSelectedGuild();
   const token = localStorage.getItem('qft-token');
   
@@ -40,7 +42,7 @@ function ControlPanelUsers() {
       const userName = selectedUser.discord_username || selectedUser.username || 'Profile';
       return buildDetailBreadcrumbs('/control-panel/users', userName);
     }
-    return null; // Auto-generate from route
+    return [{ label: 'Control Panel', path: '/control-panel' }, { label: 'User Management', path: '/control-panel/users' }]; // Default breadcrumbs
   }, [activeView, selectedUser]);
   
   useModalLock(showMessageModal || showModerationModal);
@@ -55,11 +57,15 @@ function ControlPanelUsers() {
   const hasPrivilegedAccess = isPrivilegedStaff(qftRole);
   
   // Close sidebar on mobile when item clicked
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
-  };
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   useEffect(() => {
     loadUsers();
@@ -212,6 +218,95 @@ function ControlPanelUsers() {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  useEffect(() => {
+    setHeaderContent({
+      breadcrumbs: <Breadcrumbs items={breadcrumbItems} />,
+      title: (<h1><FaUser /> QFT Users</h1>),
+      subtitle: 'Search and view user profiles across the QFT Ecosystem',
+      actions: (
+        <>
+          {/* Search and Filters */}
+          <div className="header-actions">
+            <div className="header-search-group">
+              <input
+                type="text"
+                className="header-search-input"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button 
+                  className="clear-search-btn"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+            
+            <select 
+              className="header-filter-select"
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+              title="Search Type"
+            >
+              <option value="username">Username</option>
+              <option value="id">User ID</option>
+            </select>
+            
+            <select 
+              className="header-filter-select"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              title="Filter by Role"
+            >
+              <option value="all">All Users</option>
+              <option value="with-roles">With Roles</option>
+              <option value="no-roles">No Roles</option>
+            </select>
+            
+            <select 
+              className="header-filter-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              title="Sort By"
+            >
+              <option value="username">Username (A-Z)</option>
+              <option value="created">Recently Created</option>
+              <option value="updated">Recently Updated</option>
+            </select>
+          </div>
+          
+          {hasPrivilegedAccess && (
+            <div className="header-stats">
+              <div className="stat-item">
+                <span className="stat-value">{users.length}</span>
+                <span className="stat-label">Total Users</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{users.filter(u => u.roles && u.roles.length > 0).length}</span>
+                <span className="stat-label">With Roles</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Mobile Sidebar Toggle */}
+          <button 
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <FaBars />
+          </button>
+        </>
+      ),
+    });
+
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, breadcrumbItems, users, searchTerm, searchType, roleFilter, sortBy, hasPrivilegedAccess, toggleSidebar]);
+
   if (loading) {
     return (
       <div className="page-content">
@@ -225,94 +320,10 @@ function ControlPanelUsers() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header">
-        <Breadcrumbs items={breadcrumbItems} />
-        <div>
-          <h1><FaUser /> QFT Users</h1>
-          <p>Search and view user profiles across the QFT Ecosystem</p>
-        </div>
-        
-        {/* Search and Filters in Header */}
-        <div className="header-actions">
-          <div className="header-search-group">
-            <input
-              type="text"
-              className="header-search-input"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button 
-                className="clear-search-btn"
-                onClick={() => setSearchTerm('')}
-                title="Clear search"
-              >
-                <FaTimes />
-              </button>
-            )}
-          </div>
-          
-          <select 
-            className="header-filter-select"
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
-            title="Search Type"
-          >
-            <option value="username">Username</option>
-            <option value="id">User ID</option>
-          </select>
-          
-          <select 
-            className="header-filter-select"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            title="Filter by Role"
-          >
-            <option value="all">All Users</option>
-            <option value="with-roles">With Roles</option>
-            <option value="no-roles">No Roles</option>
-          </select>
-          
-          <select 
-            className="header-filter-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            title="Sort By"
-          >
-            <option value="username">Username (A-Z)</option>
-            <option value="created">Recently Created</option>
-            <option value="updated">Recently Updated</option>
-          </select>
-        </div>
-        
-        {hasPrivilegedAccess && (
-          <div className="header-stats">
-            <div className="stat-item">
-              <span className="stat-value">{users.length}</span>
-              <span className="stat-label">Total Users</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-value">{users.filter(u => u.roles && u.roles.length > 0).length}</span>
-              <span className="stat-label">With Roles</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Mobile Sidebar Toggle */}
-        <button 
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <FaBars />
-        </button>
-      </div>
-      
       {/* Sidebar Overlay */}
       <div 
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => closeSidebar()}
       />
 
       <div className="page-layout">

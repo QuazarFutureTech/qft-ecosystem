@@ -1,0 +1,28 @@
+.bot-management-layout {
+  display: flex;
+  height: 100%;
+}
+
+.bot-management-sidebar {
+  width: 280px;
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.bot-management-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .bot-management-layout {
+    flex-direction: column;
+  }
+  .bot-management-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}

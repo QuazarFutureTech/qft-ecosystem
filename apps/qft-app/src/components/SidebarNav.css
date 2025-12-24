@@ -1,0 +1,205 @@
+/* apps/qft-app/src/components/SidebarNav.css - Mobile First */
+
+/* Mobile Sidebar Styles */
+.page-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width); /* Mobile sidebar width */
+  max-width: 80vw; /* Prevent it from taking too much screen on very small devices */
+  height: 100vh;
+  max-height: 100vh;
+  background-color: var(--bg-secondary);
+  border-right: var(--border-width) solid var(--border-color); /* Add border for visual separation */
+  transform: translateX(-100%);
+  transition: transform var(--transition-base);
+  z-index: 2000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--spacing-xl); /* Adjust for sticky header height */
+}
+
+.page-sidebar.is-open {
+  transform: translateX(0);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1999;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--border-color);
+  position: absolute; /* Position relative to sidebar */
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-secondary); /* Ensure it has a background */
+  z-index: 2001; /* Above sidebar content */
+}
+
+.close-sidebar {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  transition: color var(--transition-fast);
+  min-width: 44px; /* Ensure tap target */
+  min-height: 44px; /* Ensure tap target */
+}
+
+.close-sidebar:hover {
+  color: var(--text-color);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+}
+
+.sidebar-section {
+  margin-bottom: var(--spacing-md); /* Use variable */
+  padding: 0 var(--spacing-sm); /* Use variable */
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section-title {
+  font-size: var(--font-size-xs); /* Use variable */
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xs) 4px; /* Use variable */
+  letter-spacing: 0.5px;
+  display: flex; /* Make it a flex container */
+  justify-content: space-between; /* Space out title and icon */
+  align-items: center; /* Vertically align items */
+  padding: var(--spacing-xxs) 0; /* Add some padding */
+  cursor: pointer; /* Indicate clickability */
+  transition: color var(--transition-fast);
+}
+
+.sidebar-section-title:hover {
+  color: var(--text-color); /* Darken text on hover */
+}
+
+.section-toggle-icon {
+  font-size: var(--font-size-sm); /* Adjust size of the toggle icon */
+  margin-left: var(--spacing-xs); /* Space between title and icon */
+}
+
+.sidebar-section-content {
+  max-height: 0; /* Hidden by default */
+  overflow: hidden;
+  transition: max-height 0.3s ease-out; /* Smooth transition */
+}
+
+.sidebar-section-content.is-open {
+  max-height: 1000px; /* Large enough value to show all content */
+  transition: max-height 0.5s ease-in; /* Adjust timing if needed */
+}
+
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  min-height: 44px; /* Larger tap target */
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+.nav-icon {
+  font-size: var(--font-size-lg);
+  width: 24px;
+  text-align: center;
+}
+
+.nav-label {
+  flex-grow: 1;
+  white-space: nowrap;
+}
+
+/* Mobile Sidebar Toggle Button - Shown on mobile, hidden on desktop */
+.sidebar-mobile-toggle {
+  position: fixed; /* Fixed position so it's always accessible */
+  top: var(--spacing-sm); /* Adjust based on header height */
+  left: var(--spacing-md);
+  background: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: var(--font-size-xl);
+  z-index: 1000; /* Above regular content, below sidebar overlay */
+  display: flex; /* Show on mobile */
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  min-width: 44px; /* Ensure tap target */
+  min-height: 44px; /* Ensure tap target */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-mobile-toggle:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+}
+
+
+/* Desktop Styles (min-width: var(--breakpoint-md)) */
+@media (min-width: var(--breakpoint-md)) {
+  .page-sidebar {
+    position: static; /* Static on desktop */
+    transform: translateX(0); /* Always visible */
+    box-shadow: none;
+    width: var(--desktop-sidebar-width); /* Desktop sidebar width */
+    flex-shrink: 0;
+    max-width: unset; /* Remove max-width restriction */
+    padding-top: var(--spacing-lg); /* Adjust padding for desktop sidebar */
+  }
+
+  .sidebar-overlay,
+  .sidebar-mobile-toggle, /* Hide mobile toggle on desktop */
+  .sidebar-header {
+    display: none; /* Hide mobile-specific elements */
+  }
+
+  .sidebar-nav-item {
+    color: var(--text-muted); /* Default color for desktop */
+  }
+}
