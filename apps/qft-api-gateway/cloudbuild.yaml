@@ -4,7 +4,7 @@ steps:
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA', '.']
     
     # ✅ ADD THIS LINE:
-    dir: 'apps/api-gateway'
+    dir: 'apps/qft-api-gateway'
     # (This tells Docker: "Look for the Dockerfile inside this folder, not the root")
 
   # 2. Push the Image...
