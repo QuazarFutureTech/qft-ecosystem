@@ -1,207 +1,47 @@
-/* BottomNav.css - Pill-style bottom navigation bar (Mobile-First) */
-
+/* apps/qft-app/src/components/BottomNav.css */
 .bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
   position: fixed;
-  bottom: var(--spacing-md);
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--bg-secondary); /* Assuming --bg-secondary-rgb is defined or will be */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius-lg); /* Larger border-radius for pill shape */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height, 60px);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-item {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-xxs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  z-index: 950;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
-  max-width: calc(100vw - var(--spacing-xl)); /* 100vw - 40px */
-  overflow-x: auto;
-  scrollbar-width: none;
-  transition: transform var(--transition-base), opacity var(--transition-base);
-}
-
-body.modal-open .bottom-nav {
-  transform: translateX(-50%) translateY(150%);
-  opacity: 0;
-}
-
-.bottom-nav.fade-in {
-  animation: fadeInBottom 0.5s 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
-}
-
-@keyframes fadeInBottom {
-  to {
-    opacity: 1;
-  }
-}
-
-.bottom-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.bottom-nav .nav-item {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
-  padding: 10px 14px; /* Using explicit px for fine-tuning */
+  flex-grow: 1;
   color: var(--text-muted);
   text-decoration: none;
-  border-radius: var(--border-radius-lg); /* Match parent or define specific */
-  transition: all var(--transition-fast);
-  min-width: 48px; /* Larger tap target */
-  min-height: 48px; /* Larger tap target */
-  cursor: pointer;
-  position: relative;
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) 0;
+  transition: color var(--transition-fast);
+}
+
+.nav-item svg {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.nav-item.active {
+  color: var(--accent-primary);
+}
+
+.nav-label {
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.bottom-nav .nav-item svg {
-  font-size: var(--font-size-xl);
-  transition: transform var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.bottom-nav .nav-item .nav-label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
-  transition: all var(--transition-fast);
-}
-
-.bottom-nav .nav-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-color);
-  transform: translateY(-2px);
-}
-
-.bottom-nav .nav-item:hover svg {
-  transform: scale(1.1);
-}
-
-.bottom-nav .nav-item.active {
-  color: var(--button-primary-text);
-  background: var(--accent-primary);
-  box-shadow: 0 4px 12px rgba(var(--accent-primary-shadow-rgb), 0.4);
-  padding: 10px var(--spacing-md); /* Adjusted padding */
-}
-
-.bottom-nav .nav-item.active .nav-label {
-  opacity: 1;
-  width: auto;
-  margin-left: var(--spacing-xxs);
-}
-
-.bottom-nav .nav-item.active svg {
-  transform: scale(1.05);
-}
-
-/* Small devices (sm) adjustments */
-@media (max-width: var(--breakpoint-sm)) { /* 640px */
-  .bottom-nav {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    border-radius: 0;
-    border: none;
-    border-top: var(--border-width) solid var(--border-color);
-    max-width: 100%;
-    width: 100%;
-    padding: var(--spacing-xxs) var(--spacing-xxs) max(var(--spacing-xxs), env(safe-area-inset-bottom));
-    justify-content: space-around;
-    gap: var(--spacing-xxs);
-    overflow-x: visible;
-  }
-
-  .bottom-nav .nav-item {
-    flex-direction: column;
-    gap: var(--spacing-xxs);
-    padding: var(--spacing-xxs);
-    min-width: 56px;
-    border-radius: var(--border-radius-sm);
-    flex: 1;
-    max-width: 80px;
-  }
-
-  .bottom-nav .nav-item .nav-label {
-    opacity: 0;
-    height: 0;
-    font-size: var(--font-size-xs);
-    margin-left: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    transition: all var(--transition-fast);
-  }
-
-  .bottom-nav .nav-item.active {
-    padding: var(--spacing-xxs);
-  }
-
-  .bottom-nav .nav-item.active .nav-label {
-    opacity: 1;
-    height: auto;
-  }
-
-  .bottom-nav .nav-item svg {
-    font-size: var(--font-size-xl);
-  }
-
-  .bottom-nav .nav-item:hover {
-    transform: none;
-  }
-}
-
-/* Medium devices (md) and up - Hide on desktop */
-@media (min-width: var(--breakpoint-md)) {
+@media (min-width: 769px) {
   .bottom-nav {
     display: none;
-  }
-}
-
-/* Specific adjustments for very small screens (keeping original intent) */
-@media (max-width: 480px) {
-  .bottom-nav {
-    padding: var(--spacing-xxs) var(--spacing-xxs) max(var(--spacing-xxs), env(safe-area-inset-bottom));
-  }
-
-  .bottom-nav .nav-item {
-    padding: var(--spacing-xxs) 1px;
-    min-width: 48px;
-    gap: 1px;
-  }
-
-  .bottom-nav .nav-item .nav-label {
-    font-size: 8px; /* Very small font for very small screens */
-  }
-
-  .bottom-nav .nav-item svg {
-    font-size: var(--font-size-lg);
-  }
-}
-
-/* Extra small screens (very old or small phones, keeping original intent) */
-@media (max-width: 360px) {
-  .bottom-nav .nav-item {
-    padding: 7px 1px;
-    min-width: 44px;
-  }
-
-  .bottom-nav .nav-item .nav-label {
-    font-size: 8px;
-  }
-
-  .bottom-nav .nav-item svg {
-    font-size: var(--font-size-base);
   }
 }

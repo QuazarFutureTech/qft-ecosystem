@@ -20,7 +20,7 @@ import {
   NAV_CONTEXT,
 } from '../../utils/navigationController';
 import { FaUsers, FaShieldAlt, FaRobot, FaDatabase, FaClipboardList, FaCubes, FaChartLine, FaCode, FaShieldAlt as FaAutomod, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVial, FaGavel, FaUserShield, FaHistory, FaBrain } from 'react-icons/fa';
-import '../../Layout.css';
+import './AdaptiveNavigation.css';
 
 // Icon map for both Control Panel sections and Bot modules
 const ICON_MAP = {
@@ -103,41 +103,39 @@ function AdaptiveNavigation({
   }, [navContext, activeId, onCloseSidebar]);
 
   return (
-    <aside className={`page-sidebar ${sidebarOpen ? 'open' : ''}`}>
-      <nav className="sidebar-nav">
-        {navigationItems.map((category, idx) => {
-          const key = category.modules ? 'modules' : 'sections';
-          const items = category[key];
+    <nav className="sidebar-nav">
+      {navigationItems.map((category, idx) => {
+        const key = category.modules ? 'modules' : 'sections';
+        const items = category[key];
 
-          return (
-            <CollapsibleCategory
-              key={category.title}
-              title={category.title}
-              defaultOpen={idx === 0}
-            >
-              {items.map(item => {
-                const IconComponent = item.icon;
-                const isActive = activeId === item.id;
+        return (
+          <CollapsibleCategory
+            key={category.title}
+            title={category.title}
+            defaultOpen={idx === 0}
+          >
+            {items.map(item => {
+              const IconComponent = item.icon;
+              const isActive = activeId === item.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => handleNavClick(item.id)}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <span className="nav-icon">
-                      {IconComponent && <IconComponent />}
-                    </span>
-                    <span className="nav-label">{item.label}</span>
-                  </button>
-                );
-              })}
-            </CollapsibleCategory>
-          );
-        })}
-      </nav>
-    </aside>
+              return (
+                <button
+                  key={item.id}
+                  className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavClick(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <span className="nav-icon">
+                    {IconComponent && <IconComponent />}
+                  </span>
+                  <span className="nav-label">{item.label}</span>
+                </button>
+              );
+            })}
+          </CollapsibleCategory>
+        );
+      })}
+    </nav>
   );
 }
 

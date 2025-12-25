@@ -1,5 +1,6 @@
 // UserProfileModal.jsx - Full user profile modal with sidebar
 import React, { useState } from 'react';
+import { useUser } from '../contexts/UserContext.jsx';
 import { 
   FaUser, FaPalette, FaLock, FaShieldAlt, FaCreditCard, FaPlug,
   FaTimes, FaDiscord, FaFacebook, FaGoogle, FaEnvelope, FaCircle,
@@ -15,6 +16,7 @@ import ReviewsModule from './modules/ReviewsModule';
 import Switch from './elements/Switch';
 
 function UserProfileModal({ isOpen, onClose, user, qftRole }) {
+  const { logout } = useUser();
   const { theme, setSpecificTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('account');
   const [showPassword, setShowPassword] = useState(false);
@@ -156,6 +158,9 @@ function UserProfileModal({ isOpen, onClose, user, qftRole }) {
 
               <button className="qft-button primary" onClick={handleSaveChanges}>
                 <FaSave /> Save Changes
+              </button>
+              <button className="qft-button logout-button" style={{ marginTop: '16px', background: '#f04747', color: 'white' }} onClick={logout}>
+                <FaLock style={{ marginRight: 6 }} /> Log Out
               </button>
             </div>
           </div>
@@ -683,6 +688,13 @@ function UserProfileModal({ isOpen, onClose, user, qftRole }) {
                   </button>
                 );
               })}
+              <button
+                className="profile-nav-item logout-button"
+                style={{ marginTop: '24px', background: '#f04747', color: 'white' }}
+                onClick={logout}
+              >
+                <FaLock style={{ marginRight: 6 }} /> Log Out
+              </button>
             </nav>
           </aside>
 

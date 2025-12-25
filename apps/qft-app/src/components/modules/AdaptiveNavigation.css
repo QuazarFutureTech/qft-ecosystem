@@ -1,0 +1,91 @@
+/* Styling for AdaptiveNavigation, used in SmartNav */
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+}
+
+.sidebar-section {
+  margin-bottom: var(--spacing-md);
+  padding: 0 var(--spacing-sm);
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section-title {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--spacing-xs) 4px;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xxs) 0;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.sidebar-section-title:hover {
+  color: var(--text-color);
+}
+
+.section-toggle-icon {
+  font-size: var(--font-size-sm);
+  margin-left: var(--spacing-xs);
+}
+
+.sidebar-section-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.sidebar-section-content.is-open {
+  max-height: 1000px;
+  transition: max-height 0.5s ease-in;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  min-height: 44px;
+  width: 100%; /* Ensure button takes full width */
+  border: none; /* Reset button border */
+  background: none; /* Reset button background */
+  text-align: left; /* Align text to the left */
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+.nav-icon {
+  font-size: var(--font-size-lg);
+  width: 24px;
+  text-align: center;
+}
+
+.nav-label {
+  flex-grow: 1;
+  white-space: nowrap;
+}

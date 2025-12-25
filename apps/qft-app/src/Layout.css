@@ -100,21 +100,48 @@ body {
 /* --- Global Layout --- */
 .app-layout {
   display: flex;
-  flex-direction: column; /* Mobile-first: stack vertically */
-  min-height: 100vh;
+  flex-direction: column;
+  height: 100vh;
   background: var(--bg-primary);
+  overflow: hidden; /* Prevent entire page from scrolling */
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* Prevent app-body from overflowing */
+  height: calc(100vh - var(--header-height)); /* Use variable */
 }
 
 .app-main {
   flex: 1;
-  overflow-y: auto; /* Allow main content to scroll */
-  padding-bottom: 80px; /* Space for floating bottom nav on mobile */
+  overflow-y: auto; /* Main content area scrolls */
   display: flex;
   flex-direction: column;
+  padding-bottom: 60px; /* Space for bottom nav on mobile, adjust if needed */
+}
+
+/* Mobile Sidebar Overlay (repurposed for Smart Nav) */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-base), visibility var(--transition-base);
+}
+
+.sidebar-overlay.visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Desktop adjustments for login screen */
-@media (min-width: var(--breakpoint-md)) {
+@media (min-width: 769px) {
   .login-screen {
     justify-content: center; /* Center vertically on desktop */
     padding: var(--spacing-xl);
@@ -132,16 +159,16 @@ body {
   .footer-links {
     margin-top: var(--spacing-lg);
   }
-}
 
-/* Medium screens and up (desktop-like layout) */
-@media (min-width: var(--breakpoint-md)) {
-  .app-layout {
-    flex-direction: row; /* Desktop: horizontal layout (sidebar + main) */
+  .app-body {
+    display: flex;
+    grid-template-columns: 60px 240px 1fr; /* Tabs | SmartNav | Main */
+    gap: 1px;
+    background-color: var(--border-color);
   }
-
+  /* Desktop layout for main app */
   .app-main {
-    padding-bottom: 0; /* No bottom nav on desktop, so no extra padding */
+    padding-bottom: 0; /* No bottom nav on desktop */
   }
 }
 
@@ -313,4 +340,28 @@ body {
 
 .qft-toggle input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* --- Chat System --- */
+.chat-message {
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.chat-message.edited .message-content::after {
+  content: " (edited)";
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-left: 0.5em;
+}
+
+.chat-message.deleted {
+  opacity: 0.6;
+  font-style: italic;
+  border: 1px dashed var(--border-color, #ccc);
+}
+
+.chat-message.pinned {
+  border-left: 3px solid var(--accent-primary);
+  background-color: rgba(255, 255, 255, 0.05);
 }

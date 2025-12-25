@@ -1,0 +1,5 @@
+/* Mock Header Styles */
+.user-bar {
+  border: 2px dashed red !important;
+  background-color: #ffcccc !important;
+}

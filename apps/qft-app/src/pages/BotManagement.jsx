@@ -22,27 +22,13 @@ import { FaCode, FaShieldAlt, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVi
 
 function BotManagement() {
   const { isLoadingUser, qftRole, userGuilds, userStatus } = useUser();
-  const { setHeaderContent } = useHeader(); // Use setHeaderContent
+  const { setHeaderContent, setSidebarContent, closeSidebar, toggleSidebar } = useHeader();
   const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const [activeModule, setActiveModule] = useState('commands');
-  
-  // Sidebar state for mobile
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Check for privileged staff access (α, Ω, 3, 2, 1)
   const hasAdminAccess = qftRole && ['α', 'Ω', '3', '2', '1'].includes(qftRole);
   
-  // Close sidebar on mobile when item clicked
-  const closeSidebar = useCallback(() => {
-    if (window.innerWidth <= 768) {
-      setSidebarOpen(false);
-    }
-  }, []);
-
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen(prev => !prev);
-  }, []);
-
   if (isLoadingUser) {
     return <QFTPreloader />;
   }
@@ -144,44 +130,39 @@ function BotManagement() {
     return () => setHeaderContent(null);
   }, [setHeaderContent, breadcrumbItems, userGuilds, selectedGuildId, setSelectedGuildId, toggleSidebar]);
   
-  
+  useEffect(() => {
+    setSidebarContent(
+      <nav className="sidebar-nav">
+        {moduleCategories.map((category, idx) => (
+          <CollapsibleCategory 
+            key={category.title} 
+            title={category.title}
+            defaultOpen={idx === 0}
+          >
+            {category.modules.map(module => {
+              const IconComponent = module.icon;
+              return (
+                <button
+                  key={module.id}
+                  className={`sidebar-nav-item ${activeModule === module.id ? 'active' : ''}`}
+                  onClick={() => { setActiveModule(module.id); closeSidebar(); }}
+                >
+                  <span className="nav-icon"><IconComponent /></span>
+                  <span className="nav-label">{module.label}</span>
+                </button>
+              );
+            })}
+          </CollapsibleCategory>
+        ))}
+      </nav>
+    );
+
+    return () => setSidebarContent(null);
+  }, [setSidebarContent, moduleCategories, activeModule, closeSidebar]);
 
   return (
     <div className="page-wrapper">
-      {/* Sidebar Overlay */}
-      <div 
-        className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
-        onClick={() => closeSidebar()}
-      />
-
       <div className="page-layout">
-
-        <aside className={`page-sidebar ${sidebarOpen ? 'open' : ''}`}>
-          <nav className="sidebar-nav">
-            {moduleCategories.map((category, idx) => (
-              <CollapsibleCategory 
-                key={category.title} 
-                title={category.title}
-                defaultOpen={idx === 0}
-              >
-                {category.modules.map(module => {
-                  const IconComponent = module.icon;
-                  return (
-                    <button
-                      key={module.id}
-                      className={`sidebar-nav-item ${activeModule === module.id ? 'active' : ''}`}
-                      onClick={() => { setActiveModule(module.id); closeSidebar(); }}
-                    >
-                      <span className="nav-icon"><IconComponent /></span>
-                      <span className="nav-label">{module.label}</span>
-                    </button>
-                  );
-                })}
-              </CollapsibleCategory>
-            ))}
-          </nav>
-        </aside>
-
         <main className="page-content">
           {ActiveComponent && <ActiveComponent />}
         </main>

@@ -1,19 +1,20 @@
-
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
-import { useHeader } from '../contexts/HeaderContext.jsx'; // Import useHeader
+import { useHeader } from '../contexts/HeaderContext.jsx';
+import { useSmartNav } from '../contexts/SmartNavContext.jsx';
 import { isPrivilegedStaff } from '../utils/clearance';
 import UserDetailView from '../components/modules/users/UserDetailView.jsx';
-import Breadcrumbs from '../components/elements/Breadcrumbs'; // Ensure Breadcrumbs is imported for local use before passing as prop
+import Breadcrumbs from '../components/elements/Breadcrumbs';
+import UsersSmartNav from './UsersSmartNav.jsx';
 
 function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUserSelect }) {
   const navigate = useNavigate();
   const { qftRole } = useUser();
-  const { setHeaderContent } = useHeader(); // Use setHeaderContent
+  const { setHeaderContent } = useHeader();
+  const { setSmartNavContent, closeSmartNav } = useSmartNav();
   const hasAccess = isPrivilegedStaff(qftRole);
 
-  // Live user data state
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,7 +33,6 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
         });
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
-        // Map API response to expected shape
         setUsers(data.map(u => ({
           qft_uuid: u.id,
           discord_username: u.name,
@@ -52,7 +52,6 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
     fetchUsers();
   }, []);
 
-
   const [internalSelectedUserId, setInternalSelectedUserId] = useState(null);
 
   useEffect(() => {
@@ -61,17 +60,10 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
     }
   }, [users, internalSelectedUserId]);
 
-  const activeUserId =
-    controlledUserId !== undefined ? controlledUserId : internalSelectedUserId;
+  const activeUserId = controlledUserId !== undefined ? controlledUserId : internalSelectedUserId;
+  const handleUserSelect = controlledOnUserSelect || setInternalSelectedUserId;
 
-  const handleUserSelect =
-    controlledOnUserSelect || setInternalSelectedUserId;
-
-
-  // Search state
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Filter users by search term (username)
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return users;
     const lower = searchTerm.toLowerCase();
@@ -80,45 +72,10 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
     );
   }, [users, searchTerm]);
 
-  const withRoles = filteredUsers.filter(u => u.roles && u.roles.length > 0);
-  const withoutRoles = filteredUsers.filter(u => !u.roles || u.roles.length === 0);
-
-
-  if (!hasAccess) {
-    return (
-      <div className="page-content">
-        <div className="qft-card">
-          <h2>Access Denied</h2>
-          <p>You need elevated permissions to access User Management.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="page-content">
-        <div className="qft-card">
-          <h2>Loading Users...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="page-content">
-        <div className="qft-card">
-          <h2>Error Loading Users</h2>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
+  const withRoles = useMemo(() => filteredUsers.filter(u => u.roles && u.roles.length > 0), [filteredUsers]);
+  const withoutRoles = useMemo(() => filteredUsers.filter(u => !u.roles || u.roles.length === 0), [filteredUsers]);
   const activeUser = users.find((u) => u.qft_uuid === activeUserId);
 
-  // Breadcrumbs logic
   const breadcrumbItems = useMemo(() => {
     const items = [
       { label: 'Control Panel', path: '/control-panel' },
@@ -130,149 +87,87 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
     return items;
   }, [activeUser]);
 
-  // Header logic
-  const headerTitle = activeUser
-    ? `User: ${activeUser.display_name || activeUser.discord_username}`
-    : 'User Management';
-  const headerDesc = activeUser
-    ? (
-        <>
-          <span style={{ fontWeight: 500 }}>Discord ID:</span> {activeUser.discord_id}<br />
-          <span style={{ fontWeight: 500 }}>Username:</span> {activeUser.discord_username}
-        </>
-      )
-    : 'Manage users, roles, and moderation.';
+  const headerTitle = activeUser ? `User: ${activeUser.display_name || activeUser.discord_username}` : 'User Management';
+  const headerDesc = activeUser ? (
+    <>
+      <span style={{ fontWeight: 500 }}>Discord ID:</span> {activeUser.discord_id}<br />
+      <span style={{ fontWeight: 500 }}>Username:</span> {activeUser.discord_username}
+    </>
+  ) : 'Manage users, roles, and moderation.';
 
   useEffect(() => {
+    if (!hasAccess) return;
     setHeaderContent({
       title: headerTitle,
-      subtitle: headerDesc,
       breadcrumbs: <Breadcrumbs items={breadcrumbItems} navigate={navigate} />,
     });
-
     return () => setHeaderContent(null);
-  }, [setHeaderContent, headerTitle, headerDesc, breadcrumbItems, navigate]);
+  }, [setHeaderContent, headerTitle, breadcrumbItems, navigate, hasAccess]);
 
+  useEffect(() => {
+    setSmartNavContent(
+      <UsersSmartNav
+        activeUser={activeUser}
+        activeUserId={activeUserId}
+        handleUserSelect={handleUserSelect}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        withRoles={withRoles}
+        withoutRoles={withoutRoles}
+        onClose={closeSmartNav}
+      />
+    );
+    return () => setSmartNavContent(null);
+  }, [setSmartNavContent, activeUser, activeUserId, handleUserSelect, searchTerm, withRoles, withoutRoles, closeSmartNav]);
+
+
+  if (!hasAccess) {
+    return <div className="qft-card"><h2>Access Denied</h2><p>You need elevated permissions to access User Management.</p></div>;
+  }
+  if (loading) {
+    return <div className="qft-card"><h2>Loading Users...</h2></div>;
+  }
+  if (error) {
+    return <div className="qft-card"><h2>Error Loading Users</h2><p>{error}</p></div>;
+  }
 
   return (
     <>
-      <div className="page-layout">
-        {/* Sidebar */}
-        <aside className="page-sidebar">
-          <nav className="sidebar-nav">
-            {!activeUser && (
-              <>
-                {/* Search */}
-                <div className="sidebar-search">
-                  <input
-                    id="user-search"
-                    type="text"
-                    className="sidebar-search-input"
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                {/* WITH ROLES */}
-                <div className="sidebar-section">
-                  <div className="sidebar-section-title">With Roles</div>
-                  {withRoles.length === 0 ? (
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 13, padding: '8px 0 8px 8px' }}>No users found.</div>
-                  ) : withRoles.map(user => (
-                    <button
-                      key={user.qft_uuid}
-                      className={`sidebar-nav-item${activeUserId === user.qft_uuid ? ' active' : ''}`}
-                      onClick={() => handleUserSelect(user.qft_uuid)}
-                      aria-current={activeUserId === user.qft_uuid ? 'page' : undefined}
-                    >
-                      <span className="nav-icon">
-                        <img src={user.discord_avatar_url} alt={user.discord_username} className="avatar-sm" style={{ borderRadius: '50%', width: 24, height: 24 }} />
-                      </span>
-                      <span className="nav-label">{user.discord_username}</span>
-                    </button>
-                  ))}
-                </div>
-                {/* NO ROLES */}
-                <div className="sidebar-section">
-                  <div className="sidebar-section-title">No Roles</div>
-                  {withoutRoles.length === 0 ? (
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 13, padding: '8px 0 8px 8px' }}>No users found.</div>
-                  ) : withoutRoles.map(user => (
-                    <button
-                      key={user.qft_uuid}
-                      className={`sidebar-nav-item${activeUserId === user.qft_uuid ? ' active' : ''}`}
-                      onClick={() => handleUserSelect(user.qft_uuid)}
-                      aria-current={activeUserId === user.qft_uuid ? 'page' : undefined}
-                    >
-                      <span className="nav-icon">
-                        <img src={user.discord_avatar_url} alt={user.discord_username} className="avatar-sm" style={{ borderRadius: '50%', width: 24, height: 24 }} />
-                      </span>
-                      <span className="nav-label">{user.discord_username}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            {activeUser && (
-              <>
-                <button
-                  className="sidebar-nav-item"
-                  style={{ marginBottom: 16 }}
-                  onClick={() => handleUserSelect(null)}
-                >
-                  <span className="nav-icon">&larr;</span>
-                  <span className="nav-label">Back to User List</span>
-                </button>
-                <div className="sidebar-section" style={{ marginTop: 24 }}>
-                  <div className="sidebar-section-title">Actions</div>
-                  <button className="sidebar-nav-item">Moderation</button>
-                  <button className="sidebar-nav-item">Role Management</button>
-                  {/* TODO: Add more user-specific actions here */}
-                </div>
-              </>
-            )}
-          </nav>
-        </aside>
-        {/* Main Content */}
-        <section className="page-content" style={{ flex: 1, minWidth: 0 }}>
-          {!activeUser && (
-            <div className="qft-card" style={{ marginTop: 32 }}>
-              <h3>Select a user to view details</h3>
-              <p>Choose a user from the list to view their details, manage roles, and perform moderation actions.</p>
-            </div>
-          )}
-          {activeUser && (
-            <div className="qft-card" style={{ marginTop: 32, padding: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-                <img
-                  src={activeUser.discord_avatar_url}
-                  alt={activeUser.display_name || activeUser.discord_username}
-                  className="avatar-lg"
-                  style={{ borderRadius: '50%', width: 64, height: 64, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-                />
-                <div>
-                  <div style={{ fontSize: 22, fontWeight: 700 }}>{activeUser.display_name || activeUser.discord_username}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-                    @{activeUser.discord_username} &bull; <span style={{ fontFamily: 'monospace' }}>{activeUser.discord_id}</span>
-                  </div>
-                </div>
+      {!activeUser && (
+        <div className="qft-card" style={{ marginTop: 32 }}>
+          <h3>Select a user to view details</h3>
+          <p>Choose a user from the list to view their details, manage roles, and perform moderation actions.</p>
+        </div>
+      )}
+      {activeUser && (
+        <div className="qft-card" style={{ marginTop: 32, padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+            <img
+              src={activeUser.discord_avatar_url}
+              alt={activeUser.display_name || activeUser.discord_username}
+              className="avatar-lg"
+              style={{ borderRadius: '50%', width: 64, height: 64, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            />
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{activeUser.display_name || activeUser.discord_username}</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
+                @{activeUser.discord_username} &bull; <span style={{ fontFamily: 'monospace' }}>{activeUser.discord_id}</span>
               </div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-                <button className="qft-btn">Send Message</button>
-                <button className="qft-btn">Moderation</button>
-                <button className="qft-btn">View Logs</button>
-                <button className="qft-btn">More...</button>
-              </div>
-              {/* UserDetailView can still be rendered for detailed info */}
-              <UserDetailView
-                user={activeUser}
-                onBack={() => handleUserSelect(null)}
-                onUserUpdate={() => {}}
-              />
             </div>
-          )}
-        </section>
-      </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+            <button className="qft-btn">Send Message</button>
+            <button className="qft-btn">Moderation</button>
+            <button className="qft-btn">View Logs</button>
+            <button className="qft-btn">More...</button>
+          </div>
+          <UserDetailView
+            user={activeUser}
+            onBack={() => handleUserSelect(null)}
+            onUserUpdate={() => {}}
+          />
+        </div>
+      )}
     </>
   );
 }

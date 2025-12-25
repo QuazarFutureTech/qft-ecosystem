@@ -1,31 +1,131 @@
 /* Header.css - User bar at top (Mobile-First) */
 
 .user-bar {
-  background-color: var(--bg-secondary); /* Assuming --bg-secondary-rgb is defined or will be */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text-color);
+  background-color: var(--bg-secondary);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md); /* Mobile compact padding */
+  flex-direction: column; /* Stack rows vertically */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all var(--transition-base);
   position: sticky;
   top: 0;
   z-index: 999;
   border-bottom: var(--border-width) solid var(--border-color);
-  min-height: 56px; /* Ensure sufficient tap target */
+  height: auto; /* Let content define height */
+  transition: all 0.3s ease-in-out;
+  padding: var(--spacing-md);
+}
+
+.user-bar-top-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 var(--spacing-md);
+  height: var(--header-height);
+  width: 100%;
 }
 
 .user-bar-left {
-  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  justify-content: flex-start;
+}
+
+.user-bar-center {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-bar-right {
-  flex: 1;
   display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
+}
+
+.notification-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  position: relative;
+  padding: var(--spacing-xs);
+  transition: color var(--transition-fast);
+}
+
+.notification-button:hover {
+  color: var(--text-color);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--danger-color);
+  color: #fff;
+  border-radius: 50%;
+  font-size: var(--font-size-xs);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.header-collapse-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  transition: color var(--transition-fast);
+}
+.header-collapse-toggle:hover {
+  color: var(--text-color);
+}
+
+.user-bar-bottom-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+  max-height: 100px; /* Adjust as needed */
+  overflow: hidden;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: var(--border-width) solid var(--border-color);
+  opacity: 1;
+}
+
+.user-bar.is-collapsed .user-bar-bottom-row {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top: none;
+  opacity: 0;
+}
+
+
+
+.header-sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  padding: var(--spacing-xxs);
+  transition: all var(--transition-fast);
+  display: flex; /* Always display on mobile */
+  align-items: center;
+  justify-content: center;
+  min-width: 44px; /* Ensure tap target */
+  min-height: 44px; /* Ensure tap target */
+}
+
+.header-sidebar-toggle:hover {
+  color: var(--accent-primary);
 }
 
 .app-logo {
@@ -91,17 +191,65 @@
   font-size: var(--font-size-sm);
   display: none; /* Hidden on mobile by default */
 }
-
-/* Desktop adjustments */
-@media (min-width: var(--breakpoint-md)) {
+/*Mobile adjustments*/
+@media (max-width: 768px) {
   .user-bar {
-    padding: var(--spacing-md) var(--spacing-lg); /* More spacious desktop padding */
+    padding: 0 var(--spacing-xs); /* Slightly reduced padding on mobile */
+    display:flex;
+    flex-direction: column;
+  }
+  .user-bar-right {
+    gap: var(--spacing-xs); /* Reduced gap on mobile */
+    justify-content: flex-end;
+    padding: var(--spacing-sm);
+  }
+  .user-bar-top-row {
+    padding: 0; /* Reduced horizontal padding on mobile */
+  }
+  .user-bar-left
+  { 
+    display: flex;
+    padding: 0px; /* Reduced horizontal padding on mobile */
+    gap: 0px; /* Reduced gap on mobile */
+  }
+  h1.header-title {
+    font-size: var(--font-size-sm); /* Smaller title on mobile */
+  }
+  .app-logo {
+    font-size: 0; /* Slightly smaller logo on mobile */
+  }
+
+  .username-label {
+    display: none; /* Hide username on mobile */
+  }
+
+  .profile-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    justify-content: center;
+    padding: var(--spacing-xxs) var(--spacing-xs); /* More compact padding on mobile */
+  }
+  
+}
+/* Desktop adjustments */
+@media (min-width: 769px) {
+  .user-bar {
+    padding: 0 var(--spacing-lg); /* More spacious desktop padding */
+  }
+
+  .header-sidebar-toggle {
+    display: none; /* Hide toggle button on desktop */
   }
 
   .app-logo {
     font-size: var(--font-size-xxl); /* Larger font for desktop */
   }
-
+  h1.header-title {
+    font-size: var(--font-size-lg); /* Smaller title on mobile */
+  }
   .username-label {
     display: block; /* Show on desktop */
   }

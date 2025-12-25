@@ -37,16 +37,6 @@ function BottomNav() {
         <span className="nav-label">Shop</span>
       </NavLink>
       
-      <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Notifications">
-        <FaBell />
-        <span className="nav-label">Notifications</span>
-      </NavLink>
-
-      <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Profile">
-        <FaUserCircle />
-        <span className="nav-label">Profile</span>
-      </NavLink>
-      
       {isStaff && (
         <NavLink to="/command-center" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')} title="Command Center">
           <FaTasks />

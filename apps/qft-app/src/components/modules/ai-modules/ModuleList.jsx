@@ -6,9 +6,11 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../../contexts/UserContext';
+import { useSelectedGuild } from '../../../contexts/SelectedGuildContext';
 import { FaCode, FaShieldAlt, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVial, FaGavel, FaUserShield, FaHistory, FaRobot, FaTicketAlt, FaArrowLeft } from 'react-icons/fa';
 import CollapsibleCategory from '../../elements/CollapsibleCategory';
-import '../../../Layout.css';
+import '../AdaptiveNavigation.css';
 
 // Module definitions with categorization
 const DISCORD_MODULE_CATEGORIES = [
@@ -52,60 +54,81 @@ const PLATFORM_MODULE_LISTS = {
   youtube: []
 };
 
-function ModuleList({ platform, activeModule, sidebarOpen, onCloseSidebar, onModuleSelect }) {
+function ModuleList({ platform, activeModule, onCloseSidebar, onModuleSelect }) {
   const navigate = useNavigate();
+  const { userGuilds } = useUser();
+  const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const moduleCategories = PLATFORM_MODULE_LISTS[platform] || [];
 
   return (
-    <aside className={`page-sidebar ${sidebarOpen ? 'open' : ''}`}>
-      <nav className="sidebar-nav">
-        {/* Back to platform grid button */}
-        <button
-          className="sidebar-nav-item"
-          onClick={() => {
-            navigate(`/control-panel/ai-modules/${platform}`);
-            onCloseSidebar();
-          }}
-          style={{ 
-            marginBottom: '10px', 
-            borderBottom: '1px solid var(--color-border)',
-            paddingBottom: '10px'
-          }}
+    <nav className="sidebar-nav">
+      {/* Back to platform grid button */}
+      <button
+        className="sidebar-nav-item"
+        onClick={() => {
+          navigate(`/control-panel/ai-modules/${platform}`);
+          onCloseSidebar();
+        }}
+        style={{ 
+          marginBottom: '10px', 
+          borderBottom: '1px solid var(--border-color)',
+          paddingBottom: '10px'
+        }}
+      >
+        <span className="nav-icon">
+          <FaArrowLeft />
+        </span>
+        <span className="nav-label">Back to Modules</span>
+      </button>
+
+      {/* Server Selector */}
+      <div className="sidebar-section" style={{ padding: '10px' }}>
+        <label htmlFor="guild-selector" style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          Server
+        </label>
+        <select
+          id="guild-selector"
+          className="qft-input"
+          value={selectedGuildId || ''}
+          onChange={(e) => setSelectedGuildId(e.target.value)}
+          style={{ width: '100%' }}
         >
-          <span className="nav-icon">
-            <FaArrowLeft />
-          </span>
-          <span className="nav-label">Back to Modules</span>
-        </button>
+          <option value="" disabled>Select a Server</option>
+          {userGuilds.map(guild => (
+            <option key={guild.id} value={guild.id}>
+              {guild.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {moduleCategories.map((category, idx) => (
-          <CollapsibleCategory
-            key={category.title}
-            title={category.title}
-            defaultOpen={idx === 0}
-          >
-            {category.modules.map((module) => {
-              const IconComponent = module.icon;
-              const isActive = activeModule === module.id;
+      {moduleCategories.map((category, idx) => (
+        <CollapsibleCategory
+          key={category.title}
+          title={category.title}
+          defaultOpen={idx === 0}
+        >
+          {category.modules.map((module) => {
+            const IconComponent = module.icon;
+            const isActive = activeModule === module.id;
 
-              return (
-                <button
-                  key={module.id}
-                  className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => onModuleSelect(module.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <span className="nav-icon">
-                    <IconComponent />
-                  </span>
-                  <span className="nav-label">{module.label}</span>
-                </button>
-              );
-            })}
-          </CollapsibleCategory>
-        ))}
-      </nav>
-    </aside>
+            return (
+              <button
+                key={module.id}
+                className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={() => onModuleSelect(module.id)}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className="nav-icon">
+                  <IconComponent />
+                </span>
+                <span className="nav-label">{module.label}</span>
+              </button>
+            );
+          })}
+        </CollapsibleCategory>
+      ))}
+    </nav>
   );
 }
 

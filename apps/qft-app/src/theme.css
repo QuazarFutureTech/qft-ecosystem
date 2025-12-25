@@ -72,6 +72,7 @@
   --border-width: 1px;
 
   /* Layout */
+  --header-height: 68px;
   --sidebar-width: 280px;
   --desktop-sidebar-width: 240px;
 
@@ -204,8 +205,36 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body.modal-open {
+}
+
+html, body {
   overflow: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Minimal, interactive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-secondary) transparent;
+}
+
+/* For Webkit browsers */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--accent-secondary);
+  border-radius: 20px;
+  /* border: 3px solid transparent; */
 }

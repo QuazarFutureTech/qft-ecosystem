@@ -178,6 +178,35 @@ const syncDatabaseProduction = async () => {
       CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id);
     `);
 
+    // ===== CHAT MESSAGES TABLE (Channels & DMs) =====
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        room_id TEXT NOT NULL, -- e.g., 'channel:general' or 'dm:user1-user2'
+        author_qft_uuid UUID NOT NULL REFERENCES users(qft_uuid),
+        content TEXT NOT NULL,
+        attachments JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_author ON chat_messages(author_qft_uuid);
+    `);
+
+    await client.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='updated_at') THEN
+          ALTER TABLE chat_messages ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='deleted_at') THEN
+          ALTER TABLE chat_messages ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='is_pinned') THEN
+          ALTER TABLE chat_messages ADD COLUMN is_pinned BOOLEAN DEFAULT false;
+        END IF;
+      END $$;
+    `);
+
     // ===== LOGS TABLE =====
     await client.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (

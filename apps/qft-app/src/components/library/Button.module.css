@@ -1,0 +1,95 @@
+/* apps/qft-app/src/components/library/Button.module.css */
+
+.button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-speed-fast), 
+              color var(--transition-speed-fast), 
+              border-color var(--transition-speed-fast),
+              box-shadow var(--transition-speed-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  line-height: 1; /* Ensure consistent height */
+}
+
+/* Variants */
+.primary {
+  background-color: var(--color-primary);
+  color: var(--color-surface); /* White text on primary background */
+  border-color: var(--color-primary);
+}
+
+.primary:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 90%, black); /* Slightly darker on hover */
+  border-color: color-mix(in srgb, var(--color-primary) 90%, black);
+}
+
+.secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-surface);
+  border-color: var(--color-secondary);
+}
+
+.secondary:hover {
+  background-color: color-mix(in srgb, var(--color-secondary) 90%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 90%, black);
+}
+
+.accent {
+  background-color: var(--color-accent);
+  color: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+.accent:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 90%, black);
+  border-color: color-mix(in srgb, var(--color-accent) 90%, black);
+}
+
+.ghost {
+  background-color: transparent;
+  color: var(--color-text-default);
+  border-color: var(--color-border);
+}
+
+.ghost:hover {
+  background-color: var(--color-border);
+  color: var(--color-primary);
+}
+
+/* Sizes */
+.small {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.medium {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+}
+
+.large {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-md);
+  border-radius: var(--border-radius-md);
+}
+
+/* Disabled state */
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: saturate(0.5); /* Desaturate for disabled look */
+}
+
+/* Focus state */
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

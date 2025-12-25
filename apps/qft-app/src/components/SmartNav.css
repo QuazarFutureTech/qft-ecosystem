@@ -1,0 +1,14 @@
+/* apps/qft-app/src/components/SmartNav.css */
+.smart-nav {
+  display: none; /* Hidden on mobile */
+  width: 240px;
+  background-color: var(--bg-secondary);
+  overflow-y: auto;
+  height: 100%;
+}
+
+@media (min-width: 769px) { /* Desktop */
+  .smart-nav {
+    display: block;
+  }
+}

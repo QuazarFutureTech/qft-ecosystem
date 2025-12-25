@@ -2,38 +2,28 @@
 
 /* Mobile Sidebar Styles */
 .page-sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar-width); /* Mobile sidebar width */
-  max-width: 80vw; /* Prevent it from taking too much screen on very small devices */
-  height: 100vh;
-  max-height: 100vh;
-  background-color: var(--bg-secondary);
-  border-right: var(--border-width) solid var(--border-color); /* Add border for visual separation */
-  transform: translateX(-100%);
-  transition: transform var(--transition-base);
-  z-index: 2000;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  padding-top: var(--spacing-xl); /* Adjust for sticky header height */
+position: fixed;
+    overflow: auto;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    max-width: 80vw;
+    height: 100vh;
+    max-height: 100vh;
+    background-color: var(--bg-secondary);
+    border-right: var(--border-width) solid var(--border-color);
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--spacing-xl);
 }
 
 .page-sidebar.is-open {
   transform: translateX(0);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1999;
 }
 
 .sidebar-header {
@@ -153,53 +143,9 @@
   white-space: nowrap;
 }
 
-/* Mobile Sidebar Toggle Button - Shown on mobile, hidden on desktop */
-.sidebar-mobile-toggle {
-  position: fixed; /* Fixed position so it's always accessible */
-  top: var(--spacing-sm); /* Adjust based on header height */
-  left: var(--spacing-md);
-  background: var(--bg-secondary);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-sm);
-  cursor: pointer;
-  color: var(--text-color);
-  font-size: var(--font-size-xl);
-  z-index: 1000; /* Above regular content, below sidebar overlay */
-  display: flex; /* Show on mobile */
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  min-width: 44px; /* Ensure tap target */
-  min-height: 44px; /* Ensure tap target */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-mobile-toggle:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--accent-primary);
-}
-
-
 /* Desktop Styles (min-width: var(--breakpoint-md)) */
-@media (min-width: var(--breakpoint-md)) {
+@media (min-width: 769px) {
   .page-sidebar {
-    position: static; /* Static on desktop */
-    transform: translateX(0); /* Always visible */
-    box-shadow: none;
-    width: var(--desktop-sidebar-width); /* Desktop sidebar width */
-    flex-shrink: 0;
-    max-width: unset; /* Remove max-width restriction */
-    padding-top: var(--spacing-lg); /* Adjust padding for desktop sidebar */
-  }
-
-  .sidebar-overlay,
-  .sidebar-mobile-toggle, /* Hide mobile toggle on desktop */
-  .sidebar-header {
-    display: none; /* Hide mobile-specific elements */
-  }
-
-  .sidebar-nav-item {
-    color: var(--text-muted); /* Default color for desktop */
+    display: none;
   }
 }

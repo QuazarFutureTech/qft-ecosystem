@@ -7,10 +7,14 @@ console.log("🔥 Starting DB sync...");
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require("socket.io");
 const db = require('./src/db');
 const { syncDatabaseProduction } = require('./src/db/migrations');
 const authenticateToken = require('./src/middleware/auth');
 const app = express();
+const server = http.createServer(app);
+
 const PORT = process.env.PORT || 3001;
 
 // Handle unhandled promise rejections
@@ -21,26 +25,41 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // --- Middleware Setup ---
 const allowedOrigins = [
-  'http://localhost:5173', 
-  process.env.FRONTEND_URL // We will set this in Cloud Run later
-];
+    'http://localhost:5173',
+    'http://0.0.0.0:5173',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL // We will set this in Cloud Run later
+].filter(Boolean); // Filter out undefined/null values
+
 app.use(express.json()); // Body parser
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      // If the origin isn't in the list, allow it anyway ONLY if we haven't set a production URL yet
-      if (!process.env.FRONTEND_URL) return callback(null, true);
-      
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, true);
   },
-  credentials: true // Crucial for passing cookies/headers if needed
+  credentials: true
 }));
 
+// --- Socket.IO Setup ---
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ["GET", "POST"]
+  }
+});
+
+// Initialize Chat Service
+const initializeChat = require('./src/services/chatService');
+initializeChat(io);
 
 
 // --- QFT Config ---
@@ -639,12 +658,22 @@ try {
 } catch (err) {
     console.error('❌ Failed to load moderation routes:', err.message);
 }
+
+// --- Ticket Routes ---
+try {
+    const ticketRoutes = require('./src/routes/tickets');
+    app.use('/api/v1', ticketRoutes);
+    console.log('✅ Ticket routes loaded');
+} catch (err) {
+    console.error('❌ Failed to load ticket routes:', err.message);
+}
+
 // ... (Keep all your routes above) ...
 
 // --- FAIL-SAFE SERVER STARTUP ---
 // 1. Start listening IMMEDIATELY so Cloud Run knows we are alive.
 //    Crucial: Listen on '0.0.0.0' for Docker/Cloud Run binding.
-const server = app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 QFT API Gateway LISTENING on port ${PORT}`);
     console.log(`⏳ Waiting for Database Connection...`);
 });

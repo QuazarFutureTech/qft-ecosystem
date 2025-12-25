@@ -101,6 +101,26 @@ const listTickets = async (guildId, status = null, limit = 50, offset = 0) => {
   return result.rows;
 };
 
+// List tickets for guild for a specific user
+const listTicketsForUser = async (guildId, userDiscordId, status = null, limit = 50, offset = 0) => {
+  let query = `
+    SELECT * FROM tickets
+    WHERE guild_id = $1 AND user_discord_id = $2
+  `;
+  const params = [guildId, userDiscordId];
+
+  if (status) {
+    query += ` AND status = $3`;
+    params.push(status);
+  }
+
+  query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2};`;
+  params.push(limit, offset);
+
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
 // Close ticket
 const closeTicket = async (ticketId, threadId) => {
   // Call Agent to close Discord thread
@@ -209,6 +229,7 @@ module.exports = {
   createTicket,
   getTicket,
   listTickets,
+  listTicketsForUser,
   closeTicket,
   addTicketMessage,
   getTranscript,

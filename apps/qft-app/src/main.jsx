@@ -17,11 +17,13 @@ import './assets/css/theme-cyber.css';
 import './assets/css/theme-holographic.css';
 import './assets/css/buttons.css';
 import './assets/css/forms.css';
-import './assets/css/page-layout.css';
 import './Layout.css';
 import { UserProvider, useUser } from './contexts/UserContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { SelectedGuildProvider } from './contexts/SelectedGuildContext.jsx';
+import { HeaderProvider } from './contexts/HeaderContext.jsx'; // Import HeaderProvider
+import { SmartNavProvider } from './contexts/SmartNavContext.jsx';
+import { ChatProvider } from './contexts/ChatContext.jsx';
 import { enrichUserStatus, fetchUserStatus, fetchUserGuilds } from './services/user';
 import { sendRpcActivity } from './services/discord'; // Import sendRpcActivity
 import QFTPreloader from './components/QFTPreloader';
@@ -134,7 +136,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route element={<ErrorBoundary><Layout /></ErrorBoundary>}>
+      <Route element={<HeaderProvider><ErrorBoundary><Layout /></ErrorBoundary></HeaderProvider>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/chat" element={<Chat />} />
@@ -146,6 +148,13 @@ function AppContent() {
         <Route path="/control-panel/users" element={<ControlPanel />} />
         <Route path="/control-panel/users/:userId" element={<ControlPanel />} />
         <Route path="/control-panel/permissions" element={<ControlPanel />} />
+        <Route path="/control-panel/analytics" element={<ControlPanel />} />
+        <Route path="/control-panel/logs" element={<ControlPanel />} />
+        <Route path="/control-panel/registry" element={<ControlPanel />} />
+        <Route path="/control-panel/module-manager" element={<ControlPanel />} />
+        <Route path="/control-panel/database" element={<ControlPanel />} />
+        <Route path="/control-panel/tools" element={<ControlPanel />} />
+        <Route path="/control-panel/bot-control" element={<ControlPanel />} />
         <Route path="/control-panel/ai-modules" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform/:module" element={<AiModules />} />
@@ -158,9 +167,13 @@ function AppContent() {
 function App() {
   return (
     <UserProvider>
-      <SelectedGuildProvider>
-        <AppContent />
-      </SelectedGuildProvider>
+      <ChatProvider>
+        <SelectedGuildProvider>
+          <SmartNavProvider>
+            <AppContent />
+          </SmartNavProvider>
+        </SelectedGuildProvider>
+      </ChatProvider>
     </UserProvider>
   );
 }

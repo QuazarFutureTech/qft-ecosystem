@@ -1,0 +1,105 @@
+/* src/pages/Chat.css */
+
+.chat-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-primary);
+}
+
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column-reverse; /* To keep scroll at the bottom */
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Existing chat post card styles can be kept or tweaked */
+.chat-post-card {
+  position: relative;
+}
+
+.chat-post-card:hover .post-actions {
+  opacity: 1;
+}
+
+.post-actions {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  display: flex;
+  gap: var(--spacing-xs);
+  background-color: var(--bg-tertiary);
+  padding: 4px;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  color: var(--danger-color);
+}
+
+.chat-input-container {
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-input-bar {
+    display: flex;
+    align-items: center;
+    /* gap: var(--spacing-sm); */
+    background-color: var(--bg-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xs);
+    justify-content: center;
+    flex-direction: row;
+}
+
+.chat-message-input {
+flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    /* padding: var(--spacing-sm); */
+    font-size: var(--font-size-base);
+}
+
+.chat-message-input:focus {
+  outline: none;
+}
+
+.attachment-button,
+.send-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 50%;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.attachment-button:hover,
+.send-button:hover {
+  color: var(--text-color);
+  background-color: var(--bg-primary);
+}
