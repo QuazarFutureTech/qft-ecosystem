@@ -44,7 +44,7 @@ export const STAFF_ROLES = [
 
 // Helper functions for clearance checks
 export const isPrivilegedStaff = (clearanceLevel) => {
-  return PRIVILEGED_LEVELS.includes(clearanceLevel);
+  return PRIVILEGED_LEVELS.includes(clearanceLevel) || clearanceLevel === 'alpha_owner';
 };
 
 // Check if user is QFT staff (hired employee, not client/affiliate)
