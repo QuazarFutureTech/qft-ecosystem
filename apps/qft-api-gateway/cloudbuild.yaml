@@ -2,16 +2,31 @@ steps:
   # 1. Build the Container Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA', '.']
-    
-    # ✅ ADD THIS LINE:
-    dir: 'apps/qft-api-gateway'
-    # (This tells Docker: "Look for the Dockerfile inside this folder, not the root")
+    dir: 'apps/qft-api-gateway'  # 👈 CRITICAL: Isolates the build to this folder
 
-  # 2. Push the Image...
+  # 2. Push the Image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA']
-    # (You don't strictly need 'dir' here, but it doesn't hurt)
 
-  # 3. Deploy to Cloud Run...
+  # 3. Deploy to Cloud Run (The part you were missing)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'api-gateway'                  # Name of your Cloud Run service
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA'
+      - '--region'
+      - 'us-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+# Define the images to be stored
+images:
+  - 'gcr.io/$PROJECT_ID/api-gateway:$COMMIT_SHA'
+
+# Fixes the "Bucket" error
 options:
   logging: CLOUD_LOGGING_ONLY
