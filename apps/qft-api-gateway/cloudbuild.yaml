@@ -13,4 +13,5 @@ steps:
     # (You don't strictly need 'dir' here, but it doesn't hurt)
 
   # 3. Deploy to Cloud Run...
-  # (No changes needed here)
+options:
+  logging: CLOUD_LOGGING_ONLY
