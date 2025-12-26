@@ -10,11 +10,18 @@ const TicketManager = require('./modules/tickets'); // Import TicketManager
 const BackupService = require('./services/backupService'); // Import BackupService
 
 // --- BOT + API CONFIG ---
-const BOT_API_PORT = 3002;
+const BOT_API_PORT = process.env.PORT || 3002;
 const botApp = express();
 botApp.use(express.json());
 
 const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET || 'dev_secret';
+
+// --- CLOUD RUN HEALTH CHECK ---
+// Google needs this specific route to know the bot is alive.
+botApp.get('/', (req, res) => {
+    res.status(200).send('QFT Agent is Online! 🤖');
+});
+// -----------------------------
 
 // Middleware to secure the bot's local API (only API Gateway can call it)
 const internalAuth = (req, res, next) => {
