@@ -29,21 +29,22 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
       
       if (response.ok) {
         const data = await response.json();
-        const newRole = data.qft_role;
+        let newRole = data.qft_role;
         const newRoleName = data.role_name;
         const newAllRoles = data.all_roles || [];
-        
+        // Automatically grant alpha_owner if is_owner is true
+        if (data.is_owner === true) {
+          newRole = 'alpha_owner';
+        }
         // Only update if role has changed
         if (newRole !== qftRole || newRoleName !== roleName) {
           console.log(`🔄 Role changed: ${roleName || 'None'} (${qftRole}) → ${newRoleName || 'Client'} (${newRole})`);
           setQftRole(newRole);
           setRoleName(newRoleName);
           setAllRoles(newAllRoles);
-          
           // If user lost all staff roles, redirect away from privileged pages
           const hadStaffAccess = roleName && ['Owner', 'Admin', 'Executive', 'Management', 'Security', 'IT Staff', 'Staff'].includes(roleName);
           const hasStaffAccess = newRoleName && ['Owner', 'Admin', 'Executive', 'Management', 'Security', 'IT Staff', 'Staff'].includes(newRoleName);
-          
           if (hadStaffAccess && !hasStaffAccess) {
             const currentPath = window.location.pathname;
             const privilegedPaths = ['/control-panel', '/bot-management', '/command-center'];
