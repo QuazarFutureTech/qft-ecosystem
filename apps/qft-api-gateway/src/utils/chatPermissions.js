@@ -1,5 +1,6 @@
+// apps/api-gateway/src/utils/chatPermissions.js
 
-export const CHAT_ROLES = {
+const CHAT_ROLES = {
   OWNER: 'owner',
   ADMIN: 'admin',
   MODERATOR: 'moderator',
@@ -7,7 +8,7 @@ export const CHAT_ROLES = {
   GUEST: 'guest'
 };
 
-export const CHAT_ACTIONS = {
+const CHAT_ACTIONS = {
   SEND_MESSAGE: 'send_message',
   EDIT_OWN_MESSAGE: 'edit_own_message',
   EDIT_ANY_MESSAGE: 'edit_any_message',
@@ -49,15 +50,15 @@ const ROLE_PERMISSIONS = {
   ]
 };
 
-// This maps the roles from your database (or other system) to the chat roles.
-// The keys are the roles from `socket.user.roles`
+// Map system roles to chat roles
 const SYSTEM_ROLE_MAP = {
-    'Owner': CHAT_ROLES.OWNER,
-    'Admin': CHAT_ROLES.ADMIN,
-    'staff': CHAT_ROLES.MODERATOR, // from `deleteMessage` code
-    'Staff': CHAT_ROLES.MODERATOR,
+    'alpha_owner': CHAT_ROLES.OWNER,  // Matches your God Mode role
+    'owner': CHAT_ROLES.OWNER,
+    'admin': CHAT_ROLES.ADMIN,
+    'staff': CHAT_ROLES.MODERATOR,
     'moderator': CHAT_ROLES.MODERATOR,
     'member': CHAT_ROLES.MEMBER,
+    'level_0_standard': CHAT_ROLES.MEMBER
 };
 
 const CHAT_ROLE_HIERARCHY = [
@@ -74,14 +75,14 @@ const CHAT_ROLE_HIERARCHY = [
  * @returns {string} The highest CHAT_ROLES value.
  */
 function getHighestChatRole(systemRoles) {
-    if (!systemRoles || !Array.isArray(systemRoles)) {
-        return CHAT_ROLES.GUEST;
-    }
+    if (!systemRoles) return CHAT_ROLES.GUEST;
+    
+    // Convert single string role to array if needed (handles your qft_role string)
+    const rolesToCheck = Array.isArray(systemRoles) ? systemRoles : [systemRoles];
 
     for (const role of CHAT_ROLE_HIERARCHY) {
-        // Check if any of the user's system roles map to this chat role level
-        if (systemRoles.some(systemRole => SYSTEM_ROLE_MAP[systemRole] === role)) {
-            return role; // Return the first one found, which is the highest
+        if (rolesToCheck.some(systemRole => SYSTEM_ROLE_MAP[systemRole] === role)) {
+            return role;
         }
     }
 
@@ -94,12 +95,20 @@ function getHighestChatRole(systemRoles) {
  * @param {string} action - The CHAT_ACTIONS key.
  * @returns {boolean} - True if permitted, false otherwise.
  */
-export function checkPermission(user, action) {
+function checkPermission(user, action) {
   if (!user) return false;
 
-  const userHighestRole = getHighestChatRole(user.roles);
+  // Handles both array of roles (from JWT) or single qft_role (from DB)
+  const roles = user.roles || user.qft_role;
+  const userHighestRole = getHighestChatRole(roles);
 
   const permissions = ROLE_PERMISSIONS[userHighestRole] || [];
   return permissions.includes(action);
 }
 
+// ✅ THE FIX: Use module.exports instead of export const
+module.exports = {
+    CHAT_ROLES,
+    CHAT_ACTIONS,
+    checkPermission
+};
