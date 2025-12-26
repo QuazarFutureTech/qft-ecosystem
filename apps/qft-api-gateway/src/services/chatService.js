@@ -1,12 +1,19 @@
 // apps/qft-api-gateway/src/services/chatService.js
 const db = require('../db');
+const { createClient } = require('redis');
+const { createAdapter } = require('@socket.io/redis-adapter');
 const { checkPermission, CHAT_ACTIONS } = require('../utils/chatPermissions');
 
-// In-memory store for users in each room.
-// For a scalable application, consider using a distributed store like Redis.
-const roomUsers = {};
+// Redis client for distributed chat state
+const redisClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.connect().then(() => console.log('✅ Redis client connected')).catch(console.error);
 
 const initializeChat = (io) => {
+  // Configure Socket.IO to use the Redis adapter
+  io.adapter(createAdapter(redisClient, redisClient.duplicate()));
+
   // Middleware for authenticating socket connections
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
@@ -47,8 +54,18 @@ const initializeChat = (io) => {
       }
 
       socket.user = userResult.rows[0]; // Attach user data to the socket object
+      socket.qftUuid = socket.user.qft_uuid; // Store qftUuid directly on socket for easy access
       socket.joinedRooms = new Set(); // Keep track of rooms the user has joined
-      console.log('Socket Auth: User authenticated:', socket.user.username);
+
+      // Store user's details in Redis Hash for quick lookup by qftUuid
+      await redisClient.hSet(`user:${socket.qftUuid}`, {
+        qft_uuid: socket.user.qft_uuid,
+        discord_id: socket.user.discord_id,
+        username: socket.user.username,
+        roles: JSON.stringify(socket.user.roles || []), // Store roles as JSON string
+      });
+
+      console.log('Socket Auth: User authenticated and data stored in Redis:', socket.user.username);
       next();
     } catch (err) {
       console.error('Socket auth middleware error:', err);
@@ -59,8 +76,28 @@ const initializeChat = (io) => {
   io.on('connection', (socket) => {
     console.log(`✅ User connected: ${socket.user.username} (Socket ID: ${socket.id})`);
 
-    const broadcastUserList = (roomId) => {
-      const usersInRoom = roomUsers[roomId] ? Array.from(roomUsers[roomId].values()) : [];
+    const broadcastUserList = async (roomId) => {
+      const userQftUuidsInRoom = await redisClient.sMembers(`room:${roomId}:users`);
+      const usersInRoom = [];
+
+      for (const qftUuid of userQftUuidsInRoom) {
+        const userData = await redisClient.hGetAll(`user:${qftUuid}`);
+        if (Object.keys(userData).length > 0) {
+          // Parse roles back from JSON string
+          if (userData.roles) {
+            try {
+              userData.roles = JSON.parse(userData.roles);
+            } catch (e) {
+              console.error(`Error parsing roles for user ${qftUuid}:`, e);
+              userData.roles = []; // Default to empty array on error
+            }
+          } else {
+            userData.roles = [];
+          }
+          usersInRoom.push(userData);
+        }
+      }
+
       io.to(roomId).emit('userListUpdate', { roomId, users: usersInRoom });
       console.log(`Broadcasting user list for room ${roomId}:`, usersInRoom.map(u => u.username));
     };
@@ -100,13 +137,11 @@ const initializeChat = (io) => {
       socket.join(roomId);
       socket.joinedRooms.add(roomId);
 
-      if (!roomUsers[roomId]) {
-        roomUsers[roomId] = new Map();
-      }
-      roomUsers[roomId].set(socket.user.qft_uuid, socket.user);
+      // Add user's qft_uuid to the Redis Set for this room
+      await redisClient.sAdd(`room:${roomId}:users`, socket.qftUuid);
 
       console.log(`${socket.user.username} joined room: ${roomId}`);
-      broadcastUserList(roomId);
+      broadcastUserList(roomId); // This will now fetch from Redis
       await fetchAndEmitHistory(socket, roomId);
     });
 
@@ -115,7 +150,7 @@ const initializeChat = (io) => {
         return socket.emit('error', { message: 'Target user ID is required.' });
       }
 
-      const members = [socket.user.qft_uuid, targetUserId].sort();
+      const members = [socket.qftUuid, targetUserId].sort(); // Use socket.qftUuid
       const roomId = `dm:${members[0]}:${members[1]}`;
 
       const targetUserResult = await db.query('SELECT * FROM users WHERE qft_uuid = $1', [targetUserId]);
@@ -126,27 +161,28 @@ const initializeChat = (io) => {
       socket.join(roomId);
       socket.joinedRooms.add(roomId);
       
+      // Add both users' qft_uuids to the Redis Set for this DM room
+      await redisClient.sAdd(`room:${roomId}:users`, socket.qftUuid);
+      await redisClient.sAdd(`room:${roomId}:users`, targetUserId);
+
       console.log(`${socket.user.username} initiated DM with room ID: ${roomId}`);
       
       // Let the client know the DM room is ready
       socket.emit('dm-room-created', { roomId, targetUser: targetUserResult.rows[0] });
 
+      broadcastUserList(roomId); // Broadcast user list for DM room
       await fetchAndEmitHistory(socket, roomId);
     });
 
-    socket.on('leaveRoom', (roomId) => {
+    socket.on('leaveRoom', async (roomId) => {
       socket.leave(roomId);
       socket.joinedRooms.delete(roomId);
 
-      if (roomUsers[roomId]) {
-        roomUsers[roomId].delete(socket.user.qft_uuid);
-        if (roomUsers[roomId].size === 0) {
-          delete roomUsers[roomId];
-        }
-      }
-
+      // Remove user's qft_uuid from the Redis Set for this room
+      await redisClient.sRem(`room:${roomId}:users`, socket.qftUuid);
+      
       console.log(`${socket.user.username} left room: ${roomId}`);
-      broadcastUserList(roomId);
+      broadcastUserList(roomId); // This will now fetch from Redis
     });
 
     socket.on('chat message', async ({ roomId, content }) => {
@@ -343,16 +379,19 @@ const initializeChat = (io) => {
         }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       console.log(`❌ User disconnected: ${socket.user.username} (Socket ID: ${socket.id})`);
+
+      // Remove user's details from Redis Hash
+      await redisClient.del(`user:${socket.qftUuid}`);
+
+      // Remove user from all room sets they were part of
       for (const roomId of socket.joinedRooms) {
-        if (roomUsers[roomId]) {
-          roomUsers[roomId].delete(socket.user.qft_uuid);
-          if (roomUsers[roomId].size === 0) {
-            delete roomUsers[roomId];
-          }
-          broadcastUserList(roomId);
-        }
+        await redisClient.sRem(`room:${roomId}:users`, socket.qftUuid);
+        // We still need to broadcast user list updates for all affected rooms
+        // to ensure other clients see the user leave.
+        // This will be handled by the updated broadcastUserList.
+        broadcastUserList(roomId);
       }
     });
 

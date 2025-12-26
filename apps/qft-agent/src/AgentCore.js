@@ -14,7 +14,11 @@ const BOT_API_PORT = process.env.PORT || 3002;
 const botApp = express();
 botApp.use(express.json());
 
-const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET || 'dev_secret';
+const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET;
+if (!INTERNAL_SECRET) {
+    console.error('CRITICAL ERROR: INTERNAL_BOT_SECRET is not defined. Please set this environment variable for secure internal API communication.');
+    process.exit(1); // Exit the process with an error code
+}
 
 // --- CLOUD RUN HEALTH CHECK ---
 // Google needs this specific route to know the bot is alive.
@@ -253,6 +257,29 @@ botApp.delete('/api/guilds/:guildId/scheduled-embeds/:jobId', internalAuth, asyn
     } catch (error) {
         console.error('Error removing scheduled embed:', error);
         res.status(500).json({ success: false, message: 'Failed to remove scheduled embed.' });
+    }
+});
+
+// Get all guilds the bot is a member of
+botApp.get('/api/guilds', internalAuth, async (req, res) => {
+    const discordAdapterInstance = PlatformManager.adapters.get('discord');
+
+    if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
+        return res.status(503).json({ message: 'Discord bot client not ready.' });
+    }
+
+    try {
+        const guilds = discordAdapterInstance.getGuildsCache().map(guild => ({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            memberCount: guild.memberCount,
+            ownerId: guild.ownerId,
+        }));
+        res.json(guilds);
+    } catch (error) {
+        console.error('Error fetching all bot guilds:', error);
+        res.status(500).json({ message: 'Failed to fetch bot guilds due to an internal bot error.' });
     }
 });
 

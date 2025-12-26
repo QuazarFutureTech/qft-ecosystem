@@ -18,6 +18,30 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
   const [isLoadingUser, setIsLoadingUser] = useState(true); // Loading state for user data
 
   // Function to refresh user permissions in real-time
+  // Function to fetch bot guilds
+  const fetchBotGuilds = useCallback(async () => {
+    const token = localStorage.getItem('qft-token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/discord/guilds`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserGuilds(data);
+        console.log('✅ Fetched bot guilds:', data.length);
+      } else {
+        console.error('Failed to fetch bot guilds:', response.status);
+        setUserGuilds([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bot guilds:', error);
+      setUserGuilds([]);
+    }
+  }, []); // Empty dependency array as it only depends on API_URL and localStorage
+
   const refreshUserPermissions = useCallback(async () => {
     const token = localStorage.getItem('qft-token');
     if (!token || !userStatus) return;
@@ -63,16 +87,21 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
     }
   }, [userStatus, qftRole, roleName, navigate]);
 
-  // Auto-refresh permissions every 30 seconds
+  // Fetch bot guilds and auto-refresh permissions when user is authenticated
   useEffect(() => {
-    if (!userStatus) return;
+    const token = localStorage.getItem('qft-token');
+    if (!userStatus || !token) return;
 
+    // Fetch bot guilds once on login/refresh
+    fetchBotGuilds();
+
+    // Auto-refresh permissions every 30 seconds
     const interval = setInterval(() => {
       refreshUserPermissions();
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [userStatus, refreshUserPermissions]);
+  }, [userStatus, refreshUserPermissions, fetchBotGuilds]);
 
   const logout = () => { // Defined logout function internally
     localStorage.removeItem('qft-token');

@@ -1,6 +1,8 @@
 import React, { useEffect, useCallback } from 'react'; // Added useCallback
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useSearchParams, useNavigate, Navigate } from 'react-router-dom';
+import Legal from './pages/Legal';
+import SLA from './pages/SLA';
 import Login from './Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Chat from './pages/Chat.jsx'; // Renamed from Feed
@@ -158,6 +160,8 @@ function AppContent() {
         <Route path="/control-panel/ai-modules" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform" element={<AiModules />} />
         <Route path="/control-panel/ai-modules/:platform/:module" element={<AiModules />} />
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/sla" element={<SLA />} />
         <Route path="/bot-management" element={<Navigate to="/control-panel" replace />} />
       </Route>
     </Routes>

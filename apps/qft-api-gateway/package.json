@@ -4,7 +4,7 @@
   "description": "QFT Microservices API Gateway (Express/Node.js)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",     
+    "start": "node index.js",
     "dev": "nodemon index.js"
   },
   "dependencies": {
@@ -14,7 +14,9 @@
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "pg": "^8.11.3",
+    "redis": "^5.10.0",
     "socket.io": "^4.7.2",
+    "socket.io-redis": "^5.4.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

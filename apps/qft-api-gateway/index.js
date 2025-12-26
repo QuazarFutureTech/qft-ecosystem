@@ -224,6 +224,11 @@ try {
 const adminRoutes = require('./src/routes/admin');
 app.use('/api/v1/admin', adminRoutes);
 
+try {
+    const registryRoutes = require('./src/routes/registry');
+    app.use('/api/v1/registry', registryRoutes);
+} catch (err) { console.error('Route Error: Failed to mount registry routes:', err.message); }
+
 // ... (Keep other route imports) ...
 
 // ✅ FIX 5: CRITICAL - SERVER LISTEN
