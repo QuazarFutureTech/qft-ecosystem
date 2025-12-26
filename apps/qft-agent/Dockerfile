@@ -11,5 +11,10 @@ RUN npm install --production
 # Copy the rest of the bot code
 COPY . .
 
-# Start the bot
-CMD ["node", "AgentCore.js"]
+# Expose the correct port
+ENV PORT=3002
+EXPOSE 3002
+
+# ✅ THE FIX: Use npm start
+# This reads your package.json and runs "node src/AgentCore.js" automatically.
+CMD ["npm", "start"]
