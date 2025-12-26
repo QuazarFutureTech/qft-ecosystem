@@ -211,6 +211,12 @@ app.get('/api/v1/user/status', authenticateToken, async (req, res) => {
 const internalRoutes = require('./src/routes/internal');
 app.use('/api/internal', internalRoutes);
 
+// Mounting registry routes earlier to avoid potential conflicts
+try {
+    const registryRoutes = require('./src/routes/registry');
+    app.use('/api/v1/registry', registryRoutes);
+} catch (err) { console.error('Route Error: Failed to mount registry routes:', err.message); }
+
 try {
     const productionRoutes = require('./src/routes/production');
     app.use('/api/v1', productionRoutes);
@@ -223,11 +229,6 @@ try {
 
 const adminRoutes = require('./src/routes/admin');
 app.use('/api/v1/admin', adminRoutes);
-
-try {
-    const registryRoutes = require('./src/routes/registry');
-    app.use('/api/v1/registry', registryRoutes);
-} catch (err) { console.error('Route Error: Failed to mount registry routes:', err.message); }
 
 // ... (Keep other route imports) ...
 
