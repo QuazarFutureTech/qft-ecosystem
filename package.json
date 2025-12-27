@@ -7,8 +7,9 @@
     "apps/qft-agent"
   ],
   "scripts": {
+    "dev": "concurrently \"npm run dev --workspace qft-app\" \"npm run dev --workspace qft-api-gateway\" \"npm run dev --workspace qft-agent\"",
     "landing": "http-server apps/qft-landing -p 8000 -a 0.0.0.0",
-    "start:dev": "concurrently \"npm run dev --workspace qft-app\" \"npm run start --workspace qft-api-gateway\" \"npm run start --workspace qft-agent\" \"npm run landing\""
+    "start": "concurrently \"npm run dev --workspace qft-app\" \"npm run start --workspace qft-api-gateway\" \"npm run start --workspace qft-agent\" \"npm run landing\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

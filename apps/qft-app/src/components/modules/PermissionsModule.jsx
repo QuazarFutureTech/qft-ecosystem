@@ -107,21 +107,11 @@ function PermissionsModule() {
 
   return (
     <div className="permissions-module">
-      <div className="permissions-header">
-        <div>
-          <h2><FaShieldAlt /> Permissions & Roles</h2>
-          <p className="permissions-subtitle">Manage role-level access; user management now lives in Control Panel</p>
-        </div>
-      </div>
-
       <div className="permissions-layout">
         {/* Left Sidebar - Role/User List */}
         <div className="permissions-sidebar">
           <div className="sidebar-header">
             <h3>Roles</h3>
-            <button className="qft-button secondary small" disabled title="Role creation coming soon">
-              + New Role
-            </button>
           </div>
           <div className="sidebar-list">
             {roles.map(role => (
@@ -206,6 +196,9 @@ function PermissionsModule() {
               )}
 
               <div className="permissions-footer">
+                <button className="qft-button secondary" disabled title="Role creation coming soon">
+                  + New Role
+                </button>
                 <button className="qft-button secondary" onClick={() => loadRolePermissions(selectedRole.id)}>Reset to Current</button>
                 <button className="qft-button primary" onClick={handleSavePermissions} disabled={saving}>
                   {saving ? 'Saving...' : 'Save Changes'}

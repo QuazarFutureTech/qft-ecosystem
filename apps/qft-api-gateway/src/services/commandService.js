@@ -1,17 +1,7 @@
 // qft-api-gateway/src/services/commandService.js
 // Custom command engine with YAGPDB-style template system
 
-const { Pool } = require('pg');
-const vm = require('vm');
-const TemplateEngine = require('./templateEngine');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // ===== PSEUDO-LANG PARSER =====
 // Simple GoLang-inspired syntax parser for custom commands
@@ -191,7 +181,7 @@ const createCommand = async (guildId, commandName, commandCode, authorDiscordId,
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     guildId, commandName, commandCode, authorDiscordId, description,
     triggerType, triggerOnEdit, caseSensitive, responseType, responseInDM,
     deleteTrigger, deleteResponse, cooldownSeconds,
@@ -238,7 +228,7 @@ const getCommand = async (guildId, commandName) => {
     SELECT * FROM custom_commands
     WHERE guild_id = $1 AND LOWER(command_name) = LOWER($2) AND is_active = true AND enabled = true;
   `;
-  const result = await pool.query(query, [guildId, commandName]);
+  const result = await db.query(query, [guildId, commandName]);
   return result.rows[0] || null;
 };
 
@@ -249,7 +239,7 @@ const getCommandsByTrigger = async (guildId, triggerType) => {
     WHERE guild_id = $1 AND trigger_type = $2 AND is_active = true AND enabled = true
     ORDER BY created_at ASC;
   `;
-  const result = await pool.query(query, [guildId, triggerType]);
+  const result = await db.query(query, [guildId, triggerType]);
   return result.rows;
 };
 
@@ -306,7 +296,7 @@ const updateExecutionStats = async (commandId) => {
     SET execution_count = execution_count + 1, last_executed_at = CURRENT_TIMESTAMP
     WHERE id = $1;
   `;
-  await pool.query(query, [commandId]);
+  await db.query(query, [commandId]);
 };
 
 // List all commands for a guild
@@ -321,7 +311,7 @@ const listCommands = async (guildId) => {
     WHERE guild_id = $1 AND is_active = true
     ORDER BY created_at DESC;
   `;
-  const result = await pool.query(query, [guildId]);
+  const result = await db.query(query, [guildId]);
   return result.rows;
 };
 
@@ -366,7 +356,7 @@ const updateCommand = async (commandId, commandCode, description, options = {}) 
     WHERE id = $17
     RETURNING *;
   `;
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     commandCode, 
     description, 
     triggerType,
@@ -396,7 +386,7 @@ const deleteCommand = async (commandId) => {
     WHERE id = $1
     RETURNING *;
   `;
-  const result = await pool.query(query, [commandId]);
+  const result = await db.query(query, [commandId]);
   return result.rows[0];
 };
 
@@ -413,7 +403,60 @@ const importYAGPDBCommand = async (guildId, yagpdbJson, authorDiscordId) => {
   return createCommand(guildId, name, commandCode, authorDiscordId, `[YAGPDB] ${description || ''}`);
 };
 
-module.exports = { // Keep for backward compatibility
+const refreshCustomCommands = async (guildId) => {
+  // 1. Fetch all active custom commands from the database for the given guildId
+  const activeCommands = await listCommands(guildId); // Reusing listCommands
+
+  // 2. Format these commands into the Discord API format for slash commands
+  const discordCommands = activeCommands.map(cmd => {
+    // Basic structure for a Discord Slash Command
+    // This will need to be adapted based on how your bot expects commands
+    // and what options/subcommands you support.
+    // For now, a simple chat input command.
+    return {
+      name: cmd.command_name.toLowerCase(), // Discord command names must be lowercase
+      description: cmd.description || `Custom command for ${cmd.command_name}`,
+      type: 1, // CHAT_INPUT type
+      options: [], // Add options if your custom commands support them
+      // ephemeral and other settings are handled by the bot's execution logic,
+      // not directly by Discord command registration itself
+    };
+  });
+
+  // 3. Make a POST request to an internal endpoint on the qft-agent (bot)
+  //    passing the guildId and the formatted commands, authenticated with INTERNAL_BOT_SECRET.
+  const botApiUrl = process.env.BOT_API_URL;
+  const internalBotSecret = process.env.INTERNAL_BOT_SECRET;
+
+  if (!botApiUrl || !internalBotSecret) {
+    throw new Error('BOT_API_URL or INTERNAL_BOT_SECRET not configured in API Gateway environment.');
+  }
+
+  try {
+    const response = await fetch(`${botApiUrl}/api/refresh-custom-commands`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${internalBotSecret}`, // Use internal secret for auth
+      },
+      body: JSON.stringify({ guildId, commands: discordCommands }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Bot internal API error: ${response.status} - ${errorData.message || response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error('Error refreshing custom commands on bot:', error);
+    throw new Error(`Failed to communicate with bot for command refresh: ${error.message}`);
+  }
+};
+
+module.exports = {
+  // Keep for backward compatibility
   CommandSandbox, // Keep for backward compatibility
   createCommand,
   executeCommand,
@@ -424,5 +467,7 @@ module.exports = { // Keep for backward compatibility
   listCommands,
   updateCommand,
   deleteCommand,
+
   importYAGPDBCommand,
+  refreshCustomCommands,
 };

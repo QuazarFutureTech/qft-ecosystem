@@ -1,17 +1,7 @@
 // qft-api-gateway/src/services/backupService.js
 // Server backup and restore with config export/import
 
-const { Pool } = require('pg');
-const crypto = require('crypto');
-const fetch = require('node-fetch');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 const AGENT_API_URL = process.env.AGENT_API_URL || 'http://localhost:3002';
 const INTERNAL_BOT_SECRET = process.env.INTERNAL_BOT_SECRET || 'dev_secret';
@@ -52,7 +42,7 @@ const createBackup = async (guildId, client, createdByDiscordId, isAutomated = f
     const backupName = `backup_${new Date().toISOString().split('T')[0]}_${isAutomated ? 'auto' : 'manual'}`;
     const backupSize = JSON.stringify(backupData).length;
 
-    const result = await pool.query(query, [guildId, backupName, JSON.stringify(backupData), configHash, backupSize, createdByDiscordId, isAutomated]);
+    const result = await db.query(query, [guildId, backupName, JSON.stringify(backupData), configHash, backupSize, createdByDiscordId, isAutomated]);
 
     return { success: true, backup: result.rows[0] };
   } catch (error) {
@@ -70,7 +60,7 @@ const listBackups = async (guildId, limit = 20, offset = 0) => {
     ORDER BY created_at DESC
     LIMIT $2 OFFSET $3;
   `;
-  const result = await pool.query(query, [guildId, limit, offset]);
+  const result = await db.query(query, [guildId, limit, offset]);
   return result.rows;
 };
 
@@ -79,7 +69,7 @@ const getBackup = async (backupId) => {
   const query = `
     SELECT * FROM server_backups WHERE id = $1;
   `;
-  const result = await pool.query(query, [backupId]);
+  const result = await db.query(query, [backupId]);
   return result.rows[0] || null;
 };
 

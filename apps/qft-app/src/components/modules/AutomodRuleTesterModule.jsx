@@ -16,7 +16,8 @@ export default function AutomodRuleTesterModule() {
     
     // Fetch current automod config
     const token = localStorage.getItem('qft-token');
-    const res = await fetch(`http://localhost:3001/api/v1/guilds/${selectedGuildId}/config`, {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const res = await fetch(`${API_URL}/api/v1/guilds/${selectedGuildId}/config`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(r => r.json());
 

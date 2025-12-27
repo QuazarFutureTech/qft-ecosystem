@@ -168,13 +168,17 @@ function AppContent() {
   );
 }
 
+import { ModuleProvider } from './contexts/ModuleContext.jsx';
+// ...
 function App() {
   return (
     <UserProvider>
       <ChatProvider>
         <SelectedGuildProvider>
           <SmartNavProvider>
-            <AppContent />
+            <ModuleProvider>
+              <AppContent />
+            </ModuleProvider>
           </SmartNavProvider>
         </SelectedGuildProvider>
       </ChatProvider>

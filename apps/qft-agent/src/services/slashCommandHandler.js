@@ -13,36 +13,35 @@ class SlashCommandHandler {
   }
 
   // Register all slash commands for a guild
-  async registerSlashCommands(guildId) {
+  async registerSlashCommands(guildId, commands) {
     try {
-      const response = await fetch(`${this.apiUrl}/api/internal/commands?guildId=${guildId}&triggerType=slash`, {
-        headers: {
-          'x-internal-secret': this.internalSecret
-        }
-      });
-      const data = await response.json();
-      
-      if (!data.success || !data.commands || data.commands.length === 0) {
-        console.log(`No slash commands to register for guild ${guildId}`);
+      if (!commands || commands.length === 0) {
+        console.log(`No slash commands provided to register for guild ${guildId}`);
+        // If no commands are provided, we should clear existing commands if that's the intent,
+        // or just return if the intent is only to register new ones.
+        // For now, let's assume if no commands are provided, we don't do anything or clear them.
+        // Clearing commands: await rest.put(Routes.applicationGuildCommands(this.client.user.id, guildId), { body: [] });
         return;
       }
 
-      const commands = data.commands.map(cmd => ({
-        name: cmd.command_name.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+      const discordCommands = commands.map(cmd => ({
+        name: cmd.name.toLowerCase().replace(/[^a-z0-9_-]/g, ''), // Ensure Discord-compliant naming
         description: cmd.description || 'Custom command',
-        options: this.parseCommandOptions(cmd.command_code)
+        type: cmd.type || 1, // Default to CHAT_INPUT
+        options: cmd.options || [] // Assume options are already correctly formatted by API Gateway
       }));
 
       const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
       
       await rest.put(
         Routes.applicationGuildCommands(this.client.user.id, guildId),
-        { body: commands }
+        { body: discordCommands }
       );
 
-      console.log(`✅ Registered ${commands.length} slash commands for guild ${guildId}`);
+      console.log(`✅ Registered ${discordCommands.length} slash commands for guild ${guildId}`);
     } catch (error) {
       console.error(`Error registering slash commands for guild ${guildId}:`, error);
+      throw error; // Re-throw to be caught by the calling function
     }
   }
 

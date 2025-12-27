@@ -25,7 +25,9 @@ function UsersSection({ userId: controlledUserId, onUserSelect: controlledOnUser
       setError(null);
       try {
         const token = localStorage.getItem('qft-token');
-        const res = await fetch('http://localhost:3001/api/v1/admin/users', {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// ...
+        const res = await fetch(`${API_URL}/api/v1/admin/users`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

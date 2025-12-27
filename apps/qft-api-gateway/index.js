@@ -218,6 +218,7 @@ const moduleRoutes = require('./src/routes/modules');
 const databaseRoutes = require('./src/routes/database');
 const commandRoutes = require('./src/routes/commands');
 const embedTemplatesRoutes = require('./src/routes/embedTemplates');
+const guildConfigRoutes = require('./src/routes/guildConfig');
 
 app.use('/api/internal', internalRoutes);
 app.use('/api/v1/registry', registryRoutes);
@@ -229,6 +230,7 @@ app.use('/api/v1/modules', moduleRoutes);
 app.use('/api/v1/database', databaseRoutes);
 app.use('/api/v1', commandRoutes);
 app.use('/api/v1', embedTemplatesRoutes);
+app.use('/api/v1', guildConfigRoutes);
 
 // ... (Keep other route imports) ...
 

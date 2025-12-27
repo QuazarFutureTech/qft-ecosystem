@@ -1,5 +1,5 @@
 // src/services/admin.js
-const API_GATEWAY_URL = 'http://localhost:3001'; // Assuming API Gateway URL
+const API_GATEWAY_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const fetchUsers = async (token) => {
   try {
@@ -46,8 +46,7 @@ export const updateUserRole = async (userId, newRole, token) => {
 
 export const fetchGuildRoles = async (guildId, token) => {
   try {
-    // This endpoint does not exist yet in API Gateway, but will be added later
-    const response = await fetch(`${API_GATEWAY_URL}/api/v1/admin/guilds/${guildId}/roles`, {
+    const response = await fetch(`${API_GATEWAY_URL}/api/v1/discord/guilds/${guildId}/roles`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 

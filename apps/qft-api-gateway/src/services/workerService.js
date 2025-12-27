@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/workerService.js
 // Zapier-style trigger→action workflow system
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // Create a new worker
 const createWorker = async (guildId, workerName, description, trigger, actions, createdByDiscordId, platforms = ['discord'], assignedRoleId = null) => {
@@ -19,7 +11,7 @@ const createWorker = async (guildId, workerName, description, trigger, actions, 
     RETURNING *;
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     guildId,
     workerName,
     description,
@@ -38,7 +30,7 @@ const getWorker = async (workerId) => {
   const query = `
     SELECT * FROM workers WHERE id = $1;
   `;
-  const result = await pool.query(query, [workerId]);
+  const result = await db.query(query, [workerId]);
   return result.rows[0] || null;
 };
 
@@ -58,7 +50,7 @@ const listWorkers = async (guildId, filterState = null) => {
 
   query += ` ORDER BY created_at DESC;`;
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return result.rows;
 };
 
@@ -115,7 +107,7 @@ const updateWorker = async (workerId, updates) => {
     RETURNING *;
   `;
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 
@@ -152,10 +144,10 @@ const executeWorker = async (workerId, guildId, triggerData = {}, client = null)
       VALUES ($1, $2, $3, 'success')
       RETURNING *;
     `;
-    await pool.query(logQuery, [workerId, JSON.stringify(triggerData), JSON.stringify(actionResults)]);
+    await db.query(logQuery, [workerId, JSON.stringify(triggerData), JSON.stringify(actionResults)]);
 
     // Update execution count
-    await pool.query(
+    await db.query(
       `UPDATE workers SET execution_count = execution_count + 1, last_executed_at = CURRENT_TIMESTAMP WHERE id = $1;`,
       [workerId]
     );
@@ -292,7 +284,7 @@ const getWorkersByTrigger = async (guildId, triggerType) => {
     AND is_enabled = true
     AND (trigger::jsonb->>'type' = $2 OR trigger::jsonb->'types' ? $2);
   `;
-  const result = await pool.query(query, [guildId, triggerType]);
+  const result = await db.query(query, [guildId, triggerType]);
   return result.rows.map(row => ({
     ...row,
     trigger: typeof row.trigger === 'string' ? JSON.parse(row.trigger) : row.trigger,
@@ -303,7 +295,7 @@ const getWorkersByTrigger = async (guildId, triggerType) => {
 // Delete worker
 const deleteWorker = async (workerId) => {
   const query = `DELETE FROM workers WHERE id = $1 RETURNING *;`;
-  const result = await pool.query(query, [workerId]);
+  const result = await db.query(query, [workerId]);
   return result.rows[0];
 };
 
@@ -315,7 +307,7 @@ const getExecutionHistory = async (workerId, limit = 50) => {
     ORDER BY executed_at DESC
     LIMIT $2;
   `;
-  const result = await pool.query(query, [workerId, limit]);
+  const result = await db.query(query, [workerId, limit]);
   return result.rows;
 };
 
@@ -328,14 +320,14 @@ const getWorkersByRole = async (roleId) => {
     WHERE w.assigned_role_id = $1 AND w.is_enabled = true
     ORDER BY w.worker_name;
   `;
-  const result = await pool.query(query, [roleId]);
+  const result = await db.query(query, [roleId]);
   return result.rows;
 };
 
 // Check if user can execute worker (based on role assignment)
 const canExecuteWorker = async (workerId, userDiscordId) => {
   const workerQuery = `SELECT assigned_role_id FROM workers WHERE id = $1;`;
-  const workerResult = await pool.query(workerQuery, [workerId]);
+  const workerResult = await db.query(workerQuery, [workerId]);
   
   if (!workerResult.rows[0]) return false;
   
@@ -349,7 +341,7 @@ const canExecuteWorker = async (workerId, userDiscordId) => {
     SELECT 1 FROM user_roles 
     WHERE user_discord_id = $1 AND role_id = $2;
   `;
-  const userRoleResult = await pool.query(userRoleQuery, [userDiscordId, assignedRoleId]);
+  const userRoleResult = await db.query(userRoleQuery, [userDiscordId, assignedRoleId]);
   
   return userRoleResult.rows.length > 0;
 };

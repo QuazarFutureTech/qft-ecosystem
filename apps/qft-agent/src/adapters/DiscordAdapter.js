@@ -54,29 +54,27 @@ class DiscordAdapter {
     }
 
     _loadCommands() {
-        const commandsPath = path.join(__dirname, '../commands');
-        const load = (directory) => {
-            const files = fs.readdirSync(directory);
-            for (const file of files) {
-                const filePath = path.join(directory, file);
-                const stat = fs.statSync(filePath);
+        const commandsPath = path.resolve(__dirname, '../commands');
+        const commandFolders = fs.readdirSync(commandsPath);
 
-                if (stat.isDirectory()) {
-                    load(filePath);
-                } else if (file.endsWith('.js')) {
-                    const command = require(filePath);
-                    if ('data' in command && 'execute' in command) {
-                        this.client.commands.set(command.data.name, command);
-                        console.log(`[DiscordAdapter] Loaded command: ${command.data.name}`);
-                    }
+        for (const folder of commandFolders) {
+            const commandsPathNested = path.join(commandsPath, folder);
+            const commandFiles = fs.readdirSync(commandsPathNested).filter(file => file.endsWith('.js'));
+            for (const file of commandFiles) {
+                const filePath = path.join(commandsPathNested, file);
+                const command = require(filePath);
+                if ('data' in command && 'execute' in command) {
+                    this.client.commands.set(command.data.name, command);
+                    console.log(`[DiscordAdapter] Loaded command: ${command.data.name}`);
+                } else {
+                    console.warn(`[DiscordAdapter] Command at ${filePath} is missing 'data' or 'execute' property.`);
                 }
             }
-        };
-        load(commandsPath);
+        }
     }
 
     _loadEvents() {
-        const eventsPath = path.join(__dirname, '../events');
+        const eventsPath = path.resolve(__dirname, '../events');
         const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
         for (const file of eventFiles) {
@@ -88,6 +86,7 @@ class DiscordAdapter {
             } else {
                 this.client.on(event.name, (...args) => event.execute(...args, this.client));
             }
+            console.log(`[DiscordAdapter] Loaded event: ${event.name}`);
         }
     }
 

@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/activityLogService.js
 // Service for logging user activities
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // Log an activity
 const logActivity = async (logData) => {
@@ -39,7 +31,7 @@ const logActivity = async (logData) => {
     RETURNING *;
   `;
 
-  const result = await pool.query(query, [
+  const result = await db.query(query, [
     userId,
     username,
     action,
@@ -112,7 +104,7 @@ const getActivityLogs = async (filters = {}) => {
 
   params.push(limit, offset);
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   
   // Get total count
   const countQuery = `
@@ -120,7 +112,7 @@ const getActivityLogs = async (filters = {}) => {
     ${whereClause};
   `;
   
-  const countResult = await pool.query(countQuery, params.slice(0, -2));
+  const countResult = await db.query(countQuery, params.slice(0, -2));
 
   return {
     logs: result.rows,
@@ -146,7 +138,7 @@ const getActivityStats = async (days = 7) => {
     ORDER BY count DESC;
   `;
 
-  const result = await pool.query(query);
+  const result = await db.query(query);
   return result.rows;
 };
 
@@ -159,7 +151,7 @@ const getUserRecentActivity = async (userId, limit = 20) => {
     LIMIT $2;
   `;
 
-  const result = await pool.query(query, [userId, limit]);
+  const result = await db.query(query, [userId, limit]);
   return result.rows;
 };
 

@@ -7,8 +7,10 @@ const permissionsService = require('../services/permissionsService');
 const { rbacMiddleware } = require('../middleware/rbacMiddleware');
 const { activityLogger } = require('../middleware/activityLogger');
 
+const authenticateToken = require('../middleware/auth');
+
 // Get all roles
-router.get('/roles', rbacMiddleware('admin'), async (req, res) => {
+router.get('/roles', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const roles = await permissionsService.getAllRoles();
     res.json({ success: true, roles });
@@ -19,7 +21,7 @@ router.get('/roles', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get all permissions
-router.get('/permissions', rbacMiddleware('admin'), async (req, res) => {
+router.get('/permissions', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const permissions = await permissionsService.getAllPermissions();
     res.json({ success: true, permissions });
@@ -30,7 +32,7 @@ router.get('/permissions', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get permissions for a specific role
-router.get('/roles/:roleId/permissions', rbacMiddleware('admin'), async (req, res) => {
+router.get('/roles/:roleId/permissions', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const { roleId } = req.params;
     const permissions = await permissionsService.getRolePermissions(roleId);
@@ -44,6 +46,7 @@ router.get('/roles/:roleId/permissions', rbacMiddleware('admin'), async (req, re
 // Update role permissions
 router.patch(
   '/roles/:roleId/permissions',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('update_role_permissions', 'role'),
   async (req, res) => {
@@ -63,6 +66,7 @@ router.patch(
 // Create new role
 router.post(
   '/roles',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('create_role', 'role'),
   async (req, res) => {
@@ -80,6 +84,7 @@ router.post(
 // Update role
 router.patch(
   '/roles/:roleId',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('update_role', 'role'),
   async (req, res) => {
@@ -99,6 +104,7 @@ router.patch(
 // Delete role
 router.delete(
   '/roles/:roleId',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('delete_role', 'role'),
   async (req, res) => {
@@ -116,6 +122,7 @@ router.delete(
 // Assign role to user
 router.post(
   '/users/:userId/roles',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('assign_role', 'user'),
   async (req, res) => {
@@ -136,6 +143,7 @@ router.post(
 // Remove role from user
 router.delete(
   '/users/:userId/roles/:roleId',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('remove_role', 'user'),
   async (req, res) => {
@@ -151,7 +159,7 @@ router.delete(
 );
 
 // Get all users
-router.get('/users', rbacMiddleware('admin'), async (req, res) => {
+router.get('/users', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const users = await permissionsService.getAllUsers();
     res.json({ success: true, users });
@@ -162,7 +170,7 @@ router.get('/users', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get user roles
-router.get('/users/:userId/roles', rbacMiddleware('staff'), async (req, res) => {
+router.get('/users/:userId/roles', authenticateToken, rbacMiddleware('staff'), async (req, res) => {
   try {
     const { userId } = req.params;
     const roles = await permissionsService.getUserRoles(userId);

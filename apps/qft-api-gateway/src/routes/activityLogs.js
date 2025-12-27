@@ -6,8 +6,10 @@ const router = express.Router();
 const activityLogService = require('../services/activityLogService');
 const { rbacMiddleware } = require('../middleware/rbacMiddleware');
 
+const authenticateToken = require('../middleware/auth');
+
 // Get activity logs with filters
-router.get('/', rbacMiddleware('admin'), async (req, res) => {
+router.get('/', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const filters = {
       userId: req.query.userId ? parseInt(req.query.userId) : null,
@@ -28,7 +30,7 @@ router.get('/', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get activity statistics
-router.get('/stats', rbacMiddleware('admin'), async (req, res) => {
+router.get('/stats', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const days = req.query.days ? parseInt(req.query.days, 10) : 7;
     // Ensure days is a valid number
@@ -42,7 +44,7 @@ router.get('/stats', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get user's recent activity
-router.get('/user/:userId', rbacMiddleware('staff'), async (req, res) => {
+router.get('/user/:userId', authenticateToken, rbacMiddleware('staff'), async (req, res) => {
   try {
     const { userId } = req.params;
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;

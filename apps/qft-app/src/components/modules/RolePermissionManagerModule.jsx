@@ -37,8 +37,10 @@ export default function RolePermissionManagerModule() {
     setApplying(true);
     const token = localStorage.getItem('qft-token');
     try {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// ...
       const response = await fetch(
-        `http://localhost:3001/api/v1/admin/guilds/${selectedGuildId}/members/${memberUserId}/roles`,
+        `${API_URL}/api/v1/admin/guilds/${selectedGuildId}/members/${memberUserId}/roles`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

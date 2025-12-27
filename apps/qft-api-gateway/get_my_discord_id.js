@@ -1,20 +1,11 @@
 // Quick script to get your Discord ID from the database
 // Run this with: node get_my_discord_id.js
 
-const { Pool } = require('pg');
-require('dotenv').config();
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('./src/db');
 
 async function getMyDiscordId() {
   try {
-    const result = await pool.query('SELECT discord_id, username, email, qft_role FROM users ORDER BY created_at DESC LIMIT 10');
+    const result = await db.query('SELECT discord_id, username, email, qft_role FROM users ORDER BY created_at DESC LIMIT 10');
     
     if (result.rows.length === 0) {
       console.log('❌ No users found in database');
@@ -44,7 +35,7 @@ async function getMyDiscordId() {
   } catch (error) {
     console.error('❌ Error:', error.message);
   } finally {
-    await pool.end();
+    await db.pool.end();
   }
 }
 

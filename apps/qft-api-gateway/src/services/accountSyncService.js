@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/accountSyncService.js
 // Account synchronization service for syncing Discord users with website database
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // Role mapping: Discord role IDs/names to website roles
 const ROLE_MAPPINGS = {
@@ -81,7 +73,7 @@ const syncAccounts = async (guildId, members) => {
         RETURNING *;
       `;
       
-      await pool.query(syncQuery, [
+      await db.query(syncQuery, [
         guildId,
         member.userId,
         member.username,
@@ -107,7 +99,7 @@ const syncAccounts = async (guildId, members) => {
         RETURNING qft_uuid, (xmax = 0) AS inserted;
       `;
       
-      const userResult = await pool.query(userQuery, [
+      const userResult = await db.query(userQuery, [
         member.userId,
         member.username,
         null // Don't override existing qft_role
@@ -127,7 +119,7 @@ const syncAccounts = async (guildId, members) => {
   console.log(`[AccountSyncService] Successfully synced ${syncedCount} accounts (${newUsersCount} new users)`);
   
   // Update last sync time for guild
-  await pool.query(
+  await db.query(
     'INSERT INTO guild_sync_metadata (guild_id, last_sync_time) VALUES ($1, NOW()) ON CONFLICT (guild_id) DO UPDATE SET last_sync_time = NOW()',
     [guildId]
   );
@@ -152,7 +144,7 @@ const getSyncedAccounts = async (guildId) => {
     ORDER BY username ASC;
   `;
   
-  const result = await pool.query(query, [guildId]);
+  const result = await db.query(query, [guildId]);
   return result.rows;
 };
 
@@ -162,7 +154,7 @@ const getLastSyncTime = async (guildId) => {
     SELECT last_sync_time FROM guild_sync_metadata WHERE guild_id = $1;
   `;
   
-  const result = await pool.query(query, [guildId]);
+  const result = await db.query(query, [guildId]);
   return result.rows[0]?.last_sync_time || null;
 };
 
@@ -175,7 +167,7 @@ const updateAccountRole = async (accountId, role) => {
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [role, accountId]);
+  const result = await db.query(query, [role, accountId]);
   return result.rows[0];
 };
 
@@ -188,7 +180,7 @@ const linkAccountToStaff = async (accountId, staffProfileId) => {
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [staffProfileId, accountId]);
+  const result = await db.query(query, [staffProfileId, accountId]);
   return result.rows[0];
 };
 
@@ -199,7 +191,7 @@ const getAccountByDiscordId = async (guildId, discordUserId) => {
     WHERE guild_id = $1 AND discord_user_id = $2;
   `;
   
-  const result = await pool.query(query, [guildId, discordUserId]);
+  const result = await db.query(query, [guildId, discordUserId]);
   return result.rows[0] || null;
 };
 

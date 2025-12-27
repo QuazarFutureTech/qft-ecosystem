@@ -1,13 +1,4 @@
-const { Pool } = require('pg');
-
-// Create pool directly for database management operations
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 /**
  * Database Management Service
@@ -31,7 +22,7 @@ async function getAllTables() {
     ORDER BY table_name;
   `;
   
-  const result = await pool.query(query);
+  const result = await db.query(query);
   return result.rows;
 }
 
@@ -54,7 +45,7 @@ async function getTableSchema(tableName) {
     ORDER BY ordinal_position;
   `;
   
-  const result = await pool.query(query, [tableName]);
+  const result = await db.query(query, [tableName]);
   return result.rows;
 }
 
@@ -75,19 +66,19 @@ async function getTableData(tableName, limit = 100, offset = 0) {
     );
   `;
   
-  const tableCheck = await pool.query(tableCheckQuery, [tableName]);
+  const tableCheck = await db.query(tableCheckQuery, [tableName]);
   if (!tableCheck.rows[0].exists) {
     throw new Error('Table does not exist');
   }
 
   // Get total count
   const countQuery = `SELECT COUNT(*) as total FROM "${tableName}"`;
-  const countResult = await pool.query(countQuery);
+  const countResult = await db.query(countQuery);
   const total = parseInt(countResult.rows[0].total);
 
   // Get data
   const dataQuery = `SELECT * FROM "${tableName}" LIMIT $1 OFFSET $2`;
-  const dataResult = await pool.query(dataQuery, [limit, offset]);
+  const dataResult = await db.query(dataQuery, [limit, offset]);
 
   return {
     tableName,
@@ -129,9 +120,9 @@ async function getDatabaseStats() {
   `;
 
   const [sizeResult, tableCountResult, totalRowsResult] = await Promise.all([
-    pool.query(sizeQuery),
-    pool.query(tableCountQuery),
-    pool.query(totalRowsQuery)
+    db.query(sizeQuery),
+    db.query(tableCountQuery),
+    db.query(totalRowsQuery)
   ]);
 
   return {
@@ -159,7 +150,7 @@ async function deleteRow(tableName, primaryKeyColumn, primaryKeyValue) {
     );
   `;
   
-  const tableCheck = await pool.query(tableCheckQuery, [tableName]);
+  const tableCheck = await db.query(tableCheckQuery, [tableName]);
   if (!tableCheck.rows[0].exists) {
     throw new Error('Table does not exist');
   }
@@ -174,14 +165,14 @@ async function deleteRow(tableName, primaryKeyColumn, primaryKeyValue) {
     );
   `;
   
-  const columnCheck = await pool.query(columnCheckQuery, [tableName, primaryKeyColumn]);
+  const columnCheck = await db.query(columnCheckQuery, [tableName, primaryKeyColumn]);
   if (!columnCheck.rows[0].exists) {
     throw new Error('Column does not exist');
   }
 
   // Delete the row
   const deleteQuery = `DELETE FROM "${tableName}" WHERE "${primaryKeyColumn}" = $1 RETURNING *`;
-  const result = await pool.query(deleteQuery, [primaryKeyValue]);
+  const result = await db.query(deleteQuery, [primaryKeyValue]);
 
   if (result.rowCount === 0) {
     throw new Error('Row not found');
@@ -210,14 +201,14 @@ async function truncateTable(tableName) {
     );
   `;
   
-  const tableCheck = await pool.query(tableCheckQuery, [tableName]);
+  const tableCheck = await db.query(tableCheckQuery, [tableName]);
   if (!tableCheck.rows[0].exists) {
     throw new Error('Table does not exist');
   }
 
   // Truncate with CASCADE to handle foreign key constraints
   const truncateQuery = `TRUNCATE TABLE "${tableName}" CASCADE`;
-  await pool.query(truncateQuery);
+  await db.query(truncateQuery);
 
   return {
     success: true,
@@ -237,7 +228,7 @@ async function purgeDatabase(confirmationCode) {
     throw new Error('Invalid confirmation code. Operation cancelled for safety.');
   }
 
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
     await client.query('BEGIN');
@@ -296,7 +287,7 @@ async function backupTable(tableName) {
     );
   `;
   
-  const tableCheck = await pool.query(tableCheckQuery, [tableName]);
+  const tableCheck = await db.query(tableCheckQuery, [tableName]);
   if (!tableCheck.rows[0].exists) {
     throw new Error('Table does not exist');
   }
@@ -306,7 +297,7 @@ async function backupTable(tableName) {
 
   // Get all data
   const dataQuery = `SELECT * FROM "${tableName}"`;
-  const dataResult = await pool.query(dataQuery);
+  const dataResult = await db.query(dataQuery);
 
   return {
     tableName,
@@ -329,7 +320,7 @@ async function executeQuery(query) {
     throw new Error('Only SELECT queries are allowed for safety');
   }
 
-  const result = await pool.query(query);
+  const result = await db.query(query);
   
   return {
     rowCount: result.rowCount,

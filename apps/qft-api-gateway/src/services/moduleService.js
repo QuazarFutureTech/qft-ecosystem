@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/moduleService.js
 // Service for managing page modules, categories, and their configurations
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // ===== PAGE OPERATIONS =====
 
@@ -48,7 +40,7 @@ const getAllPages = async () => {
     ORDER BY p.display_order, c.display_order, m.display_order;
   `;
 
-  const result = await pool.query(query);
+  const result = await db.query(query);
   
   // Transform flat result into nested structure
   const pages = {};
@@ -124,7 +116,7 @@ const createPage = async (pageKey, name, description = null, icon = null, displa
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [pageKey, name, description, icon, displayOrder]);
+  const result = await db.query(query, [pageKey, name, description, icon, displayOrder]);
   return result.rows[0];
 };
 
@@ -158,7 +150,7 @@ const updatePage = async (pageId, updates) => {
     RETURNING *;
   `;
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 
@@ -167,7 +159,7 @@ const updatePage = async (pageId, updates) => {
  */
 const deletePage = async (pageId) => {
   const query = 'DELETE FROM pages WHERE id = $1 RETURNING *;';
-  const result = await pool.query(query, [pageId]);
+  const result = await db.query(query, [pageId]);
   return result.rows[0];
 };
 
@@ -183,7 +175,7 @@ const createCategory = async (pageId, categoryKey, name, description = null, dis
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [pageId, categoryKey, name, description, displayOrder]);
+  const result = await db.query(query, [pageId, categoryKey, name, description, displayOrder]);
   return result.rows[0];
 };
 
@@ -217,7 +209,7 @@ const updateCategory = async (categoryId, updates) => {
     RETURNING *;
   `;
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 
@@ -226,7 +218,7 @@ const updateCategory = async (categoryId, updates) => {
  */
 const deleteCategory = async (categoryId) => {
   const query = 'DELETE FROM page_categories WHERE id = $1 RETURNING *;';
-  const result = await pool.query(query, [categoryId]);
+  const result = await db.query(query, [categoryId]);
   return result.rows[0];
 };
 
@@ -242,7 +234,7 @@ const createModule = async (categoryId, moduleKey, name, componentName, descript
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [categoryId, moduleKey, name, componentName, description, icon, displayOrder, requiredClearance, JSON.stringify(configuration)]);
+  const result = await db.query(query, [categoryId, moduleKey, name, componentName, description, icon, displayOrder, requiredClearance, JSON.stringify(configuration)]);
   return result.rows[0];
 };
 
@@ -282,7 +274,7 @@ const updateModule = async (moduleId, updates) => {
     RETURNING *;
   `;
 
-  const result = await pool.query(query, values);
+  const result = await db.query(query, values);
   return result.rows[0];
 };
 
@@ -291,7 +283,7 @@ const updateModule = async (moduleId, updates) => {
  */
 const deleteModule = async (moduleId) => {
   const query = 'DELETE FROM page_modules WHERE id = $1 RETURNING *;';
-  const result = await pool.query(query, [moduleId]);
+  const result = await db.query(query, [moduleId]);
   return result.rows[0];
 };
 
@@ -299,7 +291,7 @@ const deleteModule = async (moduleId) => {
  * Bulk update display orders for reordering
  */
 const updateModuleOrders = async (updates) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
 
@@ -324,7 +316,7 @@ const updateModuleOrders = async (updates) => {
  * Bulk update category orders
  */
 const updateCategoryOrders = async (updates) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
 
@@ -349,7 +341,7 @@ const updateCategoryOrders = async (updates) => {
  * Initialize default module structure for a guild
  */
 const initializeDefaultModules = async () => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
 

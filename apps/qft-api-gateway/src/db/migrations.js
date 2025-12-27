@@ -1,18 +1,10 @@
 // qft-api-gateway/src/db/migrations.js
 // Database schema migrations for production modules: commands, tickets, logs, backups, workers
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('./index');
 
 const syncDatabaseProduction = async () => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   try {
     // ===== CUSTOM COMMANDS TABLE =====
     // First, create base table structure (backward compatible columns only)

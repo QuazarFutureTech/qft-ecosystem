@@ -29,12 +29,14 @@ function Commands() {
     return () => setHeaderContent(null);
   }, [setHeaderContent]);
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+//...
   const fetchCommands = async () => {
     if (!selectedGuild) return;
     
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/guilds/${selectedGuild}/commands`, {
+      const response = await fetch(`${API_URL}/api/guilds/${selectedGuild}/commands`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
@@ -74,7 +76,7 @@ function Commands() {
     if (!confirm('Are you sure you want to delete this command?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/commands/${commandId}`, {
+      const response = await fetch(`${API_URL}/api/commands/${commandId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -93,7 +95,7 @@ function Commands() {
 
   const handleToggleEnabled = async (command) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/commands/${command.id}`, {
+      const response = await fetch(`${API_URL}/api/commands/${command.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,14 +1,4 @@
-const cron = require('node-cron');
-const { Pool } = require('pg');
-const TemplateEngine = require('./templateEngine');
-
-const pool = new Pool({
-  user: process.env.PGUSER || 'qft_user',
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'qft_identity_db',
-  password: process.env.PGPASSWORD || 'qft-0001',
-  port: process.env.PGPORT || 5432,
-});
+const db = require('../db');
 
 class SchedulerService {
   constructor() {
@@ -45,7 +35,7 @@ class SchedulerService {
   async processScheduledCommands() {
     try {
       // Get all scheduled commands that are due and not yet executed
-      const result = await pool.query(
+      const result = await db.query(
         `SELECT * FROM scheduled_commands 
          WHERE executed = FALSE 
          AND scheduled_time <= NOW() 
@@ -81,7 +71,7 @@ class SchedulerService {
       const result = await engine.execute(command_code);
       
       // Mark as executed
-      await pool.query(
+      await db.query(
         `UPDATE scheduled_commands 
          SET executed = TRUE, executed_at = NOW() 
          WHERE id = $1`,
@@ -98,7 +88,7 @@ class SchedulerService {
       console.error(`[SchedulerService] Error executing scheduled command #${id}:`, error);
       
       // Update with error
-      await pool.query(
+      await db.query(
         `UPDATE scheduled_commands 
          SET executed = TRUE, executed_at = NOW(), error = $2 
          WHERE id = $1`,
@@ -131,7 +121,7 @@ class SchedulerService {
     } = options;
 
     try {
-      const result = await pool.query(
+      const result = await db.query(
         `INSERT INTO scheduled_commands 
          (guild_id, command_name, command_code, channel_id, user_id, scheduled_time, context)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -152,7 +142,7 @@ class SchedulerService {
    */
   async cancelScheduledCommand(id) {
     try {
-      await pool.query(
+      await db.query(
         `DELETE FROM scheduled_commands WHERE id = $1 AND executed = FALSE`,
         [id]
       );
@@ -176,7 +166,7 @@ class SchedulerService {
       
       query += ` ORDER BY scheduled_time ASC`;
       
-      const result = await pool.query(query, [guildId]);
+      const result = await db.query(query, [guildId]);
       return result.rows;
     } catch (error) {
       console.error('[SchedulerService] Error getting scheduled commands:', error);

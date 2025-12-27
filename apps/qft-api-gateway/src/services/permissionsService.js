@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/permissionsService.js
 // Service for managing roles and permissions
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // Get all roles with member counts
 const getAllRoles = async () => {
@@ -32,7 +24,7 @@ const getAllRoles = async () => {
       r.name;
   `;
   
-  const result = await pool.query(query);
+  const result = await db.query(query);
   return result.rows;
 };
 
@@ -43,7 +35,7 @@ const getAllPermissions = async () => {
     ORDER BY category, label;
   `;
   
-  const result = await pool.query(query);
+  const result = await db.query(query);
   return result.rows;
 };
 
@@ -58,13 +50,13 @@ const getRolePermissions = async (roleId) => {
     ORDER BY p.category, p.label;
   `;
   
-  const result = await pool.query(query, [roleId]);
+  const result = await db.query(query, [roleId]);
   return result.rows;
 };
 
 // Update role permissions
 const updateRolePermissions = async (roleId, permissions) => {
-  const client = await pool.connect();
+  const client = await db.pool.connect();
   
   try {
     await client.query('BEGIN');
@@ -107,7 +99,7 @@ const createRole = async (name, clearanceLevel, color, description) => {
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [name, clearanceLevel, color, description]);
+  const result = await db.query(query, [name, clearanceLevel, color, description]);
   return result.rows[0];
 };
 
@@ -127,13 +119,13 @@ const updateRole = async (roleId, updates) => {
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [name, clearanceLevel, color, description, roleId]);
+  const result = await db.query(query, [name, clearanceLevel, color, description, roleId]);
   return result.rows[0];
 };
 
 // Delete role
 const deleteRole = async (roleId) => {
-  await pool.query('DELETE FROM roles WHERE id = $1', [roleId]);
+  await db.query('DELETE FROM roles WHERE id = $1', [roleId]);
   return { success: true };
 };
 
@@ -146,13 +138,13 @@ const assignRoleToUser = async (userId, roleId, assignedBy) => {
     RETURNING *;
   `;
   
-  const result = await pool.query(query, [userId, roleId, assignedBy]);
+  const result = await db.query(query, [userId, roleId, assignedBy]);
   return result.rows[0];
 };
 
 // Remove role from user
 const removeRoleFromUser = async (userId, roleId) => {
-  await pool.query('DELETE FROM user_roles WHERE user_discord_id = $1 AND role_id = $2', [userId, roleId]);
+  await db.query('DELETE FROM user_roles WHERE user_discord_id = $1 AND role_id = $2', [userId, roleId]);
   return { success: true };
 };
 
@@ -174,7 +166,7 @@ const getUserRoles = async (userId) => {
       END;
   `;
   
-  const result = await pool.query(query, [userId]);
+  const result = await db.query(query, [userId]);
   return result.rows;
 };
 
@@ -190,7 +182,7 @@ const getAllUsers = async () => {
     ORDER BY username ASC;
   `;
   
-  const result = await pool.query(query);
+  const result = await db.query(query);
   return result.rows;
 };
 

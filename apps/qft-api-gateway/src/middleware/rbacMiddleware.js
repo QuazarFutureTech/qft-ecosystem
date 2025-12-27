@@ -9,15 +9,7 @@
  *   router.post('/staff/tickets', rbacMiddleware(['admin', 'staff']), ticketController);
  */
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 /**
  * Master Admin Discord IDs - These users bypass ALL role checks
@@ -55,7 +47,7 @@ function rbacMiddleware(allowedRoles) {
       }
 
       // Get user's roles from database
-      const userRoles = await pool.query(
+      const userRoles = await db.query(
         `SELECT r.name AS role_name, r.clearance_level 
          FROM user_roles ur
          JOIN roles r ON ur.role_id = r.id
@@ -132,7 +124,7 @@ function clearanceMiddleware(minLevel) {
         return next();
       }
 
-      const userRoles = await pool.query(
+      const userRoles = await db.query(
         `SELECT r.clearance_level 
          FROM user_roles ur
          JOIN roles r ON ur.role_id = r.id
@@ -193,7 +185,7 @@ function permissionMiddleware(permissionKey) {
       }
 
       // Check if user has the permission through any of their roles
-      const hasPermission = await pool.query(
+      const hasPermission = await db.query(
         `SELECT EXISTS (
           SELECT 1
           FROM user_roles ur

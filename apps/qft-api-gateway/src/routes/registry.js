@@ -5,8 +5,10 @@ const registryService = require('../services/registryService');
 const { rbacMiddleware } = require('../middleware/rbacMiddleware');
 const { activityLogger } = require('../middleware/activityLogger');
 
+const authenticateToken = require('../middleware/auth');
+
 // Get all registry entries (with optional type filter)
-router.get('/', rbacMiddleware('admin'), async (req, res) => {
+router.get('/', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const { type, search } = req.query;
     
@@ -27,7 +29,7 @@ router.get('/', rbacMiddleware('admin'), async (req, res) => {
 });
 
 // Get a specific registry entry by key
-router.get('/key/:key', rbacMiddleware('admin'), async (req, res) => {
+router.get('/key/:key', authenticateToken, rbacMiddleware('admin'), async (req, res) => {
   try {
     const { key } = req.params;
     const { type } = req.query;
@@ -48,6 +50,7 @@ router.get('/key/:key', rbacMiddleware('admin'), async (req, res) => {
 // Create new registry entry
 router.post(
   '/',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('create_registry_entry', 'registry'),
   async (req, res) => {
@@ -75,6 +78,7 @@ router.post(
 // Update registry entry
 router.patch(
   '/:id',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('update_registry_entry', 'registry'),
   async (req, res) => {
@@ -99,6 +103,7 @@ router.patch(
 // Delete registry entry
 router.delete(
   '/:id',
+  authenticateToken,
   rbacMiddleware('admin'),
   activityLogger('delete_registry_entry', 'registry'),
   async (req, res) => {

@@ -1,16 +1,7 @@
 // qft-api-gateway/src/services/ticketService.js
 // Ticket system with Discord thread integration and transcript logging
 
-const { Pool } = require('pg');
-// Native fetch is available in Node 18+
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:3002';
 const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET;
@@ -21,7 +12,7 @@ const createTicket = async (guildId, userDiscordId, title, description, ticketCh
     SELECT COALESCE(MAX(ticket_number), 0) + 1 as next_number
     FROM tickets WHERE guild_id = $1;
   `;
-  const result = await pool.query(query, [guildId]);
+  const result = await db.query(query, [guildId]);
   const ticketNumber = result.rows[0].next_number;
 
   const ticketInsert = `
@@ -29,7 +20,7 @@ const createTicket = async (guildId, userDiscordId, title, description, ticketCh
     VALUES ($1, $2, $3, $4, $5, 'open')
     RETURNING *;
   `;
-  const ticketResult = await pool.query(ticketInsert, [guildId, userDiscordId, ticketNumber, title, description]);
+  const ticketResult = await db.query(ticketInsert, [guildId, userDiscordId, ticketNumber, title, description]);
   const ticket = ticketResult.rows[0];
 
   // Call Agent to create Discord thread
@@ -62,7 +53,7 @@ const createTicket = async (guildId, userDiscordId, title, description, ticketCh
     const updateQuery = `
       UPDATE tickets SET thread_id = $1 WHERE id = $2 RETURNING *;
     `;
-    const updated = await pool.query(updateQuery, [threadId, ticket.id]);
+    const updated = await db.query(updateQuery, [threadId, ticket.id]);
 
     return { ticket: updated.rows[0], threadId };
   } catch (error) {
@@ -77,7 +68,7 @@ const getTicket = async (ticketId) => {
   const query = `
     SELECT * FROM tickets WHERE id = $1;
   `;
-  const result = await pool.query(query, [ticketId]);
+  const result = await db.query(query, [ticketId]);
   return result.rows[0] || null;
 };
 
@@ -97,7 +88,7 @@ const listTickets = async (guildId, status = null, limit = 50, offset = 0) => {
   query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2};`;
   params.push(limit, offset);
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return result.rows;
 };
 
@@ -117,7 +108,7 @@ const listTicketsForUser = async (guildId, userDiscordId, status = null, limit =
   query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2};`;
   params.push(limit, offset);
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return result.rows;
 };
 
@@ -146,7 +137,7 @@ const closeTicket = async (ticketId, threadId) => {
     WHERE id = $1
     RETURNING *;
   `;
-  const result = await pool.query(query, [ticketId]);
+  const result = await db.query(query, [ticketId]);
   return result.rows[0];
 };
 
@@ -157,10 +148,10 @@ const addTicketMessage = async (ticketId, authorDiscordId, authorUsername, conte
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const result = await pool.query(query, [ticketId, authorDiscordId, authorUsername, content, attachments ? JSON.stringify(attachments) : null]);
+  const result = await db.query(query, [ticketId, authorDiscordId, authorUsername, content, attachments ? JSON.stringify(attachments) : null]);
 
   // Update message count
-  await pool.query(`
+  await db.query(`
     UPDATE tickets SET message_count = message_count + 1 WHERE id = $1;
   `, [ticketId]);
 
@@ -174,7 +165,7 @@ const getTranscript = async (ticketId) => {
     WHERE ticket_id = $1
     ORDER BY created_at ASC;
   `;
-  const result = await pool.query(query, [ticketId]);
+  const result = await db.query(query, [ticketId]);
   return result.rows;
 };
 

@@ -1,15 +1,7 @@
 // qft-api-gateway/src/services/logService.js
 // Audit logging system with log channels and filtering
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 // Log an action
 const logAction = async (guildId, actionType, actorDiscordId, details = {}, targetDiscordId = null, targetId = null, client = null) => {
@@ -18,7 +10,7 @@ const logAction = async (guildId, actionType, actorDiscordId, details = {}, targ
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *;
   `;
-  const result = await pool.query(query, [guildId, actionType, actorDiscordId, targetDiscordId, targetId, JSON.stringify(details)]);
+  const result = await db.query(query, [guildId, actionType, actorDiscordId, targetDiscordId, targetId, JSON.stringify(details)]);
   
   const log = result.rows[0];
 
@@ -37,7 +29,7 @@ const setupLogChannel = async (guildId, channelId, categories = ['moderation', '
     DO UPDATE SET log_categories = $3
     RETURNING *;
   `;
-  const result = await pool.query(query, [guildId, channelId, categories]);
+  const result = await db.query(query, [guildId, channelId, categories]);
 
   // Verify channel exists, if not create
   try {
@@ -51,7 +43,7 @@ const setupLogChannel = async (guildId, channelId, categories = ['moderation', '
         reason: 'QFT audit log channel',
       });
       const updateQuery = `UPDATE log_channels SET channel_id = $1 WHERE guild_id = $2;`;
-      await pool.query(updateQuery, [newChannel.id, guildId]);
+      await db.query(updateQuery, [newChannel.id, guildId]);
       return newChannel.id;
     }
   } catch (error) {
@@ -71,7 +63,7 @@ const sendToLogChannel = async (guildId, actionType, log, client) => {
       WHERE guild_id = $1 AND is_active = true
       AND $2 = ANY(log_categories);
     `;
-    const result = await pool.query(query, [guildId, actionType]);
+    const result = await db.query(query, [guildId, actionType]);
     
     if (result.rows.length === 0) return;
 
@@ -142,7 +134,7 @@ const getLogs = async (guildId, filters = {}) => {
 
   query += ` ORDER BY created_at DESC LIMIT ${filters.limit || 100} OFFSET ${filters.offset || 0};`;
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return result.rows;
 };
 
@@ -154,7 +146,7 @@ const getLogChannelId = async (guildId, category) => {
     AND $2 = ANY(log_categories)
     LIMIT 1;
   `;
-  const result = await pool.query(query, [guildId, category]);
+  const result = await db.query(query, [guildId, category]);
   return result.rows.length > 0 ? result.rows[0].channel_id : null;
 };
 
@@ -170,7 +162,7 @@ const getLogStats = async (guildId, days = 7) => {
     GROUP BY action_type
     ORDER BY count DESC;
   `;
-  const result = await pool.query(query, [guildId]);
+  const result = await db.query(query, [guildId]);
   return result.rows;
 };
 

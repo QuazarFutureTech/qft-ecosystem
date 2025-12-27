@@ -2,15 +2,7 @@
 // QFT System Integration for Template Engine
 // Provides safe database, registry, user, and permission access from templates
 
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-});
+const db = require('../db');
 
 /**
  * SAFETY CONFIGURATION
@@ -73,7 +65,7 @@ async function dbQuery(table, where = {}, limit = 100) {
     const limitClause = `LIMIT $${paramCount}`;
 
     const query = `SELECT * FROM "${table}" ${whereClause} ${limitClause}`;
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     
     return result.rows;
   } catch (error) {
@@ -124,7 +116,7 @@ async function dbCount(table, where = {}) {
     }
 
     const query = `SELECT COUNT(*) as count FROM "${table}" ${whereClause}`;
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     
     return parseInt(result.rows[0].count);
   } catch (error) {
@@ -167,7 +159,7 @@ async function dbInsert(table, data) {
       RETURNING *;
     `;
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows[0];
   } catch (error) {
     console.error('[dbInsert]', error);
@@ -206,7 +198,7 @@ async function dbUpdate(table, id, data) {
       RETURNING *;
     `;
 
-    const result = await pool.query(query, values);
+    const result = await db.query(query, values);
     return result.rows[0];
   } catch (error) {
     console.error('[dbUpdate]', error);
@@ -226,7 +218,7 @@ async function dbDelete(table, id) {
       throw new Error('Delete only allowed on registry table');
     }
 
-    await pool.query(`DELETE FROM "${table}" WHERE id = $1`, [id]);
+    await db.query(`DELETE FROM "${table}" WHERE id = $1`, [id]);
     return true;
   } catch (error) {
     console.error('[dbDelete]', error);
@@ -255,7 +247,7 @@ async function regGet(key, type = null) {
       params.push(type);
     }
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     return result.rows.length > 0 ? result.rows[0] : null;
   } catch (error) {
     console.error('[regGet]', error);
@@ -270,7 +262,7 @@ async function regGet(key, type = null) {
  */
 async function regGetAll(type) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT * FROM registry WHERE type = $1 ORDER BY key ASC',
       [type]
     );
@@ -294,14 +286,14 @@ async function regSet(key, type, value, description = '') {
     const existing = await regGet(key, type);
 
     if (existing) {
-      const result = await pool.query(
+      const result = await db.query(
         `UPDATE registry SET value = $1, description = $2, updated_at = NOW()
          WHERE id = $3 RETURNING *;`,
         [value, description, existing.id]
       );
       return result.rows[0];
     } else {
-      const result = await pool.query(
+      const result = await db.query(
         `INSERT INTO registry (type, key, value, description)
          VALUES ($1, $2, $3, $4)
          RETURNING *;`,
@@ -323,7 +315,7 @@ async function regSet(key, type, value, description = '') {
  */
 async function regDelete(key, type) {
   try {
-    await pool.query(
+    await db.query(
       'DELETE FROM registry WHERE key = $1 AND type = $2',
       [key, type]
     );
@@ -345,7 +337,7 @@ async function regDelete(key, type) {
  */
 async function getUser(userId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT * FROM users WHERE discord_id = $1',
       [userId]
     );
@@ -363,7 +355,7 @@ async function getUser(userId) {
  */
 async function getUserRoles(userId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT r.* FROM roles r
        JOIN user_roles ur ON r.id = ur.role_id
        WHERE ur.user_discord_id = $1
@@ -397,7 +389,7 @@ async function getUserHighestRole(userId) {
  */
 async function hasRole(userId, roleId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT 1 FROM user_roles WHERE user_discord_id = $1 AND role_id = $2`,
       [userId, roleId]
     );
@@ -416,7 +408,7 @@ async function hasRole(userId, roleId) {
  */
 async function checkPermission(userId, permissionKey) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT 1 FROM role_permissions rp
        JOIN user_roles ur ON rp.role_id = ur.role_id
        JOIN permissions p ON rp.permission_id = p.id
@@ -437,7 +429,7 @@ async function checkPermission(userId, permissionKey) {
  */
 async function getUserPermissions(userId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT DISTINCT p.permission_key FROM permissions p
        JOIN role_permissions rp ON p.id = rp.permission_id
        JOIN user_roles ur ON rp.role_id = ur.role_id
@@ -506,7 +498,7 @@ async function validateRole(roleId) {
  */
 async function moduleGet(moduleId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT * FROM page_modules WHERE id = $1',
       [moduleId]
     );
@@ -524,7 +516,7 @@ async function moduleGet(moduleId) {
  */
 async function moduleList(pageId) {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT pm.* FROM page_modules pm
        JOIN page_categories pc ON pm.category_id = pc.id
        WHERE pc.page_id = $1

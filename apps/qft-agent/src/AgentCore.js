@@ -495,11 +495,14 @@ botApp.post('/api/deploy-commands', internalAuth, async (req, res) => {
 // Refresh custom slash commands for a guild
 botApp.post('/api/refresh-custom-commands', internalAuth, async (req, res) => {
     try {
-        const { guildId } = req.body;
-        
+        const { guildId, commands } = req.body; // Extract commands array
+
         if (!guildId) {
             return res.status(400).json({ success: false, message: 'Guild ID is required' });
         }
+        
+        // Ensure commands is an array, default to empty if not provided
+        const commandsToRegister = Array.isArray(commands) ? commands : [];
         
         const SlashCommandHandler = require('./services/slashCommandHandler');
         const discordAdapterInstance = PlatformManager.adapters.get('discord');
@@ -509,7 +512,7 @@ botApp.post('/api/refresh-custom-commands', internalAuth, async (req, res) => {
         }
         
         const slashHandler = new SlashCommandHandler(discordAdapterInstance.client);
-        await slashHandler.registerSlashCommands(guildId);
+        await slashHandler.registerSlashCommands(guildId, commandsToRegister); // Pass commands array
         
         res.json({ success: true, message: 'Custom slash commands refreshed successfully.' });
     } catch (error) {
