@@ -33,9 +33,16 @@ export async function fetchGuildChannels(guildId, token) {
     const res = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
+
     const data = await res.json();
     console.log('[discord.js] Channels response:', res.status, data);
-    return data;
+
+    if (!res.ok) {
+      // If the response was not OK, treat it as an error
+      return { success: false, error: data.error || `Failed with status ${res.status}` };
+    }
+    
+    return { success: true, channels: data }; // Assuming data directly contains the channels array or is structured as { channels: [...] }
   } catch (error) {
     console.error('[discord.js] Error fetching channels:', error);
     return { success: false, error: error.message };
