@@ -207,28 +207,28 @@ app.get('/api/v1/user/status', authenticateToken, async (req, res) => {
 // ... (KEEP ALL YOUR OTHER ROUTES HERE: Mutual Guilds, Channels, Posts, Admin, etc.) ...
 // Paste the rest of your routes (lines 200+) here.
 
-// --- Route Imports (Keep your existing imports) ---
+// --- Route Imports ---
 const internalRoutes = require('./src/routes/internal');
-app.use('/api/internal', internalRoutes);
-
-// Mounting registry routes earlier to avoid potential conflicts
-try {
-    const registryRoutes = require('./src/routes/registry');
-    app.use('/api/v1/registry', registryRoutes);
-} catch (err) { console.error('Route Error: Failed to mount registry routes:', err.message); }
-
-try {
-    const productionRoutes = require('./src/routes/production');
-    app.use('/api/v1', productionRoutes);
-} catch (err) { console.error('Route Error:', err.message); }
-
-try {
-    const discordRoutes = require('./src/routes/discord');
-    app.use('/api/v1/discord', discordRoutes);
-} catch (err) { console.error('Route Error:', err.message); }
-
+const registryRoutes = require('./src/routes/registry');
+const discordRoutes = require('./src/routes/discord');
 const adminRoutes = require('./src/routes/admin');
+const permissionsRoutes = require('./src/routes/permissions');
+const activityLogsRoutes = require('./src/routes/activityLogs');
+const moduleRoutes = require('./src/routes/modules');
+const databaseRoutes = require('./src/routes/database');
+const commandRoutes = require('./src/routes/commands');
+const embedTemplatesRoutes = require('./src/routes/embedTemplates');
+
+app.use('/api/internal', internalRoutes);
+app.use('/api/v1/registry', registryRoutes);
+app.use('/api/v1/discord', discordRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/permissions', permissionsRoutes);
+app.use('/api/v1/activity-logs', activityLogsRoutes);
+app.use('/api/v1/modules', moduleRoutes);
+app.use('/api/v1/database', databaseRoutes);
+app.use('/api/v1', commandRoutes);
+app.use('/api/v1', embedTemplatesRoutes);
 
 // ... (Keep other route imports) ...
 
