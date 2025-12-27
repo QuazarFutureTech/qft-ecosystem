@@ -19,7 +19,7 @@ const saveTemplate = async (guildId, templateName, embedData, authorDiscordId) =
 };
 
 // Get all templates for a guild
-const getTemplates = async (guildId) => {
+const listEmbedTemplates = async (guildId) => {
   const query = `
     SELECT id, template_name, embed_data, author_discord_id, created_at, updated_at
     FROM embed_templates
@@ -34,13 +34,13 @@ const getTemplates = async (guildId) => {
 };
 
 // Get a specific template by ID
-const getTemplateById = async (templateId) => {
+const getEmbedTemplate = async (guildId, templateId) => {
   const query = `
     SELECT id, guild_id, template_name, embed_data, author_discord_id, created_at, updated_at
     FROM embed_templates
-    WHERE id = $1;
+    WHERE id = $1 AND guild_id = $2;
   `;
-  const result = await db.query(query, [templateId]);
+  const result = await db.query(query, [templateId, guildId]);
   if (result.rows.length === 0) return null;
   
   const row = result.rows[0];
@@ -50,8 +50,20 @@ const getTemplateById = async (templateId) => {
   };
 };
 
+// Update an existing embed template
+const updateEmbedTemplate = async (guildId, templateId, name, embedData, updaterDiscordId) => {
+  const query = `
+    UPDATE embed_templates
+    SET template_name = $3, embed_data = $4, updated_at = CURRENT_TIMESTAMP, author_discord_id = $5
+    WHERE id = $2 AND guild_id = $1
+    RETURNING *;
+  `;
+  const result = await db.query(query, [guildId, templateId, name, JSON.stringify(embedData), updaterDiscordId]);
+  return result.rows[0];
+};
+
 // Delete a template
-const deleteTemplate = async (templateId, guildId) => {
+const deleteEmbedTemplate = async (guildId, templateId) => {
   const query = `
     DELETE FROM embed_templates
     WHERE id = $1 AND guild_id = $2
@@ -62,8 +74,9 @@ const deleteTemplate = async (templateId, guildId) => {
 };
 
 module.exports = {
-  saveTemplate,
-  getTemplates,
-  getTemplateById,
-  deleteTemplate
+  createEmbedTemplate: saveTemplate, // Renaming for clarity if needed, keep saveTemplate as internal
+  listEmbedTemplates,
+  getEmbedTemplate,
+  updateEmbedTemplate,
+  deleteEmbedTemplate
 };

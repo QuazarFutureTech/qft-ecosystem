@@ -88,6 +88,19 @@ const syncDatabase = async () => {
       );
     `);
     
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS embed_templates (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        guild_id TEXT NOT NULL,
+        template_name TEXT NOT NULL,
+        embed_data JSONB NOT NULL,
+        author_discord_id TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(guild_id, template_name)
+      );
+    `);
+    
     console.log('PostgreSQL database synchronized: QFT Identity Schema (users table) and posts table created/updated.');
 
     client.release();
@@ -101,6 +114,8 @@ const syncDatabase = async () => {
 module.exports = {
   // Simple wrapper function to run queries using the connection pool
   query: (text, params) => pool.query(text, params),
+  // Export the pool for transactions
+  pool: pool,
   // Export the function to run at server startup
   syncDatabase,
 };
