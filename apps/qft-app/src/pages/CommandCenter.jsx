@@ -54,13 +54,15 @@ const sectionCategories = [
 const allSections = sectionCategories.flatMap(cat => cat.sections);
 
 function CommandCenter() {
-  const { isLoadingUser, qftRole, roleName, allRoles } = useUser();
+  const { isLoadingUser, qftRole, roleName, allRoles, userStatus } = useUser();
   const { setHeaderContent } = useHeader();
   const { setSmartNavContent, closeSmartNav } = useSmartNav();
   const [activeSection, setActiveSection] = useState('tasks');
   
   const isPrivileged = isPrivilegedStaff(qftRole);
-  const isStaff = isStaffMember(roleName, allRoles);
+  // Allow alpha_owner or is_owner to access Command Center
+  const isOwner = (qftRole === 'alpha_owner') || (userStatus && userStatus.is_owner === true);
+  const isStaff = isStaffMember(roleName, allRoles) || isOwner;
 
   const breadcrumbItems = useMemo(() => {
     const currentSection = allSections.find(s => s.id === activeSection);
