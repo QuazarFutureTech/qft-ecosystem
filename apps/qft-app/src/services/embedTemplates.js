@@ -11,7 +11,7 @@ export const saveEmbedTemplate = async (guildId, templateName, embedData, token)
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ templateName, embedData })
+      body: JSON.stringify({ name: templateName, embedData })
     });
 
     if (!response.ok) {

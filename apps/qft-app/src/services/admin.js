@@ -88,7 +88,7 @@ export const updateUserDiscordRole = async (guildId, userId, roleId, token) => {
 
 export const fetchGuildChannels = async (guildId, token) => {
   try {
-    const response = await fetch(`${API_GATEWAY_URL}/api/v1/user/guilds/${guildId}/channels`, {
+    const response = await fetch(`${API_GATEWAY_URL}/api/v1/discord/guilds/${guildId}/channels`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
@@ -115,7 +115,8 @@ export const fetchGuildConfig = async (guildId, token) => {
       return { success: false, data: {}, message: errorData.message || `HTTP error! status: ${response.status}` };
     }
     const data = await response.json();
-    return { success: true, data: data.data || {}, message: 'Guild config fetched.' };
+    // Return the config object directly (backend returns the config, not {data: ...})
+    return { success: true, data: data || {}, message: 'Guild config fetched.' };
   } catch (error) {
     console.error('Failed to fetch guild config:', error);
     return { success: false, data: {}, message: `An error occurred: ${error.message}` };

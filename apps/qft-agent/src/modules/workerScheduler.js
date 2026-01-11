@@ -28,38 +28,66 @@ class WorkerScheduler {
      */
     scheduleWorker(guildId, workerId, cronExpression, triggerConfig = {}) {
         try {
-            // Validate cron expression
-            if (!cron.validate(cronExpression)) {
-                throw new Error(`Invalid cron expression: ${cronExpression}`);
+            // Support one-time, recurring, interval, and timezone-aware triggers
+            let job;
+            const jobId = `${guildId}_${workerId}`;
+            const scheduledTrigger = require('../events/scheduledTrigger');
+            // One-time (timestamp in ms or ISO string)
+            if (triggerConfig.onceAt) {
+                const runAt = typeof triggerConfig.onceAt === 'number' ? triggerConfig.onceAt : Date.parse(triggerConfig.onceAt);
+                const delay = runAt - Date.now();
+                if (delay > 0) {
+                    job = setTimeout(async () => {
+                        await scheduledTrigger.execute({
+                            type: 'schedule',
+                            triggeredAt: new Date().toISOString(),
+                            guildId,
+                            commandId: workerId,
+                            ...triggerConfig,
+                        }, this.client);
+                        this.jobs.delete(jobId);
+                    }, delay);
+                    this.jobs.set(jobId, { stop: () => clearTimeout(job) });
+                    console.log(`[WorkerScheduler] Scheduled one-time worker ${workerId} for ${new Date(runAt).toISOString()}`);
+                    return jobId;
+                } else {
+                    throw new Error('onceAt time is in the past');
+                }
             }
-
-            // Create the cron job
-            const job = cron.schedule(cronExpression, async () => {
-                try {
-                    const payload = {
+            // Interval (every X ms)
+            if (triggerConfig.intervalMs) {
+                job = setInterval(async () => {
+                    await scheduledTrigger.execute({
                         type: 'schedule',
                         triggeredAt: new Date().toISOString(),
+                        guildId,
+                        commandId: workerId,
                         ...triggerConfig,
-                    };
-
-                    // Call API Gateway to execute the worker
-                    // The API Gateway will handle the actual database operations
-                    console.log(`[WorkerScheduler] Scheduled worker ${workerId} triggered at ${payload.triggeredAt}`);
-                    
-                    // Note: In production, this would make a fetch call to:
-                    // POST /api/workers/:workerId/execute
-                    // For now, this is a placeholder that logs the trigger
-                } catch (error) {
-                    console.error(`[WorkerScheduler] Error executing scheduled worker ${workerId}:`, error);
+                    }, this.client);
+                }, triggerConfig.intervalMs);
+                this.jobs.set(jobId, { stop: () => clearInterval(job) });
+                console.log(`[WorkerScheduler] Scheduled interval worker ${workerId} every ${triggerConfig.intervalMs}ms`);
+                return jobId;
+            }
+            // Cron (recurring, with optional timezone)
+            if (cronExpression) {
+                if (!cron.validate(cronExpression)) {
+                    throw new Error(`Invalid cron expression: ${cronExpression}`);
                 }
-            });
-
-            // Store the job reference
-            const jobId = `${guildId}_${workerId}`;
-            this.jobs.set(jobId, job);
-
-            console.log(`[WorkerScheduler] Scheduled worker ${workerId} in guild ${guildId} with cron: ${cronExpression}`);
-            return jobId;
+                job = cron.schedule(cronExpression, async () => {
+                    await scheduledTrigger.execute({
+                        type: 'schedule',
+                        triggeredAt: new Date().toISOString(),
+                        guildId,
+                        commandId: workerId,
+                        ...triggerConfig,
+                    }, this.client);
+                }, { timezone: triggerConfig.timezone });
+                this.jobs.set(jobId, job);
+                console.log(`[WorkerScheduler] Scheduled cron worker ${workerId} in guild ${guildId} with cron: ${cronExpression} tz: ${triggerConfig.timezone || 'default'}`);
+                return jobId;
+            }
+            throw new Error('No valid scheduling option provided');
         } catch (error) {
             console.error(`[WorkerScheduler] Error scheduling worker ${workerId}:`, error);
             throw error;

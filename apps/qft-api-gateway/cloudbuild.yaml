@@ -22,6 +22,11 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      # Environment variables for production
+      - '--set-env-vars'
+      - 'BOT_API_URL=https://qft-agent-YOUR_HASH-uc.a.run.app'
+      - '--set-secrets'
+      - 'INTERNAL_BOT_SECRET=INTERNAL_BOT_SECRET:latest,DATABASE_URL=DATABASE_URL:latest'
 
 # Define the images to be stored
 images:

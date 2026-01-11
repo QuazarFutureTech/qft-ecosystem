@@ -66,7 +66,7 @@ function BotManagement() {
     {
       title: 'Automation',
       modules: [
-        { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock, component: ScheduledEmbedsModule },
+        // { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock, component: ScheduledEmbedsModule },
       ]
     },
     {

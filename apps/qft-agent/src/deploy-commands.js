@@ -55,11 +55,8 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
         console.log(`🔄 Started refreshing ${commands.length} application (/) commands.`);
 
-        // The target scope for deployment (using Guild scope for faster testing)
-        const targetRoute = Routes.applicationGuildCommands(
-            process.env.CLIENT_ID, 
-            process.env.GUILD_ID
-        );
+        // Deploy globally (takes up to 1 hour to propagate, but works in all guilds)
+        const targetRoute = Routes.applicationCommands(process.env.CLIENT_ID);
 
         const data = await rest.put(
             targetRoute,

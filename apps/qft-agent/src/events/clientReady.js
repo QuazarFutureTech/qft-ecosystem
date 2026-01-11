@@ -2,6 +2,9 @@
 const { Events, ActivityType } = require('discord.js');
 const SlashCommandHandler = require('../services/slashCommandHandler');
 const SettingsHandler = require('../utils/SettingsHandler'); // Import SettingsHandler
+const fetch = require('node-fetch');
+const API_URL = process.env.API_GATEWAY_URL || 'http://localhost:3001';
+const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET;
 
 module.exports = {
     name: Events.ClientReady, // The event Discord.js emits
@@ -40,7 +43,26 @@ module.exports = {
         
         for (const guild of client.guilds.cache.values()) {
             try {
-                await slashHandler.registerSlashCommands(guild.id);
+                // Fetch commands for this guild from the API Gateway internal endpoint (bypass RBAC)
+                const response = await fetch(`${API_URL}/api/internal/commands?guildId=${guild.id}&triggerType=slash`, {
+                    headers: { 'x-internal-secret': INTERNAL_SECRET }
+                });
+                let commands = [];
+                if (response.ok) {
+                    const data = await response.json();
+                    // API returns { success: true, commands: [...] }
+                    if (data && Array.isArray(data.commands)) {
+                        commands = data.commands;
+                    } else {
+                        commands = [];
+                    }
+                } else {
+                    console.warn(`Could not fetch commands for guild ${guild.id}: ${response.status}`);
+                }
+                if (!Array.isArray(commands) || commands.length === 0) {
+                    console.log(`No slash commands found for guild ${guild.id}`);
+                }
+                await slashHandler.registerSlashCommands(guild.id, commands);
             } catch (error) {
                 console.error(`Error registering slash commands for ${guild.name}:`, error);
             }

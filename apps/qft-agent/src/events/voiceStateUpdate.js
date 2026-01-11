@@ -4,6 +4,27 @@ const workerService = require('../services/workerService');
 module.exports = {
     name: 'voiceStateUpdate',
     async execute(oldState, newState, client) {
+        // Custom Command: voice_join/voice_leave triggers
+        const CustomCommandHandler = require('../services/customCommandHandler');
+        const handler = new CustomCommandHandler(client);
+        const guildId = newState.guild?.id;
+        if (guildId) {
+            const allCommands = await handler.getGuildCommandsCached(guildId);
+            // Voice join
+            if (!oldState.channel && newState.channel) {
+                const joinCommands = allCommands.filter(cmd => cmd.trigger_type === 'voice_join');
+                for (const command of joinCommands) {
+                    await handler.executeCommand(command, { oldState, newState }, [], {});
+                }
+            }
+            // Voice leave
+            if (oldState.channel && !newState.channel) {
+                const leaveCommands = allCommands.filter(cmd => cmd.trigger_type === 'voice_leave');
+                for (const command of leaveCommands) {
+                    await handler.executeCommand(command, { oldState, newState }, []);
+                }
+            }
+        }
         try {
             const guildId = newState.guild?.id;
             if (!guildId) return;

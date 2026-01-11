@@ -198,18 +198,37 @@ body {
 /* --- Cards --- */
 .qft-card {
     border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Can be updated to use a variable for shadow color later */
-    margin-bottom: 25px;
-    transition: transform 0.2s;
-    background-color: var(--bg-secondary); /* Ensure cards use background variable */
-    color: var(--text-color); /* Ensure cards use text color variable */
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+}
+
+.qft-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }
 
 .qft-card h2 {
     font-family: var(--font-header);
-    margin-top: 0;
-    color: var(--accent-primary); /* Use accent color for card headers */
+    margin: 0 0 12px 0;
+    font-size: 1.3rem;
+    color: var(--accent-primary);
+}
+
+.qft-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.qft-card p {
+    margin: 0 0 12px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--text-light);
 }
 
 /* --- Buttons --- */

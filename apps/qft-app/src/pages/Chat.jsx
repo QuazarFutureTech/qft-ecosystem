@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useUser } from '../contexts/UserContext.jsx';
 import { useHeader } from '../contexts/HeaderContext.jsx';
 import { useSmartNav } from '../contexts/SmartNavContext.jsx';
@@ -35,6 +35,7 @@ function Chat() {
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
   const [newMessageContent, setNewMessageContent] = useState('');
   const [editingMessage, setEditingMessage] = useState(null); // { id, content }
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     // Set a default channel if none is selected
@@ -107,6 +108,18 @@ function Chat() {
     ...(channelMeta ? [{ label: channelMeta.name, path: null }] : [])
   ], [channelMeta]);
 
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (messages.length > 0 && messagesEndRef.current) {
+      const container = messagesEndRef.current.closest('.chat-messages-container');
+      if (container) {
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
+      }
+    }
+  }, [messages.length]);
+
   useEffect(() => {
     setHeaderContent({
       title: (<><FaComments /> Chat</>),
@@ -146,8 +159,7 @@ function Chat() {
                 const isAuthor = msg.author?.qft_uuid === userStatus?.qft_uuid;
                 const canDelete = (isAuthor && checkPermission(userStatus, CHAT_ACTIONS.DELETE_OWN_MESSAGE)) ||
                                   checkPermission(userStatus, CHAT_ACTIONS.DELETE_ANY_MESSAGE);
-                const canEdit = (isAuthor && checkPermission(userStatus, CHAT_ACTIONS.EDIT_OWN_MESSAGE)) ||
-                                checkPermission(userStatus, CHAT_ACTIONS.EDIT_ANY_MESSAGE);
+                const canEdit = isAuthor && checkPermission(userStatus, CHAT_ACTIONS.EDIT_OWN_MESSAGE);
 
                 return (
                   <div key={msg.id} className="qft-card chat-post-card">
@@ -204,6 +216,7 @@ function Chat() {
                   </div>
                 );
               })}
+              <div ref={messagesEndRef} />
             </>
           )}
         </div>

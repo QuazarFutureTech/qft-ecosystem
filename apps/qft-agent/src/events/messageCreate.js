@@ -1,6 +1,7 @@
 const AutoMod = require('../modules/automod');
 const ConfigManager = require('../utils/ConfigManager');
 const CustomCommandHandler = require('../services/customCommandHandler');
+const builtinPrefixHandler = require('../services/builtinPrefixHandler');
 const logService = require('../services/logService');
 const workerService = require('../services/workerService');
 
@@ -13,6 +14,7 @@ let commandHandler = null;
 module.exports = {
     name: 'messageCreate',
     async execute(message, client) {
+        console.log(`[messageCreate] Event fired: '${message.content}' from user: ${message.author?.id}`);
         if (message.author.bot) return;
 
         // Initialize command handler if not already done
@@ -73,12 +75,19 @@ module.exports = {
             return;
         }
 
+        // --- 1.2 Built-in prefix commands (ping, purge, coinflip, etc.) ---
+        const prefix = await ConfigManager.get(guildId, 'prefix', '!');
+        const builtInHandled = await builtinPrefixHandler.handle(message, prefix, client);
+        if (builtInHandled) return;
+
         // --- 2. YAGPDB-style Custom Commands (Enhanced) ---
         if (guildId) {
-            const prefix = ConfigManager.get(guildId, 'prefix', '!');
             const handled = await commandHandler.handleMessage(message, prefix);
             if (handled) {
+                console.log(`[messageCreate] [DEBUG] Custom command matched and executed for message: '${message.content}' in guild: ${guildId}`);
                 return; // Command was handled, stop processing
+            } else {
+                console.log(`[messageCreate] [DEBUG] No custom command matched for message: '${message.content}' in guild: ${guildId}`);
             }
         }
 

@@ -3,33 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.jsx';
 import { useHeader } from '../contexts/HeaderContext.jsx';
 import { useSmartNav } from '../contexts/SmartNavContext.jsx';
-import ProfileModule from '../components/modules/ProfileModule';
-import OrdersModule from '../components/modules/OrdersModule';
-import BotControlModule from '../components/modules/BotControlModule';
-import PortalModule from '../components/modules/PortalModule';
-import AnalyticsModule from '../components/modules/AnalyticsModule';
-import TicketDashboard from '../components/modules/TicketDashboard';
-import EmbedBuilderModule from '../components/modules/EmbedBuilderModule';
-import WorkerBuilder from '../components/modules/WorkerBuilder';
 import PermissionsModule from '../components/modules/PermissionsModule';
 import UsersSection from './Users.jsx';
 import ControlPanelModulesGrid from '../components/modules/ControlPanelModulesGrid.jsx';
-import ModuleManagerModule from '../components/modules/ModuleManagerModule';
 import SystemLogsModule from '../components/modules/SystemLogsModule';
 import RegistryModule from '../components/modules/RegistryModule';
 import DatabaseManagerModule from '../components/modules/DatabaseManagerModule';
-import BotManagementSection from '../components/modules/BotManagementSection';
 import AdaptiveNavigation from '../components/modules/AdaptiveNavigation';
 import Breadcrumbs from '../components/elements/Breadcrumbs';
-import { useModal } from '../hooks/useModal';
-import ConfirmModal from '../components/elements/ConfirmModal';
-import { isPrivilegedStaff, getClearanceLabel } from '../utils/clearance';
-import { determineNavContext, NAV_CONTEXT, getActiveItemLabel } from '../utils/navigationController';
-import { generateBotInviteUrl } from '../services/user';
-import { fetchGuildChannels } from '../services/admin';
-
-const BOT_PERMISSIONS = '8';
-const BOT_SCOPES = 'bot%20applications.commands';
+import { isPrivilegedStaff } from '../utils/clearance';
+import { NAV_CONTEXT, getActiveItemLabel } from '../utils/navigationController';
 
 function ControlPanel() {
   const location = useLocation();
@@ -41,6 +24,10 @@ function ControlPanel() {
   const [activeSection, setActiveSection] = useState('modules');
   const [activeModule, setActiveModule] = useState('commands');
   const [selectedUserId, setSelectedUserId] = useState(null);
+
+  const allowedSections = useMemo(() => (
+    ['modules', 'users', 'permissions', 'registry', 'logs', 'database', 'ai-modules']
+  ), []);
 
   const handleSectionChange = useCallback((newSection) => {
     if (newSection === 'ai-modules') {
@@ -65,9 +52,9 @@ function ControlPanel() {
     const section = pathParts[1] || 'modules';
     const userId = pathParts[2] || null;
 ~
-    setActiveSection(section);
+    setActiveSection(allowedSections.includes(section) ? section : 'modules');
     setSelectedUserId(userId);
-  }, [location.pathname]);
+  }, [location.pathname, allowedSections]);
   
   const hasPrivilegedAccess = isPrivilegedStaff(qftRole);
 
@@ -123,30 +110,16 @@ function ControlPanel() {
         return <UsersSection userId={selectedUserId} onUserSelect={setSelectedUserId} />;
       case 'permissions':
         return <PermissionsModule />;
-      case 'bot-control':
-        return <BotManagementSection />;
       case 'logs':
         return <SystemLogsModule />;
       case 'registry':
         return <RegistryModule />;
-      case 'module-manager':
-        return <ModuleManagerModule />;
       case 'database':
         return <DatabaseManagerModule />;
-      case 'analytics':
-        return <AnalyticsModule />;
-      case 'tools':
-        return (
-          <div className="admin-tools" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <TicketDashboard />
-            <WorkerBuilder />
-            <EmbedBuilderModule />
-          </div>
-        );
       default:
         return <ControlPanelModulesGrid onModuleClick={handleSectionChange} />;
     }
-  };
+}
 
   return (
     <>

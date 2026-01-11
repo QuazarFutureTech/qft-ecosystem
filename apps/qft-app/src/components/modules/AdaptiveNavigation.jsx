@@ -19,7 +19,7 @@ import {
   getNavigationItems,
   NAV_CONTEXT,
 } from '../../utils/navigationController';
-import { FaUsers, FaShieldAlt, FaRobot, FaDatabase, FaClipboardList, FaCubes, FaChartLine, FaCode, FaShieldAlt as FaAutomod, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVial, FaGavel, FaUserShield, FaHistory, FaBrain } from 'react-icons/fa';
+import { FaUsers, FaShieldAlt, FaRobot, FaDatabase, FaClipboardList, FaCode, FaShieldAlt as FaAutomod, FaHandPaper, FaEnvelope, FaClock, FaGavel, FaUserShield, FaHistory, FaBrain } from 'react-icons/fa';
 import './AdaptiveNavigation.css';
 
 // Icon map for both Control Panel sections and Bot modules
@@ -27,23 +27,18 @@ const ICON_MAP = {
   // Control Panel sections
   'users': FaUsers,
   'permissions': FaShieldAlt,
-  'bot-control': FaRobot,
   'ai-modules': FaBrain,
   'registry': FaDatabase,
   'logs': FaClipboardList,
-  'module-manager': FaCubes,
   'database': FaDatabase,
-  'analytics': FaChartLine,
-  'tools': FaRobot,
+  'bot-control': FaRobot,
   
   // Bot modules
   'commands': FaCode,
   'automod': FaAutomod,
   'welcome': FaHandPaper,
   'embeds': FaEnvelope,
-  'command-toggle': FaToggleOn,
   'scheduled-embeds': FaClock,
-  'automod-tester': FaVial,
   'quick-actions': FaGavel,
   'role-permissions': FaUserShield,
   'backups': FaHistory,

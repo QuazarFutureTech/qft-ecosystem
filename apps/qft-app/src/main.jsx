@@ -154,6 +154,7 @@ function AppContent() {
         <Route path="/control-panel/logs" element={<ControlPanel />} />
         <Route path="/control-panel/registry" element={<ControlPanel />} />
         <Route path="/control-panel/module-manager" element={<ControlPanel />} />
+        <Route path="/control-panel/module-settings" element={<ControlPanel />} />
         <Route path="/control-panel/database" element={<ControlPanel />} />
         <Route path="/control-panel/tools" element={<ControlPanel />} />
         <Route path="/control-panel/bot-control" element={<ControlPanel />} />
@@ -169,6 +170,7 @@ function AppContent() {
 }
 
 import { ModuleProvider } from './contexts/ModuleContext.jsx';
+import { GuildModuleSettingsProvider } from './contexts/GuildModuleSettingsContext.jsx';
 // ...
 function App() {
   return (
@@ -177,7 +179,9 @@ function App() {
         <SelectedGuildProvider>
           <SmartNavProvider>
             <ModuleProvider>
-              <AppContent />
+              <GuildModuleSettingsProvider>
+                <AppContent />
+              </GuildModuleSettingsProvider>
             </ModuleProvider>
           </SmartNavProvider>
         </SelectedGuildProvider>

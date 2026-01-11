@@ -90,10 +90,10 @@ export const routeMap = {
     label: 'Role Permissions',
     parent: '/control-panel/ai-modules/discord'
   },
-  '/control-panel/ai-modules/discord/scheduled-embeds': {
-    label: 'Scheduled Embeds',
-    parent: '/control-panel/ai-modules/discord'
-  },
+  // '/control-panel/ai-modules/discord/scheduled-embeds': {
+  //   label: 'Scheduled Embeds',
+  //   parent: '/control-panel/ai-modules/discord'
+  // },
   '/control-panel/ai-modules/discord/workers': {
     label: 'Workers',
     parent: '/control-panel/ai-modules/discord'

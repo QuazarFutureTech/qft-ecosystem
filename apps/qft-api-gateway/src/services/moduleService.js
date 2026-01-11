@@ -40,11 +40,15 @@ const getAllPages = async () => {
     ORDER BY p.display_order, c.display_order, m.display_order;
   `;
 
-  const result = await db.query(query);
-  
+  let result;
+  try {
+    result = await db.query(query);
+  } catch (err) {
+    console.error('[getAllPages] DB Query Error:', err);
+    throw err;
+  }
   // Transform flat result into nested structure
   const pages = {};
-  
   result.rows.forEach(row => {
     // Initialize page if not exists
     if (!pages[row.page_key]) {
@@ -385,17 +389,15 @@ const initializeDefaultModules = async () => {
       VALUES 
         ($1, 'commands', 'Custom Commands', 'CustomCommandsModule', 0, true),
         ($1, 'welcome', 'Welcome Messages', 'WelcomeModule', 1, true),
-        ($1, 'embeds', 'Embeds', 'EmbedsModule', 2, true),
-        ($1, 'command-toggle', 'Command Toggle', 'CommandToggleModule', 3, true);
+        ($1, 'embeds', 'Embeds', 'EmbedsModule', 2, true);
     `, [configCat.rows[0].id]);
 
     await client.query(`
       INSERT INTO page_modules (category_id, module_key, name, component_name, display_order, enabled)
       VALUES 
         ($1, 'automod', 'Auto Moderation', 'AutomodModule', 0, true),
-        ($1, 'automod-tester', 'Automod Tester', 'AutomodTesterModule', 1, true),
-        ($1, 'quick-actions', 'Quick Actions', 'QuickActionsModule', 2, true),
-        ($1, 'role-permissions', 'Role Permissions', 'RolePermissionsModule', 3, true);
+        ($1, 'quick-actions', 'QuickActionsModule', 1, true),
+        ($1, 'role-permissions', 'RolePermissionsModule', 2, true);
     `, [modCat.rows[0].id]);
 
     await client.query(`
@@ -473,6 +475,95 @@ const initializeDefaultModules = async () => {
   }
 };
 
+// --- New functions to match qft-agent's templateEngineQftService ---
+// Get all modules and their enabled state for a guild
+const getGuildModules = async (guildId) => {
+  // Get all modules
+  let allPages;
+  try {
+    allPages = await getAllPages();
+  } catch (err) {
+    console.error('[getGuildModules] getAllPages Error:', err);
+    throw err;
+  }
+  // Flatten all modules and filter for bot modules only
+  const allModules = [];
+  try {
+    Object.values(allPages).forEach(page => {
+      page.categories.forEach(cat => {
+        cat.modules.forEach(mod => {
+          // Only include modules where configuration.bot_module !== false (default true)
+          let isBotModule = true;
+          if (mod.configuration && typeof mod.configuration === 'object') {
+            if (mod.configuration.bot_module === false) isBotModule = false;
+          }
+          if (isBotModule) {
+            allModules.push({
+              ...mod,
+              page_key: page.page_key,
+              category_key: cat.category_key
+            });
+          }
+        });
+      });
+    });
+  } catch (err) {
+    console.error('[getGuildModules] Flatten Error:', err);
+    throw err;
+  }
+  // Get guild-specific states
+  let res;
+  try {
+    res = await db.query('SELECT module_key, enabled FROM guild_modules WHERE guild_id = $1', [guildId]);
+  } catch (err) {
+    console.error('[getGuildModules] Guild Modules Query Error:', err);
+    throw err;
+  }
+  const guildStates = Object.fromEntries(res.rows.map(r => [r.module_key, r.enabled]));
+  // Merge: guild state overrides default
+  try {
+    return allModules.map(mod => ({
+      ...mod,
+      enabled: guildStates[mod.module_key] !== undefined ? guildStates[mod.module_key] : mod.enabled
+    }));
+  } catch (err) {
+    console.error('[getGuildModules] Merge Error:', err);
+    throw err;
+  }
+};
+
+// Set enabled state for a module in a guild
+const setGuildModuleEnabled = async (guildId, moduleKey, enabled) => {
+  // Upsert
+  await db.query(`
+    INSERT INTO guild_modules (guild_id, module_key, enabled, updated_at)
+    VALUES ($1, $2, $3, NOW())
+    ON CONFLICT (guild_id, module_key)
+    DO UPDATE SET enabled = $3, updated_at = NOW();
+  `, [guildId, moduleKey, enabled]);
+  return { guildId, moduleKey, enabled };
+};
+
+const moduleGet = async (moduleId) => {
+  const query = `
+    SELECT * FROM page_modules
+    WHERE id = $1;
+  `;
+  const result = await db.query(query, [moduleId]);
+  return result.rows[0] || null;
+};
+
+const moduleList = async (pageId) => {
+  const query = `
+    SELECT pm.* FROM page_modules pm
+    JOIN page_categories pc ON pm.category_id = pc.id
+    WHERE pc.page_id = $1
+    ORDER BY pm.display_order ASC;
+  `;
+  const result = await db.query(query, [pageId]);
+  return result.rows;
+};
+
 module.exports = {
   // Pages
   getAllPages,
@@ -494,5 +585,11 @@ module.exports = {
   updateCategoryOrders,
   
   // Initialization
-  initializeDefaultModules
+  initializeDefaultModules,
+
+  // Export new wrapper functions for agent compatibility
+  moduleGet,
+  moduleList,
+    getGuildModules,
+    setGuildModuleEnabled,
 };

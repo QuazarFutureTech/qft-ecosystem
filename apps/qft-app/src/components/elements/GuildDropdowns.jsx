@@ -140,11 +140,19 @@ export function RoleSelector({ value, onChange, multiple, label = "Select Role",
   const dropdownRef = useRef(null);
   const token = localStorage.getItem('qft-token');
 
+
   useEffect(() => {
     if (selectedGuildId) {
       loadRoles();
     }
   }, [selectedGuildId]);
+
+  // Defensive: filter out roles missing id or name
+  function sanitizeRoles(roles) {
+    return Array.isArray(roles)
+      ? roles.filter(r => r && typeof r.id === 'string' && typeof r.name === 'string')
+      : [];
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -163,7 +171,8 @@ export function RoleSelector({ value, onChange, multiple, label = "Select Role",
     console.log('[RoleSelector] Fetch result:', result);
     setLoading(false);
     if (result.success) {
-      const filteredRoles = result.roles.filter(r => !r.managed && r.name !== '@everyone');
+      // Defensive: filter out roles missing id or name
+      let filteredRoles = sanitizeRoles(result.roles).filter(r => !r.managed && r.name !== '@everyone');
       console.log('[RoleSelector] Setting roles:', filteredRoles);
       setRoles(filteredRoles);
     } else {

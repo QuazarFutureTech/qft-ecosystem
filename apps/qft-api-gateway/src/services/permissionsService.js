@@ -129,8 +129,26 @@ const deleteRole = async (roleId) => {
   return { success: true };
 };
 
+// Resolve a user identifier (snowflake_id or discord_id) to the canonical discord_id
+const resolveDiscordId = async (userId) => {
+  const query = `
+    SELECT discord_id
+    FROM users
+    WHERE discord_id = $1
+    LIMIT 1;
+  `;
+
+  const result = await db.query(query, [userId]);
+  const discordId = result.rows[0]?.discord_id;
+  if (!discordId) {
+    throw new Error(`User not found with discord_id: ${userId}`);
+  }
+  return discordId;
+};
+
 // Assign role to user
 const assignRoleToUser = async (userId, roleId, assignedBy) => {
+  const discordId = await resolveDiscordId(userId);
   const query = `
     INSERT INTO user_roles (user_discord_id, role_id, assigned_by)
     VALUES ($1, $2, $3)
@@ -138,36 +156,43 @@ const assignRoleToUser = async (userId, roleId, assignedBy) => {
     RETURNING *;
   `;
   
-  const result = await db.query(query, [userId, roleId, assignedBy]);
+  const result = await db.query(query, [discordId, roleId, assignedBy]);
   return result.rows[0];
 };
 
 // Remove role from user
 const removeRoleFromUser = async (userId, roleId) => {
-  await db.query('DELETE FROM user_roles WHERE user_discord_id = $1 AND role_id = $2', [userId, roleId]);
+  const discordId = await resolveDiscordId(userId);
+  await db.query('DELETE FROM user_roles WHERE user_discord_id = $1 AND role_id = $2', [discordId, roleId]);
   return { success: true };
 };
 
 // Get user roles
 const getUserRoles = async (userId) => {
-  const query = `
-    SELECT r.*, ur.assigned_at
-    FROM roles r
-    JOIN user_roles ur ON r.id = ur.role_id
-    WHERE ur.user_discord_id = $1
-    ORDER BY 
-      CASE r.clearance_level
-        WHEN 'α' THEN 1
-        WHEN 'Ω' THEN 2
-        WHEN '3' THEN 3
-        WHEN '2' THEN 4
-        WHEN '1' THEN 5
-        ELSE 6
-      END;
-  `;
-  
-  const result = await db.query(query, [userId]);
-  return result.rows;
+  try {
+    const discordId = await resolveDiscordId(userId);
+    const query = `
+      SELECT r.*, ur.assigned_at
+      FROM roles r
+      JOIN user_roles ur ON r.id = ur.role_id
+      WHERE ur.user_discord_id = $1
+      ORDER BY 
+        CASE r.clearance_level
+          WHEN 'α' THEN 1
+          WHEN 'Ω' THEN 2
+          WHEN '3' THEN 3
+          WHEN '2' THEN 4
+          WHEN '1' THEN 5
+          ELSE 6
+        END;
+    `;
+    
+    const result = await db.query(query, [discordId]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error in getUserRoles:', error.message);
+    throw error;
+  }
 };
 
 // Get all users
@@ -175,6 +200,8 @@ const getAllUsers = async () => {
   const query = `
     SELECT 
       discord_id,
+      snowflake_id,
+      qft_uuid,
       username,
       email,
       created_at

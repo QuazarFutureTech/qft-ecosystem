@@ -123,4 +123,77 @@ router.post('/query', rbacMiddleware('admin'), async (req, res) => {
   }
 });
 
+
+// --- DB Table Utility Endpoints (Admin Only) ---
+// Get table existence
+router.get('/admin/db-table/:table', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table } = req.params;
+    const result = await databaseService.dbTableGet(table);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create table
+router.post('/admin/db-table/:table', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table } = req.params;
+    const { createSQL } = req.body;
+    if (!createSQL) return res.status(400).json({ error: 'Missing createSQL' });
+    const result = await databaseService.dbTableSet(table, createSQL);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete table
+router.delete('/admin/db-table/:table', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table } = req.params;
+    const result = await databaseService.dbTableDel(table);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- DB Subtable (Row/JSONB) Utility Endpoints ---
+// Get subtable (row/config)
+router.get('/admin/db-subtable/:table/:key', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table, key } = req.params;
+    const result = await databaseService.dbSubGet(table, key);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Set subtable (row/config)
+router.put('/admin/db-subtable/:table/:key', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table, key } = req.params;
+    const { value } = req.body;
+    if (typeof value === 'undefined') return res.status(400).json({ error: 'Missing value' });
+    const result = await databaseService.dbSubSet(table, key, value);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete subtable (row/config)
+router.delete('/admin/db-subtable/:table/:key', rbacMiddleware('admin'), async (req, res) => {
+  try {
+    const { table, key } = req.params;
+    const result = await databaseService.dbSubDel(table, key);
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

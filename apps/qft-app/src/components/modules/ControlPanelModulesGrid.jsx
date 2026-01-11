@@ -1,53 +1,87 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaShieldAlt, FaRobot, FaBrain } from 'react-icons/fa';
+import { FaUsers, FaShieldAlt, FaDatabase, FaClipboardList, FaBrain } from 'react-icons/fa';
 import '../../Layout.css';
 
 const modules = [
   {
     id: 'users',
     label: 'User Management',
-    description: 'Manage users, roles, and moderation.',
+    description: 'Manage users, roles, and assignments.',
     icon: FaUsers,
     path: '/control-panel/users'
   },
   {
     id: 'permissions',
     label: 'Permissions',
-    description: 'Configure staff and user permissions.',
+    description: 'Configure staff permissions.',
     icon: FaShieldAlt,
     path: '/control-panel/permissions'
   },
   {
-    id: 'bot-management',
-    label: 'Bot Management',
-    description: 'Configure Discord bot features and automation.',
-    icon: FaRobot,
-    path: '/bot-management'
+    id: 'registry',
+    label: 'Registry',
+    description: 'Manage registry entries and metadata.',
+    icon: FaDatabase,
+    path: '/control-panel/registry'
+  },
+  {
+    id: 'database',
+    label: 'Database Manager',
+    description: 'Manage data storage and connections.',
+    icon: FaDatabase,
+    path: '/control-panel/database'
+  },
+  {
+    id: 'logs',
+    label: 'System Logs',
+    description: 'View and audit system activity.',
+    icon: FaClipboardList,
+    path: '/control-panel/logs'
   },
   {
     id: 'ai-modules',
     label: 'AI Modules',
-    description: 'Manage platform AI integrations.',
+    description: 'Manage AI integrations.',
     icon: FaBrain,
     path: '/control-panel/ai-modules'
   }
-  // Add more modules as needed
 ];
 
 function ControlPanelModulesGrid() {
   const navigate = useNavigate();
+  
   return (
     <div className="page-content">
-      <h2>Control Panel Modules</h2>
-      <div className="modules-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginTop: '24px' }}>
+      <h2>Control Panel</h2>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '16px',
+        marginTop: '20px'
+      }}>
         {modules.map(module => {
           const Icon = module.icon;
           return (
-            <div key={module.id} className="qft-card module-card" style={{ cursor: 'pointer' }} onClick={() => navigate(module.path)}>
-              <div style={{ fontSize: '2rem', marginBottom: '12px' }}><Icon /></div>
-              <h3>{module.label}</h3>
-              <p>{module.description}</p>
+            <div
+              key={module.id}
+              className="qft-card"
+              onClick={() => navigate(module.path)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '16px'
+              }}
+            >
+              <div style={{ fontSize: '1.8rem', marginBottom: '8px', color: 'var(--accent-primary)' }}>
+                <Icon />
+              </div>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '1rem' }}>{module.label}</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                {module.description}
+              </p>
             </div>
           );
         })}

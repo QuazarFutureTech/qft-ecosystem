@@ -45,7 +45,7 @@ module.exports = {
                         commandName: commandName,
                         type: 'built-in',
                         status: 'executed',
-                    }).catch(console.error);
+                    }, null, null, client).catch(console.error);
 
                 } catch (error) {
                     console.error(`Error executing built-in command ${commandName}:`, error);
@@ -54,7 +54,7 @@ module.exports = {
                         type: 'built-in',
                         status: 'error',
                         error: error.message,
-                    }).catch(console.error);
+                    }, null, null, client).catch(console.error);
                     
                     if (interaction.deferred || interaction.replied) {
                         await interaction.followUp({ content: '❌ An execution error occurred with this built-in command!', ephemeral: true });
@@ -66,7 +66,22 @@ module.exports = {
             // --- 2. Custom Command Handling (Fallback) ---
             else {
                 const slashHandler = new SlashCommandHandler(client);
-                await slashHandler.handleInteraction(interaction);
+                try {
+                    await slashHandler.handleInteraction(interaction);
+                } catch (error) {
+                    console.error(`Error executing custom command ${commandName}:`, error);
+                    logService.logAction(interaction.guildId, 'slash_command', interaction.user.id, {
+                        commandName: commandName,
+                        type: 'custom',
+                        status: 'error',
+                        error: error.message,
+                    }, null, null, client).catch(console.error);
+                    if (interaction.deferred || interaction.replied) {
+                        await interaction.followUp({ content: '❌ An execution error occurred with this custom command!', ephemeral: true });
+                    } else {
+                        await interaction.reply({ content: '❌ An execution error occurred with this custom command!', ephemeral: true });
+                    }
+                }
             }
         }
     },

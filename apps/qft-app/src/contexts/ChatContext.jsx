@@ -1,5 +1,5 @@
 // apps/qft-app/src/contexts/ChatContext.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { socketService } from '../services/socketService';
 import { ticketService } from '../services/ticketService';
 import { useUser } from './UserContext';
@@ -14,7 +14,15 @@ export const ChatProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState({}); // { roomId: [user1, user2] }
   const [dms, setDms] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const currentRoomRef = useRef(null);
+  const lastSendAtRef = useRef(0);
 
+  // Keep a ref to the latest currentRoom to avoid stale closures in socket handlers
+  useEffect(() => {
+    currentRoomRef.current = currentRoom;
+  }, [currentRoom]);
+
+  // Connect socket once when userStatus becomes available; do not reconnect on room changes
   useEffect(() => {
     const token = localStorage.getItem('qft-token');
     // Ensure userStatus is available and contains necessary data before connecting
@@ -23,7 +31,7 @@ export const ChatProvider = ({ children }) => {
 
       const handleNewMessage = (message) => {
         // Only add the message if it belongs to the current room
-        if (message.room_id === currentRoom) {
+        if (message.room_id === currentRoomRef.current) {
           setMessages((prevMessages) => [...prevMessages, message]);
         }
       };
@@ -36,13 +44,13 @@ export const ChatProvider = ({ children }) => {
       };
 
       const handleMessageDeleted = ({ messageId, roomId }) => {
-        if (roomId === currentRoom) {
+        if (roomId === currentRoomRef.current) {
           setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
         }
       };
 
       const handleMessageEdited = ({ messageId, roomId, newContent, updatedAt }) => {
-        if (roomId === currentRoom) {
+        if (roomId === currentRoomRef.current) {
             setMessages(prevMessages => prevMessages.map(msg => {
                 if (msg.id === messageId) {
                     return { ...msg, content: newContent, updated_at: updatedAt };
@@ -53,7 +61,7 @@ export const ChatProvider = ({ children }) => {
       };
 
       const handleMessageHistory = ({ roomId, messages }) => {
-        if (roomId === currentRoom) {
+        if (roomId === currentRoomRef.current) {
           setMessages(messages);
         }
       };
@@ -85,16 +93,17 @@ export const ChatProvider = ({ children }) => {
         socketService.disconnect();
       };
     }
-  }, [userStatus, currentRoom]);
+  }, [userStatus]);
 
   const joinRoom = useCallback((roomId) => {
-    if (currentRoom && currentRoom !== roomId) {
-      socketService.emit('leaveRoom', currentRoom);
+    const prevRoom = currentRoomRef.current;
+    if (prevRoom && prevRoom !== roomId) {
+      socketService.emit('leaveRoom', prevRoom);
     }
     // Always emit joinRoom, even if already in the room, to ensure UI and socket are in sync
     setCurrentRoom(roomId);
     socketService.emit('joinRoom', roomId);
-  }, [currentRoom]);
+  }, []);
 
   const sendMessage = useCallback((content) => {
     if (!checkPermission(userStatus, CHAT_ACTIONS.SEND_MESSAGE)) {
@@ -102,10 +111,15 @@ export const ChatProvider = ({ children }) => {
       // Here you could set an error state to show a toast/modal to the user
       return;
     }
-    if (currentRoom && content) {
-      socketService.emit('chat message', { roomId: currentRoom, content });
+    const roomId = currentRoomRef.current;
+    if (roomId && content) {
+      const now = Date.now();
+      // Debounce quick repeated sends (prevent duplicate on rapid clicks/enter)
+      if (now - lastSendAtRef.current < 250) return;
+      lastSendAtRef.current = now;
+      socketService.emit('chat message', { roomId, content });
     }
-  }, [currentRoom, userStatus]);
+  }, [userStatus]);
 
   const deleteMessage = useCallback((messageId) => {
     socketService.emit('deleteMessage', { messageId });

@@ -1,4 +1,67 @@
-// qft-api-gateway/index.js
+require('dotenv').config({ path: __dirname + '/.env' });
+console.log('[API Gateway] Loaded .env from:', __dirname + '/.env');
+console.log('[API Gateway] INTERNAL_BOT_SECRET on startup:', process.env.INTERNAL_BOT_SECRET);
+// --- Auto-initialize default modules if missing ---
+const moduleService = require('./src/services/moduleService');
+
+// --- Auto-initialize default modules if missing ---
+async function ensureDefaultModules() {
+    try {
+        const pages = await moduleService.getAllPages();
+        const hasModules = Object.values(pages).some(page =>
+            page.categories.some(cat => cat.modules && cat.modules.length > 0)
+        );
+        if (!hasModules) {
+            console.log('No modules found in DB. Initializing default modules...');
+            await moduleService.initializeDefaultModules();
+            console.log('Default modules initialized.');
+        }
+    } catch (e) {
+        console.error('Error initializing default modules:', e);
+    }
+}
+
+// --- Ensure only bot modules are visible in the UI by updating bot_module flags on startup ---
+async function ensureBotModuleFlags(db) {
+    try {
+        // List of bot module keys (should match your DISCORD_MODULES)
+        const botModuleKeys = [
+            'commands', // Correct module_key for Custom Commands
+            'welcome',
+            'embeds',
+            'automod',
+            'quick-actions',
+            'role-permissions',
+            'workers',
+            'tickets',
+            'backups'
+        ];
+        // Set bot_module true for bot modules
+        await db.query(`
+            UPDATE page_modules
+            SET configuration = jsonb_set(
+                COALESCE(configuration, '{}'),
+                '{bot_module}',
+                'true'::jsonb
+            )
+            WHERE module_key = ANY($1)
+        `, [botModuleKeys]);
+        // Set bot_module false for all other modules
+        await db.query(`
+            UPDATE page_modules
+            SET configuration = jsonb_set(
+                COALESCE(configuration, '{}'),
+                '{bot_module}',
+                'false'::jsonb
+            )
+            WHERE module_key <> ALL($1)
+        `, [botModuleKeys]);
+        console.log('Bot module flags updated in page_modules.');
+    } catch (e) {
+        console.error('Error updating bot_module flags:', e);
+    }
+}
+
 console.log("🔥 Starting QFT API Gateway...");
 require('dotenv').config();
 
@@ -10,8 +73,12 @@ const db = require('./src/db');
 // const { syncDatabaseProduction } = require('./src/db/migrations'); // Uncomment if needed
 const authenticateToken = require('./src/middleware/auth');
 
+
 const app = express();
 const server = http.createServer(app);
+
+// Attach db instance to app for use in routes
+app.set('db', db);
 
 // ✅ FIX 1: Ensure Port is interpreted as a number
 const PORT = parseInt(process.env.PORT) || 3001;
@@ -36,13 +103,16 @@ app.use(cors({
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            // Allow unknown origins temporarily for debugging if needed, otherwise block
-            console.log("Blocked CORS origin:", origin);
             callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true
 }));
+
+
+// Now call ensureDefaultModules and ensureBotModuleFlags after db is defined
+ensureDefaultModules();
+ensureBotModuleFlags(db);
 
 // --- Socket.IO Setup ---
 const io = new Server(server, {
@@ -219,6 +289,12 @@ const databaseRoutes = require('./src/routes/database');
 const commandRoutes = require('./src/routes/commands');
 const embedTemplatesRoutes = require('./src/routes/embedTemplates');
 const guildConfigRoutes = require('./src/routes/guildConfig');
+const settingsRoutes = require('./src/routes/settings');
+const moduleSettingsRoutes = require('./src/routes/moduleSettings');
+
+const backupsRoutes = require('./src/routes/backups');
+const userRoutes = require('./src/routes/user');
+const ticketsRoutes = require('./src/routes/tickets');
 
 app.use('/api/internal', internalRoutes);
 app.use('/api/v1/registry', registryRoutes);
@@ -231,6 +307,11 @@ app.use('/api/v1/database', databaseRoutes);
 app.use('/api/v1', commandRoutes);
 app.use('/api/v1', embedTemplatesRoutes);
 app.use('/api/v1', guildConfigRoutes);
+app.use('/api/v1', settingsRoutes);
+app.use('/api/v1', moduleSettingsRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use('/api/v1', backupsRoutes);
+app.use('/api/v1', ticketsRoutes);
 
 // ... (Keep other route imports) ...
 

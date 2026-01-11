@@ -9,26 +9,38 @@ import CustomCommandBuilderModule from './CustomCommandBuilderModule';
 import AutomodModule from './AutomodModule';
 import WelcomeModule from './WelcomeModule';
 import EnhancedEmbedBuilder from './EnhancedEmbedBuilder';
-import CommandToggleModule from './CommandToggleModule';
-import ScheduledEmbedsModule from './ScheduledEmbedsModule';
-import AutomodRuleTesterModule from './AutomodRuleTesterModule';
 import ModerationQuickActionsModule from './ModerationQuickActionsModule';
 import RolePermissionManagerModule from './RolePermissionManagerModule';
 import BackupsModule from './BackupsModule';
 import '../../assets/css/BotManagementSection.css';
 import { FaCode, FaShieldAlt, FaHandPaper, FaEnvelope, FaToggleOn, FaClock, FaVial, FaGavel, FaUserShield, FaHistory } from 'react-icons/fa';
+import ModuleCard from '../elements/ModuleCard';
+import { defaultModuleStates } from './moduleStates';
+
 
 function BotManagementSection() {
   const { userGuilds } = useUser();
   const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const [activeModule, setActiveModule] = useState('commands');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+  const [moduleStates, setModuleStates] = useState(defaultModuleStates);
+  const [settingsModule, setSettingsModule] = useState(null);
+
   // Close sidebar on mobile when item clicked
   const closeSidebar = () => {
     if (window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
+  };
+
+  const handleToggle = (moduleId) => {
+    setModuleStates(prev => ({ ...prev, [moduleId]: !prev[moduleId] }));
+    // TODO: Call backend to persist state
+  };
+
+  const handleSettings = (moduleId) => {
+    setSettingsModule(moduleId);
+    // TODO: Open modal/drawer for module settings
   };
 
   const moduleCategories = [
@@ -38,14 +50,12 @@ function BotManagementSection() {
         { id: 'commands', label: 'Custom Commands', icon: FaCode, component: CustomCommandBuilderModule },
         { id: 'welcome', label: 'Welcome Messages', icon: FaHandPaper, component: WelcomeModule },
         { id: 'embeds', label: 'Embeds', icon: FaEnvelope, component: EnhancedEmbedBuilder },
-        { id: 'command-toggle', label: 'Command Toggle', icon: FaToggleOn, component: CommandToggleModule },
       ]
     },
     {
       title: 'Moderation',
       modules: [
         { id: 'automod', label: 'Auto Moderation', icon: FaShieldAlt, component: AutomodModule },
-        { id: 'automod-tester', label: 'Automod Tester', icon: FaVial, component: AutomodRuleTesterModule },
         { id: 'quick-actions', label: 'Quick Actions', icon: FaGavel, component: ModerationQuickActionsModule },
         { id: 'role-permissions', label: 'Role Permissions', icon: FaUserShield, component: RolePermissionManagerModule },
       ]
@@ -53,7 +63,7 @@ function BotManagementSection() {
     {
       title: 'Automation',
       modules: [
-        { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock, component: ScheduledEmbedsModule },
+        // { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock, component: ScheduledEmbedsModule },
       ]
     },
     {
@@ -79,6 +89,9 @@ function BotManagementSection() {
           </div>
           <div className="guild-selector-inline">
             <label>Server:</label>
+            {/* Debug output for userGuilds and selectedGuildId */}
+            <pre style={{ fontSize: 10, color: '#888', margin: 0 }}>{JSON.stringify(userGuilds)}</pre>
+            <pre style={{ fontSize: 10, color: '#888', margin: 0 }}>selectedGuildId: {String(selectedGuildId)}</pre>
             <select
               value={selectedGuildId || ''}
               onChange={(e) => setSelectedGuildId(e.target.value)}
@@ -86,7 +99,7 @@ function BotManagementSection() {
             >
               {userGuilds.map(guild => (
                 <option key={guild.id} value={guild.id}>
-                  {guild.name}
+                  {guild.name || '[No Name]'}
                 </option>
               ))}
             </select>
@@ -103,19 +116,18 @@ function BotManagementSection() {
             defaultOpen={idx === 0}
           >
             <div className="module-buttons-grid">
-              {category.modules.map(module => {
-                const IconComponent = module.icon;
-                return (
-                  <button
-                    key={module.id}
-                    className={`module-card-button ${activeModule === module.id ? 'active' : ''}`}
-                    onClick={() => { setActiveModule(module.id); closeSidebar(); }}
-                  >
-                    <span className="module-icon"><IconComponent size={24} /></span>
-                    <span className="module-label">{module.label}</span>
-                  </button>
-                );
-              })}
+              {category.modules.map(module => (
+                <ModuleCard
+                  key={module.id}
+                  label={module.label}
+                  icon={module.icon}
+                  enabled={!!moduleStates[module.id]}
+                  onToggle={() => handleToggle(module.id)}
+                  onSettings={() => handleSettings(module.id)}
+                  active={activeModule === module.id}
+                  onClick={() => { setActiveModule(module.id); closeSidebar(); }}
+                />
+              ))}
             </div>
           </CollapsibleCategory>
         ))}

@@ -3,6 +3,7 @@
 
 const fetch = require('node-fetch');
 const { MessageFlags } = require('discord.js');
+const TemplateEngine = require('./templateEngine');
 
 class ComponentListenerHandler {
   constructor(client) {
@@ -76,21 +77,11 @@ class ComponentListenerHandler {
 
       // Build context based on interaction type
       const context = this.buildContext(interaction, triggerType);
+      const templateArgs = Array.isArray(context.Args) ? context.Args : [];
 
-      // Execute command
-      const executeResponse = await fetch(`${this.apiUrl}/api/internal/commands/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-internal-secret': this.internalSecret
-        },
-        body: JSON.stringify({
-          commandId: command.id,
-          context: context
-        })
-      });
-
-      const executeData = await executeResponse.json();
+      // Execute command locally
+      const engine = new TemplateEngine(this.client, interaction, context);
+      const executeData = await engine.execute(command.command_code, templateArgs);
 
       if (!executeData.success) {
         return interaction.reply({ 
@@ -112,7 +103,7 @@ class ComponentListenerHandler {
       // Handle embeds
       if (command.response_type === 'embed') {
         try {
-          const embedData = JSON.parse(executeData.response);
+          const embedData = JSON.parse(executeData.output);
           replyOptions.embeds = [embedData];
           delete replyOptions.content;
         } catch (e) {
@@ -200,6 +191,14 @@ class ComponentListenerHandler {
         Fields: fields
       };
     }
+
+    // Provide lowercase aliases for templates expecting gateway-style context
+    context.Guild = context.Server;
+    context.guild = context.Server;
+    context.channel = context.Channel;
+    context.user = context.User;
+    context.member = context.Member;
+    context.args = context.Args;
 
     return context;
   }

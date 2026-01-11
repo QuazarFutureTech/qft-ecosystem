@@ -24,7 +24,12 @@ steps:
       - '--allow-unauthenticated'
       # 👇 CRITICAL FOR BOTS: Keeps the CPU awake so it stays online in Discord
       - '--no-cpu-throttling'
-      - '--min-instances=1' 
+      - '--min-instances=1'
+      # Environment variables for production
+      - '--set-env-vars'
+      - 'API_GATEWAY_URL=https://api-gateway-YOUR_HASH-uc.a.run.app'
+      - '--set-secrets'
+      - 'INTERNAL_BOT_SECRET=INTERNAL_BOT_SECRET:latest,BOT_TOKEN=BOT_TOKEN:latest' 
 
 images:
   - 'gcr.io/$PROJECT_ID/qft-agent:$COMMIT_SHA'

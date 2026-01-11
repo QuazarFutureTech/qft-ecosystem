@@ -1,55 +1,93 @@
-:root[data-theme="cyber"] {
-  --bg: #0b0f1a;
-  --panel: #121826;
-  --panel-alt: #0f1422;
-  --text: #d8eaff;
-  --muted: #b9cde6;
-  --accent: #00e5ff; /* neon cyan */
-  --accent-2: #ff2ec4; /* neon magenta */
-  --accent-3: #7cf4ff; /* soft cyan */
-  --border: rgba(0, 229, 255, 0.7);
-  --shadow: 0 10px 24px rgba(0, 229, 255, 0.15);
-  --glow-shadow: 0 0 12px var(--accent), 0 0 20px var(--accent-2), 0 0 28px var(--accent);
+/* --- THE MISSING PIECES (Global Overrides) --- */
+
+/* 1. Make the Scrollbar part of the machine */
+[data-theme="cyber"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: var(--bg);
+}
+[data-theme="cyber"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.2);
+  border: 1px solid var(--accent);
+  border-radius: 0; /* Sharp edges */
+}
+[data-theme="cyber"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
-/* Base background & text */
-[data-theme="cyber"] body {
-  background: radial-gradient(1200px 800px at 10% 10%, rgba(0,229,255,0.07), transparent),
-              radial-gradient(900px 600px at 90% 30%, rgba(255,46,196,0.06), transparent),
-              var(--bg);
+/* 2. Text Selection (When you highlight text) */
+[data-theme="cyber"] ::selection {
+  background: var(--accent);
+  color: #000;
+  text-shadow: none;
+}
+
+/* 3. Inputs & Forms (The biggest culprit for looking 'default') */
+[data-theme="cyber"] input,
+[data-theme="cyber"] textarea,
+[data-theme="cyber"] select {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: var(--accent);
+  font-family: 'Consolas', 'Monaco', monospace; /* Tech font for data entry */
+  padding: 8px 12px;
+  outline: none;
+  border-radius: 2px;
+}
+[data-theme="cyber"] input:focus,
+[data-theme="cyber"] textarea:focus,
+[data-theme="cyber"] select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+  background: rgba(0, 229, 255, 0.05);
+}
+
+/* 4. Tables / Data Grids */
+[data-theme="cyber"] table {
+  border-collapse: collapse;
+  width: 100%;
+}
+[data-theme="cyber"] th {
+  text-align: left;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px;
+}
+[data-theme="cyber"] td {
+  border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+  padding: 10px;
+  color: var(--muted);
+}
+[data-theme="cyber"] tr:hover td {
+  background: rgba(0, 229, 255, 0.05); /* Highlight row on hover */
   color: var(--text);
 }
 
-/* Panels */
-[data-theme="cyber"] .qft-card {
-  background: linear-gradient(180deg, rgba(18,24,38,0.85), rgba(18,24,38,0.75));
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  border-radius: 16px;
+/* 5. Links */
+[data-theme="cyber"] a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(0, 229, 255, 0.4);
+  transition: all 0.2s;
+}
+[data-theme="cyber"] a:hover {
+  color: #fff;
+  border-bottom-style: solid;
+  text-shadow: 0 0 5px var(--accent);
 }
 
-/* Buttons */
-[data-theme="cyber"] .qft-button {
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  color: #081217;
-  border: 1px solid var(--border);
-  text-shadow: 0 0 8px rgba(0,0,0,0.35);
+/* 6. Headings (Force them to look technical) */
+[data-theme="cyber"] h1, 
+[data-theme="cyber"] h2, 
+[data-theme="cyber"] h3 {
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 300; /* Thin letters look more futuristic */
 }
-
-/* Neon borders + pulse */
-[data-theme="cyber"] .qft-button,
-[data-theme="cyber"] .qft-card,
-[data-theme="cyber"] .menu_icon::before {
-  box-shadow: var(--glow-shadow);
-}
-
-@keyframes cyberPulse {
-  0% { filter: drop-shadow(0 0 0 var(--accent)); }
-  50% { filter: drop-shadow(0 0 10px var(--accent)); }
-  100% { filter: drop-shadow(0 0 0 var(--accent)); }
-}
-
-[data-theme="cyber"] .qft-button.neon,
-[data-theme="cyber"] .qft-card.neon {
-  animation: cyberPulse 2.2s ease-in-out infinite;
+[data-theme="cyber"] h1 {
+  border-left: 4px solid var(--accent);
+  padding-left: 15px;
 }

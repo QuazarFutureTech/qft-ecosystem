@@ -3,6 +3,38 @@
 
 const db = require('../db');
 
+// Helper to parse JSON arrays from DB
+const parseCommandArrays = (command) => {
+  if (!command) return command;
+  const parsedCommand = { ...command };
+  try {
+    if (parsedCommand.require_roles && typeof parsedCommand.require_roles === 'string') {
+      parsedCommand.require_roles = JSON.parse(parsedCommand.require_roles);
+    }
+    if (parsedCommand.ignore_roles && typeof parsedCommand.ignore_roles === 'string') {
+      parsedCommand.ignore_roles = JSON.parse(parsedCommand.ignore_roles);
+    }
+    if (parsedCommand.require_channels && typeof parsedCommand.require_channels === 'string') {
+      parsedCommand.require_channels = JSON.parse(parsedCommand.require_channels);
+    }
+    if (parsedCommand.ignore_channels && typeof parsedCommand.ignore_channels === 'string') {
+      parsedCommand.ignore_channels = JSON.parse(parsedCommand.ignore_channels);
+    }
+    if (parsedCommand.trigger_data && typeof parsedCommand.trigger_data === 'string') {
+      parsedCommand.trigger_data = JSON.parse(parsedCommand.trigger_data);
+    }
+  } catch (e) {
+    console.error('Error parsing command arrays for command ID:', command.id, e);
+    // Fallback to empty arrays in case of parsing error
+    parsedCommand.require_roles = [];
+    parsedCommand.ignore_roles = [];
+    parsedCommand.require_channels = [];
+    parsedCommand.ignore_channels = [];
+    parsedCommand.trigger_data = {};
+  }
+  return parsedCommand;
+};
+
 // ===== PSEUDO-LANG PARSER =====
 // Simple GoLang-inspired syntax parser for custom commands
 class PseudoLangParser {
@@ -48,65 +80,8 @@ class PseudoLangParser {
       return { stmt: { type: 'varDecl', name, value }, nextIndex: index + 4 };
     }
 
-    // Return statement
-    if (token === 'return') {
-      const value = this.tokens[index + 1];
-      return { stmt: { type: 'return', value }, nextIndex: index + 2 };
-    }
-
-    // Send to channel/user: send("target", "message")
-    if (token === 'send') {
-      const target = this.tokens[index + 2];
-      const message = this.tokens[index + 4];
-      return { stmt: { type: 'send', target, message }, nextIndex: index + 6 };
-    }
-
-    // Log action: log("action", details)
-    if (token === 'log') {
-      const action = this.tokens[index + 2];
-      const details = this.tokens[index + 4];
-      return { stmt: { type: 'log', action, details }, nextIndex: index + 6 };
-    }
-
-    // If statement: if condition { ... }
-    if (token === 'if') {
-      const condition = this.tokens[index + 1];
-      let braceIndex = index + 3;
-      let braceCount = 1;
-      const startBrace = braceIndex + 1;
-      while (braceCount > 0) {
-        braceIndex++;
-        if (this.tokens[braceIndex] === '{') braceCount++;
-        if (this.tokens[braceIndex] === '}') braceCount--;
-      }
-      const body = this.tokens.slice(startBrace, braceIndex).join(' ');
-      return { stmt: { type: 'if', condition, body }, nextIndex: braceIndex + 1 };
-    }
-
+    // Add more statement parsing as needed
     return { stmt: null, nextIndex: index + 1 };
-  }
-}
-
-// ===== SANDBOX EXECUTOR =====
-class CommandSandbox {
-  constructor(context = {}) {
-    this.context = {
-      // Safe built-ins
-      Math,
-      Date,
-      JSON,
-      ...context,
-      // Safe logging
-      log: console.log,
-      // Dangerous functions blocked
-      require: undefined,
-      eval: undefined,
-      Function: undefined,
-      setTimeout: undefined,
-      setInterval: undefined,
-      fetch: undefined,
-      exec: undefined,
-    };
   }
 
   async execute(jsCode, timeout = 5000) {
@@ -136,6 +111,7 @@ const createCommand = async (guildId, commandName, commandCode, authorDiscordId,
   const {
     description = '',
     triggerType = 'command',
+    triggerData = {},
     triggerOnEdit = false,
     caseSensitive = false,
     responseType = 'text',
@@ -150,76 +126,40 @@ const createCommand = async (guildId, commandName, commandCode, authorDiscordId,
     enabled = true,
     isEphemeral = false
   } = options;
+  // Normalize commandName: strip prefix and force lowercase
+  let normalizedName = (commandName || '').trim();
+  normalizedName = normalizedName.replace(/^[!\/.]+/, '');
+  normalizedName = normalizedName.toLowerCase();
+  // Allow empty names to be stored as NULL so CCID is primary identifier
+  if (normalizedName === '') normalizedName = null;
+  // Ensure triggerType is always set and valid
+  const safeTriggerType = (triggerType === 'slash' || triggerType === 'command') ? triggerType : 'command';
+
+  // Determine next command_index for this guild (start at 0)
+  const idxRes = await db.query('SELECT MAX(command_index) AS max_idx FROM custom_commands WHERE guild_id = $1', [guildId]);
+  const nextIndex = (idxRes.rows[0] && typeof idxRes.rows[0].max_idx === 'number') ? idxRes.rows[0].max_idx + 1 : 0;
 
   const query = `
     INSERT INTO custom_commands (
-      guild_id, command_name, command_code, author_discord_id, description,
+      guild_id, command_index, command_name, command_code, author_discord_id, description,
       trigger_type, trigger_on_edit, case_sensitive, response_type, response_in_dm,
       delete_trigger, delete_response, cooldown_seconds,
-      require_roles, ignore_roles, require_channels, ignore_channels, enabled, is_ephemeral
+      require_roles, ignore_roles, require_channels, ignore_channels, enabled, is_ephemeral, trigger_data
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-    ON CONFLICT (guild_id, command_name)
-    DO UPDATE SET
-      command_code = $3,
-      description = $5,
-      trigger_type = $6,
-      trigger_on_edit = $7,
-      case_sensitive = $8,
-      response_type = $9,
-      response_in_dm = $10,
-      delete_trigger = $11,
-      delete_response = $12,
-      cooldown_seconds = $13,
-      require_roles = $14,
-      ignore_roles = $15,
-      require_channels = $16,
-      ignore_channels = $17,
-      enabled = $18,
-      is_ephemeral = $19,
-      updated_at = CURRENT_TIMESTAMP
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
     RETURNING *;
   `;
-  
+
   const result = await db.query(query, [
-    guildId, commandName, commandCode, authorDiscordId, description,
+    guildId, nextIndex, normalizedName, commandCode, authorDiscordId, description,
     triggerType, triggerOnEdit, caseSensitive, responseType, responseInDM,
     deleteTrigger, deleteResponse, cooldownSeconds,
     JSON.stringify(requireRoles), JSON.stringify(ignoreRoles),
-    JSON.stringify(requireChannels), JSON.stringify(ignoreChannels), enabled, isEphemeral
+    JSON.stringify(requireChannels), JSON.stringify(ignoreChannels), enabled, isEphemeral,
+    JSON.stringify(triggerData)
   ]);
-  
-  return result.rows[0];
-};
 
-// Execute a command with template engine
-const executeCommand = async (commandCode, context = {}) => {
-  try {
-    // Normalize context to support both Discord.js and YAGPDB style variables
-    const normalizedContext = {
-      ...context,
-      // Add YAGPDB-style uppercase aliases
-      User: context.author || context.user,
-      Channel: context.channel,
-      Server: context.guild,
-      Guild: context.guild,
-      Args: context.args || [],
-      // Keep lowercase versions too
-      user: context.author || context.user,
-      author: context.author || context.user,
-      channel: context.channel,
-      guild: context.guild,
-      server: context.guild,
-      args: context.args || [],
-      member: context.member
-    };
-    
-    const engine = new TemplateEngine(normalizedContext);
-    const result = await engine.execute(commandCode);
-    return result;
-  } catch (error) {
-    return { success: false, output: null, error: error.message };
-  }
+  return parseCommandArrays(result.rows[0]);
 };
 
 // Get command by name (case-insensitive)
@@ -229,18 +169,29 @@ const getCommand = async (guildId, commandName) => {
     WHERE guild_id = $1 AND LOWER(command_name) = LOWER($2) AND is_active = true AND enabled = true;
   `;
   const result = await db.query(query, [guildId, commandName]);
-  return result.rows[0] || null;
+  return parseCommandArrays(result.rows[0] || null);
 };
 
 // Get commands by trigger type (for message scanning)
-const getCommandsByTrigger = async (guildId, triggerType) => {
+const getCommandsByTrigger = async (guildId, triggerType, triggerText = null) => {
   const query = `
     SELECT * FROM custom_commands
     WHERE guild_id = $1 AND trigger_type = $2 AND is_active = true AND enabled = true
     ORDER BY created_at ASC;
   `;
   const result = await db.query(query, [guildId, triggerType]);
-  return result.rows;
+  const commands = result.rows.map(parseCommandArrays);
+
+  if (!triggerText) return commands;
+
+  const needle = String(triggerText).toLowerCase();
+  return commands.filter(cmd => {
+    const nameMatch = (cmd.command_name || '').toLowerCase() === needle;
+    const triggerData = cmd.trigger_data || {};
+    const customIdMatch = (triggerData.custom_id || triggerData.customId || '').toLowerCase() === needle;
+    const textMatch = (triggerData.trigger_text || triggerData.triggerText || '').toLowerCase() === needle;
+    return nameMatch || customIdMatch || textMatch;
+  });
 };
 
 // Check if command can be executed (cooldown, roles, channels)
@@ -302,27 +253,30 @@ const updateExecutionStats = async (commandId) => {
 // List all commands for a guild
 const listCommands = async (guildId) => {
   const query = `
-    SELECT id, command_name, command_code, description, author_discord_id, trigger_type, 
+    SELECT id, command_index, command_name, command_code, description, author_discord_id, trigger_type, 
            trigger_on_edit, case_sensitive, response_type, response_in_dm, 
            delete_trigger, delete_response, cooldown_seconds, 
            require_roles, ignore_roles, require_channels, ignore_channels,
-           enabled, execution_count, created_at, last_executed_at
+           enabled, execution_count, created_at, last_executed_at, trigger_data
     FROM custom_commands
     WHERE guild_id = $1 AND is_active = true
     ORDER BY created_at DESC;
   `;
   const result = await db.query(query, [guildId]);
-  return result.rows;
+  if (!result.rows || !Array.isArray(result.rows)) return [];
+  return result.rows.length ? result.rows.map(parseCommandArrays) : [];
 };
 
 // Update command
 const updateCommand = async (commandId, commandCode, description, options = {}) => {
   const {
+    commandName,
     triggerType,
     triggerOnEdit,
     caseSensitive,
     responseType,
     responseInDM,
+    triggerData = {},
     deleteTrigger,
     deleteResponse,
     cooldownSeconds,
@@ -333,6 +287,13 @@ const updateCommand = async (commandId, commandCode, description, options = {}) 
     enabled,
     isEphemeral
   } = options;
+  // Normalize commandName if provided
+  let normalizedName = commandName;
+  if (typeof normalizedName === 'string') {
+    normalizedName = normalizedName.trim().replace(/^[!\/.]+/, '').toLowerCase();
+  }
+  // Allow all trigger types as provided
+  const safeTriggerType = triggerType || 'command';
 
   const query = `
     UPDATE custom_commands
@@ -343,42 +304,50 @@ const updateCommand = async (commandId, commandCode, description, options = {}) 
         case_sensitive = COALESCE($5, case_sensitive),
         response_type = COALESCE($6, response_type),
         response_in_dm = COALESCE($7, response_in_dm),
-        delete_trigger = COALESCE($8, delete_trigger),
-        delete_response = COALESCE($9, delete_response),
-        cooldown_seconds = COALESCE($10, cooldown_seconds),
-        require_roles = COALESCE($11, require_roles),
-        ignore_roles = COALESCE($12, ignore_roles),
-        require_channels = COALESCE($13, require_channels),
-        ignore_channels = COALESCE($14, ignore_channels),
-        enabled = COALESCE($15, enabled),
-        is_ephemeral = COALESCE($16, is_ephemeral),
+        trigger_data = COALESCE($8, trigger_data),
+        delete_trigger = COALESCE($9, delete_trigger),
+        delete_response = COALESCE($10, delete_response),
+        cooldown_seconds = COALESCE($11, cooldown_seconds),
+        require_roles = COALESCE($12, require_roles),
+        ignore_roles = COALESCE($13, ignore_roles),
+        require_channels = COALESCE($14, require_channels),
+        ignore_channels = COALESCE($15, ignore_channels),
+        enabled = COALESCE($16, enabled),
+        is_ephemeral = COALESCE($17, is_ephemeral),
         updated_at = CURRENT_TIMESTAMP
-    WHERE id = $17
+    WHERE id = $18
     RETURNING *;
   `;
+    console.log('[updateCommand] safeTriggerType:', safeTriggerType);
+    const paramArray = [
+      commandCode, 
+      description, 
+      safeTriggerType,
+      triggerOnEdit,
+      caseSensitive,
+      responseType,
+      responseInDM,
+      triggerData ? JSON.stringify(triggerData) : null,
+      deleteTrigger,
+      deleteResponse,
+      cooldownSeconds,
+      requireRoles ? JSON.stringify(requireRoles) : null,
+      ignoreRoles ? JSON.stringify(ignoreRoles) : null,
+      requireChannels ? JSON.stringify(requireChannels) : null,
+      ignoreChannels ? JSON.stringify(ignoreChannels) : null,
+      enabled,
+      isEphemeral,
+      commandId
+    ];
+    console.log('[updateCommand] SQL param array:', paramArray);
   const result = await db.query(query, [
-    commandCode, 
-    description, 
-    triggerType,
-    triggerOnEdit,
-    caseSensitive,
-    responseType,
-    responseInDM,
-    deleteTrigger,
-    deleteResponse,
-    cooldownSeconds,
-    requireRoles ? JSON.stringify(requireRoles) : null,
-    ignoreRoles ? JSON.stringify(ignoreRoles) : null,
-    requireChannels ? JSON.stringify(requireChannels) : null,
-    ignoreChannels ? JSON.stringify(ignoreChannels) : null,
-    enabled,
-    isEphemeral,
-    commandId
-  ]);
-  return result.rows[0];
+      ...paramArray
+    ]);
+  console.log('[updateCommand] DB result:', result.rows);
+  return parseCommandArrays(result.rows[0]);
 };
 
-// Delete command
+// Delete command by primary id
 const deleteCommand = async (commandId) => {
   const query = `
     UPDATE custom_commands
@@ -388,6 +357,38 @@ const deleteCommand = async (commandId) => {
   `;
   const result = await db.query(query, [commandId]);
   return result.rows[0];
+};
+
+// Delete command by guild and command_index
+const deleteCommandByIndex = async (guildId, commandIndex) => {
+  const query = `
+    UPDATE custom_commands
+    SET is_active = false
+    WHERE guild_id = $1 AND command_index = $2
+    RETURNING *;
+  `;
+  const result = await db.query(query, [guildId, commandIndex]);
+  return result.rows[0];
+};
+
+// Get command by guild and index
+const getCommandByIndex = async (guildId, commandIndex) => {
+  const query = `
+    SELECT * FROM custom_commands
+    WHERE guild_id = $1 AND command_index = $2 AND is_active = true AND enabled = true;
+  `;
+  const result = await db.query(query, [guildId, commandIndex]);
+  return parseCommandArrays(result.rows[0] || null);
+};
+
+// Get command by primary id
+const getCommandById = async (id) => {
+  const query = `
+    SELECT * FROM custom_commands
+    WHERE id = $1 AND is_active = true AND enabled = true;
+  `;
+  const result = await db.query(query, [id]);
+  return parseCommandArrays(result.rows[0] || null);
 };
 
 // Import from YAGPDB format
@@ -437,7 +438,7 @@ const refreshCustomCommands = async (guildId) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${internalBotSecret}`, // Use internal secret for auth
+        'x-internal-secret': internalBotSecret, // Use internal secret for auth
       },
       body: JSON.stringify({ guildId, commands: discordCommands }),
     });
@@ -456,10 +457,7 @@ const refreshCustomCommands = async (guildId) => {
 };
 
 module.exports = {
-  // Keep for backward compatibility
-  CommandSandbox, // Keep for backward compatibility
   createCommand,
-  executeCommand,
   getCommand,
   getCommandsByTrigger,
   canExecuteCommand,
@@ -467,6 +465,9 @@ module.exports = {
   listCommands,
   updateCommand,
   deleteCommand,
+  deleteCommandByIndex,
+  getCommandByIndex,
+  getCommandById,
 
   importYAGPDBCommand,
   refreshCustomCommands,

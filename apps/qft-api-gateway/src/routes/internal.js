@@ -4,6 +4,11 @@ const logService = require('../services/logService');
 const workerService = require('../services/workerService');
 const ticketService = require('../services/ticketService');
 const commandService = require('../services/commandService');
+const dbService = require('../services/dbService');
+const registryService = require('../services/registryService');
+const userService = require('../services/userService');
+const moduleService = require('../services/moduleService');
+const internalGuildDb = require('./internalGuildDb');
 
 // Middleware to check internal secret
 const internalAuth = (req, res, next) => {
@@ -15,6 +20,7 @@ const internalAuth = (req, res, next) => {
 };
 
 router.use(internalAuth);
+router.use(internalGuildDb);
 
 // LOGS
 router.post('/logs', async (req, res) => {
@@ -72,7 +78,10 @@ router.get('/commands', async (req, res) => {
         }
         
         if (guildId && triggerType) {
-            const commands = await commandService.getCommandsByTrigger(guildId, triggerType);
+            const triggerText = req.query.triggerText || req.query.trigger;
+            let commands = await commandService.getCommandsByTrigger(guildId, triggerType, triggerText);
+            // Patch: add 'name' property for agent compatibility (all trigger types)
+            commands = commands.map(cmd => ({ ...cmd, name: cmd.command_name }));
             return res.json({ success: true, commands });
         }
         
@@ -113,15 +122,12 @@ router.get('/commands-debug', async (req, res) => {
     }
 });
 
-// Execute command template
-router.post('/commands/execute', async (req, res) => {
-    try {
-        const { commandCode, context } = req.body;
-        const result = await commandService.executeCommand(commandCode, context);
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Execute command template (deprecated - execution now handled by qft-agent)
+router.post('/commands/execute', async (_req, res) => {
+    return res.status(410).json({
+        success: false,
+        error: 'Command execution has moved to the Agent. Fetch command data and execute templates in the Agent context.'
+    });
 });
 
 // Update command execution stats
@@ -134,5 +140,215 @@ router.post('/commands/:commandId/stats', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ===== INTERNAL DATABASE API =====
+router.post('/db/query', async (req, res) => {
+    try {
+        const { table, where, limit } = req.body;
+        const rows = await dbService.dbQuery(table, where, limit);
+        res.json({ success: true, rows });
+    } catch (error) {
+        console.error('Error in /db/query:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/db/count', async (req, res) => {
+    try {
+        const { table, where } = req.body;
+        const count = await dbService.dbCount(table, where);
+        res.json({ success: true, count });
+    } catch (error) {
+        console.error('Error in /db/count:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/db/insert', async (req, res) => {
+    try {
+        const { table, data } = req.body;
+        const record = await dbService.dbInsert(table, data);
+        res.json({ success: true, record });
+    } catch (error) {
+        console.error('Error in /db/insert:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.put('/db/update/:id', async (req, res) => {
+    try {
+        const { table, data } = req.body;
+        const { id } = req.params;
+        const record = await dbService.dbUpdate(table, id, data);
+        res.json({ success: true, record });
+    } catch (error) {
+        console.error('Error in /db/update:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.delete('/db/delete/:id', async (req, res) => {
+    try {
+        const { table } = req.body; // Table name still needed for validation
+        const { id } = req.params;
+        await dbService.dbDelete(table, id);
+        res.json({ success: true, message: 'Record deleted.' });
+    } catch (error) {
+        console.error('Error in /db/delete:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ===== INTERNAL REGISTRY API =====
+router.get('/registry/get', async (req, res) => {
+    try {
+        const { key, type } = req.query;
+        if (!key) return res.status(400).json({ success: false, error: 'Key is required.' });
+        const entry = await registryService.regGet(key, type);
+        res.json({ success: true, entry });
+    } catch (error) {
+        console.error('Error in /registry/get:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/registry/getAll', async (req, res) => {
+    try {
+        const { type } = req.query;
+        const entries = await registryService.regGetAll(type);
+        res.json({ success: true, entries });
+    } catch (error) {
+        console.error('Error in /registry/getAll:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/registry/set', async (req, res) => {
+    try {
+        const { key, type, value, description } = req.body;
+        if (!key || !type || value === undefined) return res.status(400).json({ success: false, error: 'Key, type, and value are required.' });
+        const entry = await registryService.regSet(key, type, value, description);
+        res.json({ success: true, entry });
+    } catch (error) {
+        console.error('Error in /registry/set:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.delete('/registry/delete', async (req, res) => {
+    try {
+        const { key, type } = req.body;
+        if (!key || !type) return res.status(400).json({ success: false, error: 'Key and type are required.' });
+        const success = await registryService.regDelete(key, type);
+        res.json({ success });
+    } catch (error) {
+        console.error('Error in /registry/delete:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ===== INTERNAL USER & ROLE API =====
+router.get('/users/get/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await userService.getUser(userId);
+        res.json({ success: true, user });
+    } catch (error) {
+        console.error('Error in /users/get/:userId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/users/roles/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const roles = await userService.getUserRoles(userId);
+        res.json({ success: true, roles });
+    } catch (error) {
+        console.error('Error in /users/roles/:userId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/users/hasRole/:userId/:roleId', async (req, res) => {
+    try {
+        const { userId, roleId } = req.params;
+        const hasRole = await userService.hasRole(userId, roleId);
+        res.json({ success: true, hasRole });
+    } catch (error) {
+        console.error('Error in /users/hasRole/:userId/:roleId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/users/checkPermission/:userId/:permissionKey', async (req, res) => {
+    try {
+        const { userId, permissionKey } = req.params;
+        const hasPermission = await userService.checkPermission(userId, permissionKey);
+        res.json({ success: true, hasPermission });
+    } catch (error) {
+        console.error('Error in /users/checkPermission/:userId/:permissionKey:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/users/permissions/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const permissions = await userService.getUserPermissions(userId);
+        res.json({ success: true, permissions });
+    } catch (error) {
+        console.error('Error in /users/permissions/:userId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/users/validate/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const isValid = await userService.validateUser(userId);
+        res.json({ success: true, isValid });
+    } catch (error) {
+        console.error('Error in /users/validate/:userId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/roles/validate/:roleId', async (req, res) => {
+    try {
+        const { roleId } = req.params;
+        const isValid = await userService.validateRole(roleId);
+        res.json({ success: true, isValid });
+    } catch (error) {
+        console.error('Error in /roles/validate/:roleId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ===== INTERNAL MODULE API =====
+router.get('/modules/get/:moduleId', async (req, res) => {
+    try {
+        const { moduleId } = req.params;
+        const module = await moduleService.moduleGet(moduleId);
+        res.json({ success: true, module });
+    } catch (error) {
+        console.error('Error in /modules/get/:moduleId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/modules/list/:pageId', async (req, res) => {
+    try {
+        const { pageId } = req.params;
+        const modules = await moduleService.moduleList(pageId);
+        res.json({ success: true, modules });
+    } catch (error) {
+        console.error('Error in /modules/list/:pageId:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
 
 module.exports = router;

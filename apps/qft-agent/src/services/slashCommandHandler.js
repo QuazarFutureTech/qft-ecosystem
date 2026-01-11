@@ -1,10 +1,25 @@
 // apps/qft-agent/src/services/slashCommandHandler.js
 // Handles slash command registration and execution for custom commands
 
+
 const fetch = require('node-fetch');
 const { REST, Routes, MessageFlags } = require('discord.js');
+const TemplateEngine = require('./templateEngine');
 
 class SlashCommandHandler {
+    // Remove all slash commands for a guild
+    async clearSlashCommands(guildId) {
+      try {
+        const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+        await rest.put(
+          Routes.applicationGuildCommands(this.client.user.id, guildId),
+          { body: [] }
+        );
+        console.log(`All slash commands removed for guild ${guildId}`);
+      } catch (error) {
+        console.error(`Error clearing slash commands for guild ${guildId}:`, error);
+      }
+    }
   constructor(client) {
     this.client = client;
     this.apiUrl = process.env.API_GATEWAY_URL || 'http://localhost:3001';
@@ -17,22 +32,24 @@ class SlashCommandHandler {
     try {
       if (!commands || commands.length === 0) {
         console.log(`No slash commands provided to register for guild ${guildId}`);
-        // If no commands are provided, we should clear existing commands if that's the intent,
-        // or just return if the intent is only to register new ones.
-        // For now, let's assume if no commands are provided, we don't do anything or clear them.
-        // Clearing commands: await rest.put(Routes.applicationGuildCommands(this.client.user.id, guildId), { body: [] });
         return;
       }
 
-      const discordCommands = commands.map(cmd => ({
-        name: cmd.name.toLowerCase().replace(/[^a-z0-9_-]/g, ''), // Ensure Discord-compliant naming
+      // Only register commands with trigger_type === 'slash' and valid name
+        const slashCommands = commands.filter(cmd => (cmd && cmd.trigger_type === 'slash' && typeof cmd.name === 'string'));
+      if (slashCommands.length === 0) {
+        console.log(`No valid slash commands to register for guild ${guildId}`);
+        return;
+      }
+
+      const discordCommands = slashCommands.map(cmd => ({
+        name: cmd.name.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
         description: cmd.description || 'Custom command',
-        type: cmd.type || 1, // Default to CHAT_INPUT
-        options: cmd.options || [] // Assume options are already correctly formatted by API Gateway
+        type: cmd.type || 1,
+        options: cmd.options || []
       }));
 
       const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-      
       await rest.put(
         Routes.applicationGuildCommands(this.client.user.id, guildId),
         { body: discordCommands }
@@ -41,7 +58,7 @@ class SlashCommandHandler {
       console.log(`✅ Registered ${discordCommands.length} slash commands for guild ${guildId}`);
     } catch (error) {
       console.error(`Error registering slash commands for guild ${guildId}:`, error);
-      throw error; // Re-throw to be caught by the calling function
+      throw error;
     }
   }
 
@@ -67,13 +84,32 @@ class SlashCommandHandler {
   }
 
   // Handle slash command interaction
+
   async handleInteraction(interaction) {
     if (!interaction.isCommand()) return false;
 
     const guildId = interaction.guildId;
     const commandName = interaction.commandName;
     const userId = interaction.user.id;
-
+    const startTime = Date.now();
+    let command;
+    // Import ConfigManager here to avoid circular deps
+    const ConfigManager = require('../utils/ConfigManager');
+    // Check if custom commands are enabled for this guild
+    const isEnabled = await ConfigManager.isCategoryEnabled(guildId, 'commands');
+    if (!isEnabled) {
+      try {
+        await interaction.reply({
+          embeds: [{
+            title: 'Custom Commands Disabled',
+            description: 'This server has disabled the Custom Commands module. Enable it in the dashboard to use custom commands.',
+            color: 0xff5555
+          }],
+          ephemeral: true
+        });
+      } catch {}
+      return true;
+    }
     try {
       // Fetch command from database by name
       const response = await fetch(
@@ -84,141 +120,163 @@ class SlashCommandHandler {
           }
         }
       );
-      const command = await response.json();
-
-      if (!command || !command.id) {
-        return false; // Not a custom command, let built-in handler take over
+      if (response.status === 401) {
+        console.error('[SlashCommandHandler] 401 Unauthorized when fetching command. INTERNAL_BOT_SECRET used:', this.internalSecret);
       }
+      command = await response.json();
+    } catch (err) {
+      console.error('[SlashCommandHandler] Error fetching command:', err);
+      try { await interaction.reply({ content: 'Error fetching command.', ephemeral: true }); } catch {}
+      return true;
+    }
 
-      // CRITICAL: Defer the interaction IMMEDIATELY to avoid 3-second timeout
-      // This extends the response window to 15 minutes
-      await interaction.deferReply({ ephemeral: command.response_in_dm || false });
+    if (!command || !command.id) {
+      return false; // Not a custom command, let built-in handler take over
+    }
 
-      // Check if command is enabled (after defer so we can use editReply)
-      if (!command.enabled) {
-        await interaction.editReply({ content: 'This command is currently disabled.' });
-        return true;
+    // Defer the interaction IMMEDIATELY to avoid 3-second timeout
+    try {
+      const deferOptions = command.response_in_dm ? { flags: 64 } : {};
+      await interaction.deferReply(deferOptions);
+      const deferTime = Date.now() - startTime;
+      if (deferTime > 2500) {
+        console.warn(`[SlashCommandHandler] Warning: deferReply took ${deferTime}ms after interaction received!`);
       }
+    } catch (err) {
+      console.error('[SlashCommandHandler] Error deferring reply:', err);
+      return true;
+    }
 
-      // Check cooldown
-      const cooldownKey = `${command.id}-${userId}`;
-      if (this.cooldowns.has(cooldownKey)) {
-        const expirationTime = this.cooldowns.get(cooldownKey);
-        if (Date.now() < expirationTime) {
-          const timeLeft = Math.ceil((expirationTime - Date.now()) / 1000);
-          await interaction.editReply({ 
-            content: `Please wait ${timeLeft} seconds before using this command again.`
-          });
-          return true;
-        }
+
+
+    // Check permissions (roles/channels)
+    const canExecute = await this.checkExecutionRules(command, interaction);
+    if (!canExecute.allowed) {
+      await interaction.editReply({ content: canExecute.reason });
+      return true;
+    }
+
+    // Build args from interaction options
+    const args = [];
+    interaction.options.data.forEach(option => {
+      args.push(option.value);
+    });
+
+    // Execute command locally using the agent TemplateEngine
+    const templateContext = {
+      Args: args,
+      args,
+      User: {
+        ID: interaction.user.id,
+        Username: interaction.user.username,
+        Discriminator: interaction.user.discriminator
+      },
+      user: {
+        id: interaction.user.id,
+        username: interaction.user.username,
+        discriminator: interaction.user.discriminator
+      },
+      Member: {
+        ID: interaction.member?.id,
+        Roles: interaction.member?.roles?.cache?.map(r => r.id) || []
+      },
+      member: {
+        id: interaction.member?.id,
+        roles: interaction.member?.roles?.cache?.map(r => r.id) || []
+      },
+      Channel: {
+        ID: interaction.channelId,
+        Name: interaction.channel?.name
+      },
+      channel: {
+        id: interaction.channelId,
+        name: interaction.channel?.name
+      },
+      Guild: {
+        ID: interaction.guildId,
+        Name: interaction.guild?.name,
+        MemberCount: interaction.guild?.memberCount
+      },
+      guild: {
+        id: interaction.guildId,
+        name: interaction.guild?.name,
+        memberCount: interaction.guild?.memberCount
+      },
+      Server: {
+        ID: interaction.guildId,
+        Name: interaction.guild?.name,
+        MemberCount: interaction.guild?.memberCount
+      },
+      server: {
+        id: interaction.guildId,
+        name: interaction.guild?.name,
+        memberCount: interaction.guild?.memberCount
       }
+    };
 
-      // Check permissions (roles/channels)
-      const canExecute = await this.checkExecutionRules(command, interaction);
-      if (!canExecute.allowed) {
-        await interaction.editReply({ content: canExecute.reason });
-        return true;
-      }
+    const engine = new TemplateEngine(this.client, interaction, templateContext);
+    const executeData = await engine.execute(command.command_code, args);
 
-      // Build args from interaction options
-      const args = [];
-      interaction.options.data.forEach(option => {
-        args.push(option.value);
+    if (!executeData.success) {
+      await interaction.editReply({ 
+        content: `Error executing command: ${executeData.error}`
       });
+      return true;
+    }
 
-      // Execute command
-      const context = {
-        author: {
-          id: interaction.user.id,
-          username: interaction.user.username,
-          discriminator: interaction.user.discriminator
-        },
-        member: {
-          id: interaction.member?.id,
-          roles: interaction.member?.roles?.cache?.map(r => r.id) || []
-        },
-        channel: {
-          id: interaction.channelId,
-          name: interaction.channel?.name
-        },
-        guild: {
-          id: interaction.guildId,
-          name: interaction.guild?.name,
-          memberCount: interaction.guild?.memberCount
-        },
-        args: args
-      };
-
-      const executeResponse = await fetch(`${this.apiUrl}/api/internal/commands/execute`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-internal-secret': this.internalSecret
-        },
-        body: JSON.stringify({
-          commandCode: command.command_code,
-          context: context
-        })
-      });
-
-      const executeData = await executeResponse.json();
-
-      if (!executeData.success) {
-        await interaction.editReply({ 
-          content: `Error executing command: ${executeData.error}`
-        });
-        return true;
+    // Send response
+    const replyOptions = {
+      content: executeData.output || 'Command executed successfully.'
+    };
+    
+    // Handle embeds
+    if (command.response_type === 'embed') {
+      try {
+        const embedData = JSON.parse(executeData.output);
+        replyOptions.embeds = [embedData];
+        delete replyOptions.content;
+      } catch (e) {
+        // If not valid JSON, send as text
       }
+    }
 
-      // Send response
-      const replyOptions = {
-        content: executeData.output || 'Command executed successfully.'
-      };
-      
-      // Handle embeds
-      if (command.response_type === 'embed') {
-        try {
-          const embedData = JSON.parse(executeData.output);
-          replyOptions.embeds = [embedData];
-          delete replyOptions.content;
-        } catch (e) {
-          // If not valid JSON, send as text
-        }
+    await interaction.editReply(replyOptions);
+
+    // Set cooldown
+    if (command.cooldown_seconds > 0) {
+      this.cooldowns.set(cooldownKey, Date.now() + (command.cooldown_seconds * 1000));
+      setTimeout(() => {
+        this.cooldowns.delete(cooldownKey);
+      }, command.cooldown_seconds * 1000);
+    }
+
+    // Update stats
+    await fetch(`${this.apiUrl}/api/internal/commands/${command.id}/stats`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-internal-secret': this.internalSecret
       }
+    });
 
-      await interaction.editReply(replyOptions);
-
-      // Set cooldown
-      if (command.cooldown_seconds > 0) {
-        this.cooldowns.set(cooldownKey, Date.now() + (command.cooldown_seconds * 1000));
-        setTimeout(() => this.cooldowns.delete(cooldownKey), command.cooldown_seconds * 1000);
-      }
-
-      // Update stats
-      await fetch(`${this.apiUrl}/api/internal/commands/${command.id}/stats`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-internal-secret': this.internalSecret
-        }
-      });
-
-      return true; // Successfully handled
+    return true; // Successfully handled
 
     } catch (error) {
       console.error('Error handling slash command:', error);
-      try {
-        if (interaction.deferred && !interaction.replied) {
-          await interaction.editReply({ 
-            content: 'An error occurred while executing this command.'
-          });
+      (async () => {
+        try {
+          if (interaction.deferred && !interaction.replied) {
+            await interaction.editReply({ 
+              content: 'An error occurred while executing this command.'
+            });
+          }
+        } catch (replyError) {
+          console.error('Could not send error reply:', replyError);
         }
-      } catch (replyError) {
-        console.error('Could not send error reply:', replyError);
-      }
+      })();
       return true; // We handled it (even though it errored)
     }
-  }
+  // removed extra closing brace here
 
   async checkExecutionRules(command, interaction) {
     const member = interaction.member;
@@ -260,6 +318,6 @@ class SlashCommandHandler {
 
     return { allowed: true };
   }
-}
 
+}
 module.exports = SlashCommandHandler;

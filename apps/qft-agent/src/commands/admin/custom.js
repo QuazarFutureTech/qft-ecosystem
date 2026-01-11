@@ -18,6 +18,21 @@ module.exports = {
     async execute(interaction) {
         const sub = interaction.options.getSubcommand();
         const guildId = interaction.guildId;
+        console.log(`[CustomCommands] execute called for guild ${guildId}, subcommand: ${sub}`);
+
+        // Check if the custom commands module is enabled for this guild
+        const isEnabled = await ConfigManager.isCategoryEnabled(guildId, 'commands');
+        if (!isEnabled) {
+            await interaction.reply({
+                embeds: [{
+                    title: 'Custom Commands Disabled',
+                    description: 'This server has disabled the Custom Commands module. Enable it in the dashboard to use custom commands.',
+                    color: 0xff5555
+                }],
+                ephemeral: true
+            });
+            return;
+        }
 
         if (sub === 'create') {
             const name = interaction.options.getString('name').toLowerCase();
@@ -25,16 +40,16 @@ module.exports = {
             const cooldown = interaction.options.getInteger('cooldown') || 0;
             const role = interaction.options.getRole('role');
 
-            const cmds = ConfigManager.get(guildId, 'customCommands', {});
+            const cmds = await ConfigManager.get(guildId, 'customCommands', {});
             cmds[name] = { response, createdAt: Date.now(), cooldown: cooldown, roleId: role?.id || null };
-            ConfigManager.set(guildId, 'customCommands', cmds);
+            await ConfigManager.set(guildId, 'customCommands', cmds);
             await interaction.reply({ content: `Custom command "${name}" created.`, ephemeral: true });
         } else if (sub === 'delete') {
             const name = interaction.options.getString('name').toLowerCase();
-            const cmds = ConfigManager.get(guildId, 'customCommands', {});
+            const cmds = await ConfigManager.get(guildId, 'customCommands', {});
             if (cmds[name]) {
                 delete cmds[name];
-                ConfigManager.set(guildId, 'customCommands', cmds);
+                await ConfigManager.set(guildId, 'customCommands', cmds);
                 await interaction.reply({ content: `Deleted custom command ${name}`, ephemeral: true });
             } else {
                 await interaction.reply({ content: `No such custom command: ${name}`, ephemeral: true });

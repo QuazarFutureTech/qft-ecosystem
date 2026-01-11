@@ -1,13 +1,16 @@
-// qft-agent/src/AgentCore.js
-
 require('dotenv').config();
+// Debug log for INTERNAL_BOT_SECRET on startup
+console.log('[Agent] INTERNAL_BOT_SECRET on startup:', process.env.INTERNAL_BOT_SECRET);
 const express = require('express');
 const SettingsHandler = require('./utils/SettingsHandler');
-const PlatformManager = require('./PlatformManager'); // Import the singleton PlatformManager
-const DiscordAdapter = require('./adapters/DiscordAdapter'); // Import DiscordAdapter
-const WorkerScheduler = require('./modules/workerScheduler'); // Import WorkerScheduler
-const TicketManager = require('./modules/tickets'); // Import TicketManager
-const BackupService = require('./services/backupService'); // Import BackupService
+const PlatformManager = require('./PlatformManager'); 
+const DiscordAdapter = require('./adapters/DiscordAdapter'); 
+const WorkerScheduler = require('./modules/workerScheduler'); 
+const TicketManager = require('./modules/tickets'); 
+const BackupService = require('./services/backupService');
+const CustomCommandHandler = require('./services/customCommandHandler');
+const ConfigManager = require('./utils/ConfigManager');
+const SlashCommandHandler = require('./services/slashCommandHandler');
 
 // --- BOT + API CONFIG ---
 const BOT_API_PORT = process.env.PORT || 3002;
@@ -16,41 +19,84 @@ botApp.use(express.json());
 
 const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET;
 if (!INTERNAL_SECRET) {
-    console.error('CRITICAL ERROR: INTERNAL_BOT_SECRET is not defined. Please set this environment variable for secure internal API communication.');
-    process.exit(1); // Exit the process with an error code
+    console.error('CRITICAL ERROR: INTERNAL_BOT_SECRET is not defined.');
+    process.exit(1); 
 }
 
+// --- Platform Initialization ---
+const discordAdapter = new DiscordAdapter(process.env.BOT_TOKEN);
+discordAdapter.login();
+
+// --- Initialize Custom Command Handler ---
+const customCommandHandler = new CustomCommandHandler(discordAdapter.client);
+
+// --- Initialize Settings ---
+SettingsHandler.loadSettings();
+
+// --- Initialize Worker Scheduler & Services ---
+const workerScheduler = new WorkerScheduler(discordAdapter.client);
+const backupService = new BackupService(discordAdapter.client);
+
+// --- Wire up Discord Events ---
+discordAdapter.client.on('clientReady', () => {
+    workerScheduler.initialize();
+    console.log('✅ Worker Scheduler initialized');
+    console.log('✅ Custom Command Handler ready');
+
+    // Retroactive Reaction Scanner (feature flag)
+    const enableScanner = String(process.env.ENABLE_RETRO_REACTION_SCANNER || '').toLowerCase() === 'true';
+    if (enableScanner) {
+        const { scanRecentReactions } = require('./services/RetroactiveReactionScanner');
+        setInterval(async () => {
+            for (const guild of discordAdapter.client.guilds.cache.values()) {
+                try {
+                    await scanRecentReactions(discordAdapter.client, guild.id, { lookbackMinutes: 10, maxMessages: 50 });
+                } catch (e) {
+                    console.error(`[RetroactiveReactionScanner] Error scanning guild ${guild.id}:`, e);
+                }
+            }
+        }, 5 * 60 * 1000); // every 5 minutes
+        console.log('✅ Retroactive Reaction Scanner enabled');
+    } else {
+        console.log('⏸️ Retroactive Reaction Scanner is disabled (ENABLE_RETRO_REACTION_SCANNER != true)');
+    }
+});
+
+// DEV: Add a simple message command to trigger retroactive reaction scan
+// DEV command to trigger scanner, guarded by feature flag
+if (String(process.env.ENABLE_RETRO_REACTION_SCANNER || '').toLowerCase() === 'true') {
+    const { scanRecentReactions } = require('./services/RetroactiveReactionScanner');
+    discordAdapter.client.on('messageCreate', async (msg) => {
+        if (msg.content === '!scanreactions' && msg.member?.permissions?.has('ADMINISTRATOR')) {
+            msg.reply('Scanning recent reactions...');
+            await scanRecentReactions(discordAdapter.client, msg.guildId, { lookbackMinutes: 60, maxMessages: 50 });
+            msg.reply('Scan complete.');
+        }
+    });
+}
+
+// Listen for Messages to trigger Custom Commands
+
+// --- Make client available to routes ---
+botApp.locals.client = discordAdapter.client;
+
 // --- CLOUD RUN HEALTH CHECK ---
-// Google needs this specific route to know the bot is alive.
 botApp.get('/', (req, res) => {
     res.status(200).send('QFT Agent is Online! 🤖');
 });
-// -----------------------------
 
-// Middleware to secure the bot's local API (only API Gateway can call it)
+// Middleware
 const internalAuth = (req, res, next) => {
-    if (req.headers['internal-secret'] !== INTERNAL_SECRET) {
+    const secret = req.headers['internal-secret'] || req.headers['x-internal-secret'];
+    if (secret !== INTERNAL_SECRET) {
         return res.status(403).json({ message: 'Internal API access denied.' });
     }
     next();
 };
 
-// --- Platform Initialization ---
-const discordAdapter = new DiscordAdapter(process.env.BOT_TOKEN);
-discordAdapter.login(); // Login the Discord bot via its adapter
-
-// --- 0. Initialize Settings ---
-SettingsHandler.loadSettings(); // Load settings before anything else!
-
-// --- Initialize Worker Scheduler ---
-const workerScheduler = new WorkerScheduler(discordAdapter.client);
-workerScheduler.initialize(); // Initialize schedule-based workers
-
-const backupService = new BackupService(discordAdapter.client);
-console.log('✅ Worker Scheduler initialized');
-
-// --- Make client available to routes ---
-botApp.locals.client = discordAdapter.client;
+// ==========================================
+//  API ROUTES START HERE
+// ==========================================
 
 // --- Mount Guild Data Routes ---
 try {
@@ -61,7 +107,39 @@ try {
     console.error('❌ Failed to load guild data routes:', err.message);
 }
 
-// --- 3. Internal API Endpoints ---
+// --- Mount Discord Actions Routes (for API Gateway proxy) ---
+try {
+    const discordActionsRoutes = require('./routes/discordActions');
+    botApp.use('/api/internal', internalAuth, discordActionsRoutes);
+    console.log('✅ Discord actions routes loaded');
+} catch (err) {
+    console.error('❌ Failed to load discord actions routes:', err.message);
+}
+
+// Internal API Endpoints
+
+// Get all guilds the bot is in
+botApp.get('/api/guilds', internalAuth, async (req, res) => {
+    const discordAdapterInstance = PlatformManager.adapters.get('discord');
+
+    if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
+        return res.status(503).json({ message: 'Discord bot client not ready.' });
+    }
+
+    try {
+        const guilds = discordAdapterInstance.getGuildsCache().map(guild => ({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            memberCount: guild.memberCount
+        }));
+        res.json(guilds);
+    } catch (error) {
+        console.error('Error fetching all guilds:', error);
+        res.status(500).json({ message: 'Failed to retrieve guilds.' });
+    }
+});
+
 // Get User's Mutual Guilds
 botApp.get('/api/guilds/:userId', internalAuth, async (req, res) => {
     const userId = req.params.userId;
@@ -80,7 +158,7 @@ botApp.get('/api/guilds/:userId', internalAuth, async (req, res) => {
                 mutualGuilds.push({
                     id: guild.id,
                     name: guild.name,
-                    icon: guild.icon // <-- Return the icon hash, not the URL
+                    icon: guild.icon 
                 });
             } catch {
                 // User not in this guild, skip
@@ -162,7 +240,7 @@ botApp.delete('/api/guilds/:guildId', internalAuth, async (req, res) => {
 // Update a member's role in a guild
 botApp.put('/api/guilds/:guildId/members/:userId/roles', internalAuth, async (req, res) => {
     const { guildId, userId } = req.params;
-    const { roleId, roleName } = req.body; // Can specify by ID or Name
+    const { roleId, roleName } = req.body; 
     const discordAdapterInstance = PlatformManager.adapters.get('discord');
 
     if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
@@ -178,7 +256,7 @@ botApp.put('/api/guilds/:guildId/members/:userId/roles', internalAuth, async (re
         if (result.success) {
             res.json({ success: true, message: result.message });
         } else {
-            res.status(400).json({ message: result.message }); // Use 400 for client-side errors (e.g., role not found)
+            res.status(400).json({ message: result.message }); 
         }
     } catch (error) {
         console.error(`Error updating role for user ${userId} in guild ${guildId}:`, error);
@@ -187,8 +265,8 @@ botApp.put('/api/guilds/:guildId/members/:userId/roles', internalAuth, async (re
 });
 
 // Set Discord Rich Presence for the bot
-botApp.post('/api/set-rpc-activity', internalAuth, async (req, res) => {
-    const { activity } = req.body; // activity should be a Discord.Presence object or similar
+botApp.post('/api/discord/rpc', internalAuth, async (req, res) => {
+    const { activity } = req.body; 
     const discordAdapterInstance = PlatformManager.adapters.get('discord');
 
     if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
@@ -196,8 +274,6 @@ botApp.post('/api/set-rpc-activity', internalAuth, async (req, res) => {
     }
 
     try {
-        // Ensure the activity object is valid according to discord.js PresenceData
-        // We'll rely on discord.js to validate the structure
         await discordAdapterInstance.client.user.setPresence(activity);
         res.json({ success: true, message: 'Discord Rich Presence updated successfully.' });
     } catch (error) {
@@ -230,7 +306,6 @@ botApp.post('/api/guilds/:guildId/channels/:channelId/embed', internalAuth, asyn
 botApp.get('/api/guilds/:guildId/scheduled-embeds', internalAuth, async (req, res) => {
     const { guildId } = req.params;
     try {
-        const PlatformManager = require('./PlatformManager');
         const scheduler = PlatformManager.get('scheduler');
         if (!scheduler) return res.status(503).json({ jobs: [], message: 'Scheduler not available.' });
         const jobs = scheduler.listJobs(guildId);
@@ -245,7 +320,6 @@ botApp.get('/api/guilds/:guildId/scheduled-embeds', internalAuth, async (req, re
 botApp.delete('/api/guilds/:guildId/scheduled-embeds/:jobId', internalAuth, async (req, res) => {
     const { guildId, jobId } = req.params;
     try {
-        const PlatformManager = require('./PlatformManager');
         const scheduler = PlatformManager.get('scheduler');
         if (!scheduler) return res.status(503).json({ message: 'Scheduler not available.' });
         const ok = scheduler.removeJob(jobId);
@@ -260,38 +334,9 @@ botApp.delete('/api/guilds/:guildId/scheduled-embeds/:jobId', internalAuth, asyn
     }
 });
 
-// Get all guilds the bot is a member of
-botApp.get('/api/guilds', internalAuth, async (req, res) => {
-    const discordAdapterInstance = PlatformManager.adapters.get('discord');
-
-    if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
-        return res.status(503).json({ message: 'Discord bot client not ready.' });
-    }
-
-    try {
-        const guilds = discordAdapterInstance.getGuildsCache().map(guild => ({
-            id: guild.id,
-            name: guild.name,
-            icon: guild.icon,
-            memberCount: guild.memberCount,
-            ownerId: guild.ownerId,
-        }));
-        res.json(guilds);
-    } catch (error) {
-        console.error('Error fetching all bot guilds:', error);
-        res.status(500).json({ message: 'Failed to fetch bot guilds due to an internal bot error.' });
-    }
-});
-
-// --- 4. Startup (Express Server) ---
-botApp.listen(BOT_API_PORT, () => {
-    console.log(`🤖 Bot Internal API listening on port ${BOT_API_PORT}`);
-});
-
 // Get custom commands for a guild
 botApp.get('/api/guilds/:guildId/custom-commands', internalAuth, async (req, res) => {
     try {
-        const ConfigManager = require('./utils/ConfigManager');
         const cmds = ConfigManager.get(req.params.guildId, 'customCommands', {});
         res.json({ success: true, commands: cmds });
     } catch (err) {
@@ -303,7 +348,6 @@ botApp.get('/api/guilds/:guildId/custom-commands', internalAuth, async (req, res
 // Create/update custom command
 botApp.post('/api/guilds/:guildId/custom-commands', internalAuth, async (req, res) => {
     try {
-        const ConfigManager = require('./utils/ConfigManager');
         const { name, response, cooldown, roleId } = req.body;
         if (!name || !response) return res.status(400).json({ success: false, message: 'Name and response required.' });
         const cmds = ConfigManager.get(req.params.guildId, 'customCommands', {});
@@ -319,7 +363,6 @@ botApp.post('/api/guilds/:guildId/custom-commands', internalAuth, async (req, re
 // Delete custom command
 botApp.delete('/api/guilds/:guildId/custom-commands/:name', internalAuth, async (req, res) => {
     try {
-        const ConfigManager = require('./utils/ConfigManager');
         const name = decodeURIComponent(req.params.name).toLowerCase();
         const cmds = ConfigManager.get(req.params.guildId, 'customCommands', {});
         if (cmds[name]) {
@@ -335,7 +378,7 @@ botApp.delete('/api/guilds/:guildId/custom-commands/:name', internalAuth, async 
     }
 });
 
-// Moderation actions (ban, kick, timeout)
+// Moderation actions
 botApp.post('/api/guilds/:guildId/members/:userId/:action', internalAuth, async (req, res) => {
     const { guildId, userId, action } = req.params;
     const { reason, minutes } = req.body || {};
@@ -373,18 +416,14 @@ botApp.post('/api/guilds/:guildId/members/:userId/:action', internalAuth, async 
     }
 });
 
-// Persist guild-level config (e.g., welcome/leave templates, automod toggles, custom commands)
+// Persist guild-level config
 botApp.put('/api/guilds/:guildId/config', internalAuth, async (req, res) => {
     const guildId = req.params.guildId;
     const payload = req.body;
     try {
-        // Validate payload is an object
         if (!payload || typeof payload !== 'object') return res.status(400).json({ success: false, message: 'Invalid payload' });
-        const ConfigManager = require('./utils/ConfigManager');
-        // Merge settings (shallow merge)
         const existing = ConfigManager.get(guildId, null, {});
         const merged = { ...existing, ...payload };
-        // Save each key
         for (const [k, v] of Object.entries(merged)) {
             ConfigManager.set(guildId, k, v, { source: 'api' });
         }
@@ -398,7 +437,6 @@ botApp.put('/api/guilds/:guildId/config', internalAuth, async (req, res) => {
 // Get guild config
 botApp.get('/api/guilds/:guildId/config', internalAuth, async (req, res) => {
     try {
-        const ConfigManager = require('./utils/ConfigManager');
         const cfg = ConfigManager.getGuild(req.params.guildId);
         res.json({ success: true, data: cfg.settings });
     } catch (err) {
@@ -407,8 +445,32 @@ botApp.get('/api/guilds/:guildId/config', internalAuth, async (req, res) => {
     }
 });
 
+// Get a backup of the guild (roles, channels, settings)
+botApp.get('/api/guilds/:guildId/backups', internalAuth, async (req, res) => {
+    const { guildId } = req.params;
+    try {
+        const backup = await backupService.generateBackup(guildId);
+        res.json({ success: true, backup });
+    } catch (error) {
+        console.error('Failed to generate backup:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to generate backup.' });
+    }
+});
+
+// Restore a backup for the guild
+botApp.post('/api/guilds/:guildId/backups', internalAuth, async (req, res) => {
+    const { guildId } = req.params;
+    const backupData = req.body;
+    try {
+        const result = await backupService.restoreBackup(guildId, backupData);
+        res.json(result);
+    } catch (error) {
+        console.error('Failed to restore backup:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to restore backup.' });
+    }
+});
+
 // ===== WORKER SCHEDULER ENDPOINTS =====
-// Get active scheduled jobs
 botApp.get('/api/scheduler/jobs', internalAuth, async (req, res) => {
     try {
         const jobs = workerScheduler.getActiveJobs();
@@ -419,14 +481,11 @@ botApp.get('/api/scheduler/jobs', internalAuth, async (req, res) => {
     }
 });
 
-// Schedule a new worker
 botApp.post('/api/scheduler/schedule', internalAuth, async (req, res) => {
     const { guildId, workerId, cronExpression, triggerConfig } = req.body;
-
     if (!guildId || !workerId || !cronExpression) {
         return res.status(400).json({ success: false, message: 'guildId, workerId, and cronExpression required' });
     }
-
     try {
         const jobId = workerScheduler.scheduleWorker(guildId, workerId, cronExpression, triggerConfig);
         res.json({ success: true, jobId, message: `Worker ${workerId} scheduled with cron: ${cronExpression}` });
@@ -436,15 +495,12 @@ botApp.post('/api/scheduler/schedule', internalAuth, async (req, res) => {
     }
 });
 
-// Update a scheduled worker
 botApp.put('/api/scheduler/schedule/:jobId', internalAuth, async (req, res) => {
     const { jobId } = req.params;
     const { guildId, workerId, cronExpression, triggerConfig } = req.body;
-
     if (!cronExpression) {
         return res.status(400).json({ success: false, message: 'cronExpression required' });
     }
-
     try {
         const newJobId = workerScheduler.updateScheduledWorker(jobId, cronExpression, workerId, guildId, triggerConfig);
         res.json({ success: true, jobId: newJobId, message: 'Worker schedule updated' });
@@ -454,10 +510,8 @@ botApp.put('/api/scheduler/schedule/:jobId', internalAuth, async (req, res) => {
     }
 });
 
-// Unschedule a worker
 botApp.delete('/api/scheduler/schedule/:jobId', internalAuth, async (req, res) => {
     const { jobId } = req.params;
-
     try {
         const removed = workerScheduler.unscheduleWorker(jobId);
         if (removed) {
@@ -470,8 +524,6 @@ botApp.delete('/api/scheduler/schedule/:jobId', internalAuth, async (req, res) =
         res.status(500).json({ success: false, message: 'Failed to unschedule worker' });
     }
 });
-
-
 
 // Deploy commands globally
 botApp.post('/api/deploy-commands', internalAuth, async (req, res) => {
@@ -492,29 +544,38 @@ botApp.post('/api/deploy-commands', internalAuth, async (req, res) => {
     }
 });
 
-// Refresh custom slash commands for a guild
+// Refresh custom slash commands
 botApp.post('/api/refresh-custom-commands', internalAuth, async (req, res) => {
     try {
-        const { guildId, commands } = req.body; // Extract commands array
-
+        const { guildId, commands } = req.body;
         if (!guildId) {
             return res.status(400).json({ success: false, message: 'Guild ID is required' });
         }
-        
-        // Ensure commands is an array, default to empty if not provided
+
+        // Ensure commands is an array
         const commandsToRegister = Array.isArray(commands) ? commands : [];
-        
-        const SlashCommandHandler = require('./services/slashCommandHandler');
+
         const discordAdapterInstance = PlatformManager.adapters.get('discord');
-        
         if (!discordAdapterInstance || !discordAdapterInstance.isClientReady()) {
             return res.status(503).json({ success: false, message: 'Discord bot client not ready.' });
         }
-        
+
+        // --- PATCH: Also reload all custom commands (not just slash) ---
+        const customCommandHandler = new CustomCommandHandler(discordAdapterInstance.client);
+        // Force refresh the command cache for this guild
+        if (customCommandHandler.commandCache) {
+            customCommandHandler.commandCache.delete(guildId);
+        }
+        // Fetch and cache all commands for this guild
+        const allCommands = await customCommandHandler.getGuildCommandsCached(guildId);
+        console.log(`[AgentCore] [REFRESH] Reloaded all custom commands for guild ${guildId}. Count: ${allCommands.length}`);
+
+        // Also refresh slash commands as before
         const slashHandler = new SlashCommandHandler(discordAdapterInstance.client);
-        await slashHandler.registerSlashCommands(guildId, commandsToRegister); // Pass commands array
-        
-        res.json({ success: true, message: 'Custom slash commands refreshed successfully.' });
+        await slashHandler.registerSlashCommands(guildId, commandsToRegister);
+        console.log(`[AgentCore] [REFRESH] Refreshed slash commands for guild ${guildId}. Count: ${commandsToRegister.length}`);
+
+        res.json({ success: true, message: 'Custom commands (all triggers) and slash commands refreshed successfully.' });
     } catch (error) {
         console.error('Error refreshing custom commands:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -584,4 +645,9 @@ botApp.post('/api/internal/backups/restore', internalAuth, async (req, res) => {
         console.error('Error restoring backup:', error);
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// --- Startup (Express Server) ---
+botApp.listen(BOT_API_PORT, () => {
+    console.log(`🤖 Bot Internal API listening on port ${BOT_API_PORT}`);
 });

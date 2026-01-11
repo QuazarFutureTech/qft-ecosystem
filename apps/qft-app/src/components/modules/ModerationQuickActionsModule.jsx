@@ -4,12 +4,14 @@ import Input from '../elements/Input';
 import { useSelectedGuild } from '../../contexts/SelectedGuildContext.jsx';
 import { useUser } from '../../contexts/UserContext.jsx';
 import { moderateUser } from '../../services/admin';
+import { useGuildModuleSettings } from '../../contexts/GuildModuleSettingsContext.jsx';
 import { useModal } from '../../hooks/useModal';
 import ConfirmModal from '../elements/ConfirmModal';
 
 export default function ModerationQuickActionsModule() {
   const { selectedGuildId } = useSelectedGuild();
   const { userGuilds } = useUser();
+  const { isEnabled } = useGuildModuleSettings();
   const [userId, setUserId] = useState('');
   const [reason, setReason] = useState('');
   const [minutes, setMinutes] = useState(10);
@@ -17,7 +19,7 @@ export default function ModerationQuickActionsModule() {
   const [loading, setLoading] = useState(false);
   const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
-  const currentGuild = userGuilds?.find(g => g.id === selectedGuildId);
+  const currentGuild = Array.isArray(userGuilds) ? userGuilds.find(g => g.id === selectedGuildId) : undefined;
 
   const handleAction = async () => {
     if (!userId.trim() || !reason.trim()) return showAlert('User ID and reason required.');
@@ -35,6 +37,15 @@ export default function ModerationQuickActionsModule() {
       setReason('');
     }
   };
+
+  if (!isEnabled('moderation')) {
+    return (
+      <div className="qft-card">
+        <h2>Moderation Quick Actions</h2>
+        <p style={{ color: 'var(--text-muted)' }}>This module is disabled for the selected guild.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="qft-card">

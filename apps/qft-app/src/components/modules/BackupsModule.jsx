@@ -9,7 +9,7 @@ import '../modules.css';
 export default function BackupsModule() {
   const { qftRole } = useUser();
   const { selectedGuildId } = useSelectedGuild();
-  const [backups, setBackups] = useState([]);
+  const [backup, setBackup] = useState(null);
   const [loading, setLoading] = useState(false);
   const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
@@ -29,13 +29,13 @@ export default function BackupsModule() {
       });
       const data = await res.json();
       if (data.success) {
-        setBackups(data.backups || []);
+        setBackup(data.backup || null);
       } else {
-        showAlert('Failed to load backups: ' + data.error);
+        showAlert('Failed to load backup: ' + (data.message || data.error));
       }
     } catch (error) {
-      console.error('Error fetching backups:', error);
-      showAlert('Failed to load backups');
+      console.error('Error fetching backup:', error);
+      showAlert('Failed to load backup');
     } finally {
       setLoading(false);
     }
@@ -104,45 +104,76 @@ export default function BackupsModule() {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   };
 
+  // Helper: Download backup as JSON
+  const handleDownloadBackup = () => {
+    if (!backup) return;
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute('href', dataStr);
+    dlAnchor.setAttribute('download', `guild-backup-${selectedGuildId}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  };
+
+  // Only allow admin roles to use controls
+  const isAdmin = qftRole === 'admin' || qftRole === 'owner' || qftRole === 'system';
+
   return (
     <div className="qft-module qft-card">
       <div className="module-header">
-        <h2><FaHistory /> Server Backups</h2>
-        <button className="qft-button primary" onClick={handleCreateBackup} disabled={loading}>
-          <FaSave /> Create Backup
-        </button>
+        <h2><FaHistory /> Server Backup</h2>
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="qft-button primary" onClick={handleCreateBackup} disabled={loading} title="Create a new backup">
+              <FaSave /> Create Backup
+            </button>
+            <button className="qft-button" onClick={handleDownloadBackup} disabled={!backup} title="Download backup as JSON">
+              <FaDownload /> Download
+            </button>
+            <button className="qft-button danger" onClick={() => backup && handleRestoreBackup(selectedGuildId)} disabled={!backup || loading} title="Restore this backup">
+              <FaUndo /> Restore
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="module-content">
         {loading && <p>Loading...</p>}
-        
-        {!loading && backups.length === 0 && (
-          <p className="empty-state">No backups found.</p>
+        {!loading && !backup && (
+          <p className="empty-state">No backup found for this server.</p>
         )}
-
-        <div className="backups-list">
-          {backups.map(backup => (
-            <div key={backup.id} className="backup-item qft-card">
-              <div className="backup-info">
-                <h3>{backup.backup_name}</h3>
+        {!loading && backup && (
+          <div className="backup-details qft-card">
+            <div className="backup-header">
+              {backup.icon && <img src={backup.icon} alt="Guild Icon" style={{width: 64, height: 64, borderRadius: 8, marginRight: 16}} />}
+              <div>
+                <h3>{backup.name}</h3>
                 <p className="meta">
-                  Created: {new Date(backup.created_at).toLocaleString()} <br/>
-                  Size: {formatBytes(backup.backup_size_bytes)} <br/>
-                  Type: {backup.is_automated ? 'Automated' : 'Manual'}
+                  Created: {backup.createdAt ? new Date(backup.createdAt).toLocaleString() : 'N/A'}<br/>
+                  Channels: {backup.channels ? backup.channels.length : 0} | Roles: {backup.roles ? backup.roles.length : 0}
                 </p>
-              </div>
-              <div className="backup-actions">
-                <button 
-                  className="qft-button danger" 
-                  onClick={() => handleRestoreBackup(backup.id)}
-                  title="Restore this backup"
-                >
-                  <FaUndo /> Restore
-                </button>
+                {backup.description && <p>{backup.description}</p>}
               </div>
             </div>
-          ))}
-        </div>
+            <div className="backup-section">
+              <h4>Roles</h4>
+              <ul>
+                {backup.roles && backup.roles.length > 0 ? backup.roles.map((role, idx) => (
+                  <li key={idx}>{role.name} (Color: #{role.color?.toString(16)})</li>
+                )) : <li>No roles found.</li>}
+              </ul>
+            </div>
+            <div className="backup-section">
+              <h4>Channels</h4>
+              <ul>
+                {backup.channels && backup.channels.length > 0 ? backup.channels.map((ch, idx) => (
+                  <li key={idx}>{ch.name} ({ch.type})</li>
+                )) : <li>No channels found.</li>}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
       <ConfirmModal
         isOpen={modalState.isOpen}

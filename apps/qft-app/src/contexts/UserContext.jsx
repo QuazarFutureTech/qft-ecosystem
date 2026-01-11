@@ -1,24 +1,26 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const UserContext = createContext(null);
 
+// Pull configuration from Environment Variables
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// 🔒 The Owner ID is now hidden in your .env file
+const ALPHA_OWNER_ID = import.meta.env.VITE_ALPHA_OWNER_ID; 
 
-export const UserProvider = ({ children }) => { // Removed handleLogout from props
-  const navigate = useNavigate(); // Get navigate for logout
-  const [userStatus, setUserStatus] = useState(null); // Global state for user status
-  const [qftUuid, setQftUuid] = useState(null); // Global state for qftUuid
-  const [discordClientId, setDiscordClientId] = useState(null); // Global state for Discord Client ID
-  const [userGuilds, setUserGuilds] = useState([]); // Global state for user guilds
-  const [userConnections, setUserConnections] = useState([]); // Global state for user connections
-  const [qftRole, setQftRole] = useState(null); // Global state for QFT Role (clearance level)
-  const [roleName, setRoleName] = useState(null); // Primary role name (Staff, Client, Affiliate, etc.)
-  const [allRoles, setAllRoles] = useState([]); // All assigned role names
-  const [isLoadingUser, setIsLoadingUser] = useState(true); // Loading state for user data
+export const UserProvider = ({ children }) => {
+  const navigate = useNavigate();
+  const [userStatus, setUserStatus] = useState(null); 
+  const [qftUuid, setQftUuid] = useState(null); 
+  const [discordClientId, setDiscordClientId] = useState(null); 
+  const [userGuilds, setUserGuilds] = useState([]); 
+  const [userConnections, setUserConnections] = useState([]); 
+  const [qftRole, setQftRole] = useState(null); 
+  const [roleName, setRoleName] = useState(null); 
+  const [allRoles, setAllRoles] = useState([]); 
+  const [isLoadingUser, setIsLoadingUser] = useState(true); 
 
-  // Function to refresh user permissions in real-time
-  // Function to fetch bot guilds
+  // --- Fetch Bot Guilds ---
   const fetchBotGuilds = useCallback(async () => {
     const token = localStorage.getItem('qft-token');
     if (!token) return;
@@ -30,8 +32,9 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
 
       if (response.ok) {
         const data = await response.json();
-        setUserGuilds(data);
-        console.log('✅ Fetched bot guilds:', data.length);
+        // Always set as array
+        setUserGuilds(Array.isArray(data) ? data : []);
+        console.log('✅ Fetched bot guilds:', Array.isArray(data) ? data.length : 0);
       } else {
         console.error('Failed to fetch bot guilds:', response.status);
         setUserGuilds([]);
@@ -40,8 +43,9 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
       console.error('Error fetching bot guilds:', error);
       setUserGuilds([]);
     }
-  }, []); // Empty dependency array as it only depends on API_URL and localStorage
+  }, []); 
 
+  // --- Refresh Permissions (With God Mode Override) ---
   const refreshUserPermissions = useCallback(async () => {
     const token = localStorage.getItem('qft-token');
     if (!token || !userStatus) return;
@@ -54,21 +58,39 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
       if (response.ok) {
         const data = await response.json();
         let newRole = data.qft_role;
-        const newRoleName = data.role_name;
-        const newAllRoles = data.all_roles || [];
-        // Automatically grant alpha_owner if is_owner is true
+        let newRoleName = data.role_name;
+        let newAllRoles = data.all_roles || [];
+
+        // 1. DATABASE CHECK: Standard verification
         if (data.is_owner === true) {
           newRole = 'alpha_owner';
         }
+
+        // 2. GOD MODE CHECK: Environment Variable Override
+        // This compares your logged-in ID with the hidden Env Var
+        if (ALPHA_OWNER_ID && userStatus.id === ALPHA_OWNER_ID) {
+            console.log("🔒 Alpha Owner Override Active: God Mode Enabled");
+            newRole = 'alpha_owner';
+            newRoleName = 'Owner';
+            
+            // Force inject ALL critical hierarchy roles
+            const forcedRoles = ['Owner', 'Admin', 'Staff', 'Executive', 'Management'];
+            forcedRoles.forEach(r => {
+                if (!newAllRoles.includes(r)) newAllRoles.push(r);
+            });
+        }
+
         // Only update if role has changed
         if (newRole !== qftRole || newRoleName !== roleName) {
           console.log(`🔄 Role changed: ${roleName || 'None'} (${qftRole}) → ${newRoleName || 'Client'} (${newRole})`);
           setQftRole(newRole);
           setRoleName(newRoleName);
           setAllRoles(newAllRoles);
-          // If user lost all staff roles, redirect away from privileged pages
+
+          // Redirect Logic if Staff access is lost
           const hadStaffAccess = roleName && ['Owner', 'Admin', 'Executive', 'Management', 'Security', 'IT Staff', 'Staff'].includes(roleName);
           const hasStaffAccess = newRoleName && ['Owner', 'Admin', 'Executive', 'Management', 'Security', 'IT Staff', 'Staff'].includes(newRoleName);
+          
           if (hadStaffAccess && !hasStaffAccess) {
             const currentPath = window.location.pathname;
             const privilegedPaths = ['/control-panel', '/bot-management', '/command-center'];
@@ -79,7 +101,6 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
           }
         }
       } else if (response.status === 401) {
-        // Token expired, logout
         logout();
       }
     } catch (error) {
@@ -87,58 +108,47 @@ export const UserProvider = ({ children }) => { // Removed handleLogout from pro
     }
   }, [userStatus, qftRole, roleName, navigate]);
 
-  // Fetch bot guilds and auto-refresh permissions when user is authenticated
+  // --- Auto-Refresh Loop ---
   useEffect(() => {
     const token = localStorage.getItem('qft-token');
     if (!userStatus || !token) return;
 
-    // Fetch bot guilds once on login/refresh
     fetchBotGuilds();
 
-    // Auto-refresh permissions every 30 seconds
     const interval = setInterval(() => {
       refreshUserPermissions();
-    }, 30000); // 30 seconds
+    }, 30000); 
 
     return () => clearInterval(interval);
   }, [userStatus, refreshUserPermissions, fetchBotGuilds]);
 
-  const logout = () => { // Defined logout function internally
+  // --- Logout Function ---
+  const logout = () => { 
     localStorage.removeItem('qft-token');
     setUserStatus(null);
     setQftUuid(null);
     setDiscordClientId(null);
     setUserGuilds([]);
-    setUserConnections([]); // Clear userConnections on logout
-    setQftRole(null); // Clear qftRole on logout
-    setRoleName(null); // Clear role name
-    setAllRoles([]); // Clear all roles
+    setUserConnections([]); 
+    setQftRole(null); 
+    setRoleName(null); 
+    setAllRoles([]); 
     setIsLoadingUser(false);
     navigate('/login');
   };
 
-  // Provide user-related data and setters to consumers
   const contextValue = {
-    userStatus,
-    setUserStatus,
-    qftUuid,
-    setQftUuid,
-    discordClientId,
-    setDiscordClientId,
-    userGuilds,
-    setUserGuilds,
-    userConnections, // Provided userConnections
-    setUserConnections, // Provided setUserConnections
-    qftRole, // Provided qftRole (clearance level)
-    setQftRole, // Provided setQftRole
-    roleName, // Primary role name
-    setRoleName,
-    allRoles, // All assigned roles
-    setAllRoles,
-    isLoadingUser,
-    setIsLoadingUser,
-    logout, // Provided logout function
-    refreshUserPermissions, // Manual permission refresh
+    userStatus, setUserStatus,
+    qftUuid, setQftUuid,
+    discordClientId, setDiscordClientId,
+    userGuilds, setUserGuilds,
+    userConnections, setUserConnections,
+    qftRole, setQftRole,
+    roleName, setRoleName,
+    allRoles, setAllRoles,
+    isLoadingUser, setIsLoadingUser,
+    logout,
+    refreshUserPermissions,
   };
 
   return (

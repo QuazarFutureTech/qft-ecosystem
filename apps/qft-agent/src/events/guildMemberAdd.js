@@ -7,6 +7,21 @@ const { AttachmentBuilder } = require('discord.js');
 module.exports = {
     name: 'guildMemberAdd',
     async execute(member, client) {
+        // Custom Command: user_join trigger
+        try {
+            const CustomCommandHandler = require('../services/customCommandHandler');
+            const handler = new CustomCommandHandler(client);
+            const allCommands = await handler.getGuildCommandsCached(member.guild.id);
+            const joinCommands = allCommands.filter(cmd => cmd.trigger_type === 'join');
+            console.log(`[guildMemberAdd] [DEBUG] Loaded ${joinCommands.length} join trigger commands for guild: ${member.guild.id}`);
+            for (const command of joinCommands) {
+                // Optionally match on trigger_data (e.g., role, etc.)
+                await handler.executeCommand(command, { member, guild: member.guild, user: member.user }, [], {});
+                console.log(`[guildMemberAdd] [DEBUG] Executed join trigger command: ${command.command_name} (${command.id}) for user: ${member.id}`);
+            }
+        } catch (err) {
+            console.error('[CustomCommandHandler] Error handling join trigger:', err);
+        }
         const guildId = member.guild.id;
         const userId = member.id;
 

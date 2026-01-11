@@ -173,10 +173,12 @@ router.get('/users', authenticateToken, rbacMiddleware('admin'), async (req, res
 router.get('/users/:userId/roles', authenticateToken, rbacMiddleware('staff'), async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log(`Fetching roles for user: ${userId}`);
     const roles = await permissionsService.getUserRoles(userId);
+    console.log(`Found ${roles.length} roles for user ${userId}`);
     res.json({ success: true, roles });
   } catch (error) {
-    console.error('Error fetching user roles:', error);
+    console.error('Error fetching user roles:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

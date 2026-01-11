@@ -39,10 +39,18 @@ function rbacMiddleware(allowedRoles) {
       const discordId = req.user.discord_id;
 
       // 🔥 MASTER ADMIN OVERRIDE - Bypass all role checks
+      console.log('[RBAC DEBUG] Checking MASTER_ADMIN override');
+      console.log('[RBAC DEBUG] req.user:', req.user);
+      console.log('[RBAC DEBUG] MASTER_ADMIN_IDS:', MASTER_ADMINS);
       if (MASTER_ADMINS.includes(discordId)) {
+        console.log('[RBAC DEBUG] MASTER_ADMIN match! Granting override.');
         req.userRoles = [{ role_name: 'Master Admin', clearance_level: 'α' }];
         req.highestClearance = 'α';
         req.isMasterAdmin = true;
+        // Set downstream compatibility flags
+        if (!req.user) req.user = {};
+        req.user.qft_role = 'alpha_owner';
+        req.user.is_owner = true;
         return next();
       }
 

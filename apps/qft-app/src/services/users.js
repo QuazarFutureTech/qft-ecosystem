@@ -8,6 +8,7 @@ export const getAllUsers = async (token) => {
   const mockUsers = [
     {
       qft_uuid: 'mock-1',
+      snowflake_id: '999999999999990001',
       discord_id: '100000000000000001',
       discord_username: 'MockUserOne',
       username: 'mockuser1',
@@ -19,6 +20,7 @@ export const getAllUsers = async (token) => {
     },
     {
       qft_uuid: 'mock-2',
+      snowflake_id: '999999999999990002',
       discord_id: '100000000000000002',
       discord_username: 'MockUserTwo',
       username: 'mockuser2',

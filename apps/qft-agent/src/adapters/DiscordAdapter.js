@@ -1,6 +1,6 @@
 // qft-agent/src/adapters/DiscordAdapter.js
 
-const { Client, Collection, GatewayIntentBits, Events, EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Events, EmbedBuilder, ChannelType, PermissionsBitField, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const PlatformManager = require('../PlatformManager'); // Import the singleton PlatformManager
@@ -13,7 +13,13 @@ class DiscordAdapter {
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMembers,
+                GatewayIntentBits.GuildMessageReactions, // REQUIRED for reaction events
                 // Add more intents as QFT-Agent grows
+            ],
+            partials: [
+                Partials.Message,  // Allows reading uncached messages
+                Partials.Channel,  // Allows reading uncached DM/Guild channels
+                Partials.Reaction  // Allows reading uncached reactions
             ]
         });
         this.token = token;
@@ -37,6 +43,15 @@ class DiscordAdapter {
 
         this.client.once(Events.ClientReady, c => {
             console.log(`[DiscordAdapter] Logged in as ${c.user.tag}!`);
+            // Start heartbeat NOW that client is actually ready
+            this._startHeartbeat();
+            
+            // Fetch and log config for each guild
+            const ConfigManager = require('../utils/ConfigManager');
+            this.client.guilds.cache.forEach(async (guild) => {
+                const config = await ConfigManager.fetchGuildConfig(guild.id);
+                console.log(`[DiscordAdapter] Config for guild ${guild.id} (${guild.name}):`, JSON.stringify(config));
+            });
             // Register this adapter with the PlatformManager
             PlatformManager.registerAdapter('discord', this);
             PlatformManager.setDiscordClient(this.client); // Temporarily expose client via manager
@@ -81,6 +96,10 @@ class DiscordAdapter {
             const filePath = path.join(eventsPath, file);
             const event = require(filePath);
 
+            if (event.name === 'messageReactionAdd') {
+                console.log('[DiscordAdapter] Registering messageReactionAdd event handler.');
+            }
+
             if (event.once) {
                 this.client.once(event.name, (...args) => event.execute(...args, this.client));
             } else {
@@ -104,7 +123,7 @@ class DiscordAdapter {
             try {
                 await this.client.login(this.token);
                 console.log('[DiscordAdapter] Login succeeded.');
-                this._startHeartbeat();
+                // Heartbeat will start automatically when ClientReady event fires
             } catch (err) {
                 console.error(`[DiscordAdapter] Login attempt ${attempt} failed:`, err.message || err);
                 if (attempt < maxAttempts) {
@@ -123,12 +142,23 @@ class DiscordAdapter {
     _startHeartbeat() {
         // Clear existing heartbeat if any
         if (this._hb) clearInterval(this._hb);
+        
+        // Only start heartbeat if client is actually ready
+        if (!this.client.isReady()) {
+            console.warn('[DiscordAdapter] Cannot start heartbeat: client not ready yet.');
+            return;
+        }
+        
+        console.log('[DiscordAdapter] Heartbeat started.');
         this._hb = setInterval(() => {
             try {
                 if (!this.client.isReady()) {
-                    console.warn('[DiscordAdapter] Heartbeat detected client not ready. Attempting reconnect.');
-                    // try re-login
-                    this.login();
+                    console.warn('[DiscordAdapter] Heartbeat detected client not ready. Destroying and reconnecting.');
+                    // Don't recursively call login, just destroy and wait for auto-reconnect
+                    clearInterval(this._hb);
+                    this.client.destroy();
+                    // Give it a moment before attempting login again
+                    setTimeout(() => this.login(), 5000);
                 }
             } catch (err) {
                 console.error('[DiscordAdapter] Heartbeat error:', err);

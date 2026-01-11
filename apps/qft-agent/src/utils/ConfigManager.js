@@ -1,82 +1,73 @@
-const fs = require('fs');
-const path = require('path');
+const fetch = require('node-fetch');
+const API_GATEWAY_URL = process.env.QFT_API_GATEWAY_URL || 'http://localhost:3001';
 
-const CONFIG_FILE = path.join(__dirname, '..', 'db', 'guildConfigs.json');
-
-let guildConfigs = {};
+// No local file storage; always fetch live
 
 class ConfigManager {
-    static load() {
+    // Save config to API Gateway
+    static async setGuildConfig(guildId, config) {
         try {
-            const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
-            guildConfigs = JSON.parse(raw);
-            console.log('[ConfigManager] Loaded guild configs.');
+            const res = await fetch(`${API_GATEWAY_URL}/api/v1/guilds/${guildId}/config`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${process.env.QFT_AGENT_SECRET || ''}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            console.log('[ConfigManager] Saved config for', guildId);
+            return data;
         } catch (err) {
-            console.warn('[ConfigManager] No existing config file, starting fresh.');
-            guildConfigs = {};
-            ConfigManager._save();
+            console.error('[ConfigManager] Failed to save config for guild', guildId, err.message);
+            return { success: false, error: err.message };
         }
     }
-
-    static _save() {
+    // Fetch config from API Gateway
+    static async fetchGuildConfig(guildId) {
         try {
-            const tmp = CONFIG_FILE + '.tmp';
-            fs.writeFileSync(tmp, JSON.stringify(guildConfigs, null, 4));
-            fs.renameSync(tmp, CONFIG_FILE);
+            const res = await fetch(`${API_GATEWAY_URL}/api/v1/guilds/${guildId}/config`, {
+                headers: { 'Authorization': `Bearer ${process.env.QFT_AGENT_SECRET || ''}` }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            // Debug: log config
+            console.log('[ConfigManager] API config for', guildId, JSON.stringify(data.settings));
+            return data.settings || {};
         } catch (err) {
-            console.error('[ConfigManager] Failed to persist configs:', err);
+            console.error('[ConfigManager] Failed to fetch config for guild', guildId, err.message);
+            return {};
         }
     }
 
-    static getGuild(guildId) {
-        if (!guildConfigs[guildId]) {
-            guildConfigs[guildId] = {
-                meta: { createdAt: Date.now() },
-                settings: {},
-                history: [],
-            };
-        }
-        return guildConfigs[guildId];
-    }
-
-    static get(guildId, key, fallback = undefined) {
-        const g = ConfigManager.getGuild(guildId);
-        return key ? (g.settings[key] ?? fallback) : g.settings;
-    }
-
-    static set(guildId, key, value, meta = {}) {
-        const g = ConfigManager.getGuild(guildId);
-        // push a snapshot to history for rollback
-        g.history.push({ ts: Date.now(), key, old: g.settings[key], meta });
-        g.settings[key] = value;
-        ConfigManager._save();
-        return true;
-    }
-
-    static rollback(guildId, steps = 1) {
-        const g = ConfigManager.getGuild(guildId);
-        if (!g.history.length || steps <= 0) return false;
-        for (let i = 0; i < steps; i++) {
-            const entry = g.history.pop();
-            if (!entry) break;
-            if (entry.key) {
-                if (entry.old === undefined) delete g.settings[entry.key];
-                else g.settings[entry.key] = entry.old;
+    // Async get for a key (deep path support)
+    static async get(guildId, key, fallback = undefined) {
+        const settings = await ConfigManager.fetchGuildConfig(guildId);
+        console.log(`[ConfigManager] get for guild ${guildId}:`, JSON.stringify(settings));
+        if (!key) return settings;
+        // Support deep keys like 'automod.enabled'
+        if (key.includes('.')) {
+            const parts = key.split('.');
+            let val = settings;
+            for (const part of parts) {
+                if (val && typeof val === 'object' && part in val) val = val[part];
+                else return fallback;
             }
+            return val !== undefined ? val : fallback;
         }
-        ConfigManager._save();
-        return true;
+        return settings[key] !== undefined ? settings[key] : fallback;
     }
 
-    // Category toggles helper
-    static isCategoryEnabled(guildId, category) {
-        const value = ConfigManager.get(guildId, 'categories', {});
-        if (!value || typeof value !== 'object') return true; // default on
-        return value[category] !== false;
+    // Async category toggle check
+    static async isCategoryEnabled(guildId, category) {
+        const categories = await ConfigManager.get(guildId, 'categories', {});
+        console.log(`[ConfigManager] isCategoryEnabled for guild ${guildId}, category '${category}':`, JSON.stringify(categories));
+        if (!categories || typeof categories !== 'object') return true;
+        return categories[category] !== false;
     }
 }
 
-// initialize on import
-ConfigManager.load();
+
 
 module.exports = ConfigManager;

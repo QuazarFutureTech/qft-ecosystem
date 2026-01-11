@@ -1,3 +1,12 @@
+    // ===== GUILD CONFIGS TABLE =====
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guild_configs (
+        guild_id TEXT PRIMARY KEY,
+        config JSONB NOT NULL DEFAULT '{}',
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_guild_configs_guild ON guild_configs(guild_id);
+    `);
 // qft-api-gateway/src/db/migrations.js
 // Database schema migrations for production modules: commands, tickets, logs, backups, workers
 
@@ -586,6 +595,19 @@ const syncDatabaseProduction = async () => {
         ('Client', '0', '#9b59b6', 'Client accounts'),
         ('Affiliate', '0', '#3498db', 'Affiliate partners')
       ON CONFLICT (name) DO NOTHING;
+    `);
+
+    // ===== GUILD SETTINGS TABLE (for per-guild configuration) =====
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guild_settings (
+        guild_id TEXT PRIMARY KEY,
+        command_prefix TEXT DEFAULT '?',
+        module_settings JSONB DEFAULT '{}'::jsonb,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_guild_settings_guild ON guild_settings(guild_id);
+      ALTER TABLE guild_settings
+      ADD COLUMN IF NOT EXISTS module_settings JSONB DEFAULT '{}'::jsonb;
     `);
 
     console.log('✅ Production database migrations completed (including permissions & logging)');

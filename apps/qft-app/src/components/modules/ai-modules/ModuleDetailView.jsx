@@ -9,9 +9,6 @@ import CustomCommandBuilderModule from '../CustomCommandBuilderModule';
 import AutomodModule from '../AutomodModule';
 import WelcomeModule from '../WelcomeModule';
 import EnhancedEmbedBuilder from '../EnhancedEmbedBuilder';
-import CommandToggleModule from '../CommandToggleModule';
-import ScheduledEmbedsModule from '../ScheduledEmbedsModule';
-import AutomodRuleTesterModule from '../AutomodRuleTesterModule';
 import ModerationQuickActionsModule from '../ModerationQuickActionsModule';
 import RolePermissionManagerModule from '../RolePermissionManagerModule';
 import BackupsModule from '../BackupsModule';
@@ -23,12 +20,9 @@ const DISCORD_MODULE_COMPONENTS = {
   'custom-commands': CustomCommandBuilderModule,
   'welcome': WelcomeModule,
   'embeds': EnhancedEmbedBuilder,
-  'command-toggle': CommandToggleModule,
   'automod': AutomodModule,
-  'automod-tester': AutomodRuleTesterModule,
   'quick-actions': ModerationQuickActionsModule,
   'role-permissions': RolePermissionManagerModule,
-  'scheduled-embeds': ScheduledEmbedsModule,
   'workers': WorkerBuilder,
   'tickets': TicketDashboard,
   'backups': BackupsModule

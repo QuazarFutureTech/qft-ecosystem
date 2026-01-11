@@ -46,7 +46,7 @@ const createRegistryEntry = async (type, key, value, description = null, metadat
   return result.rows[0];
 };
 
-// Update a registry entry
+// Update a registry entry by ID
 const updateRegistryEntry = async (id, updates) => {
   const { value, description, metadata } = updates;
   
@@ -65,13 +65,13 @@ const updateRegistryEntry = async (id, updates) => {
   return result.rows[0];
 };
 
-// Delete a registry entry
-const deleteRegistryEntry = async (id) => {
+// Delete a registry entry by ID
+const deleteRegistryEntryById = async (id) => {
   await db.query('DELETE FROM registry WHERE id = $1', [id]);
   return { success: true };
 };
 
-// Get registry entries by type
+// Get registry entries by type (retained for explicit type-only fetching)
 const getRegistryByType = async (type) => {
   const query = `
     SELECT * FROM registry
@@ -98,13 +98,46 @@ const searchRegistry = async (searchTerm) => {
   return result.rows;
 };
 
+// --- New functions to match qft-agent's templateEngineQftService ---
+
+const regGet = async (key, type = null) => {
+  return await getRegistryEntry(key, type);
+};
+
+const regGetAll = async (type = null) => {
+  return await getAllRegistryEntries(type);
+};
+
+const regSet = async (key, type, value, description = '') => {
+  const existing = await getRegistryEntry(key, type);
+  if (existing) {
+    return await updateRegistryEntry(existing.id, { value, description });
+  } else {
+    return await createRegistryEntry(type, key, value, description);
+  }
+};
+
+const regDelete = async (key, type) => {
+  const existing = await getRegistryEntry(key, type);
+  if (existing) {
+    await deleteRegistryEntryById(existing.id);
+    return true;
+  }
+  return false;
+};
+
 module.exports = {
   getAllRegistryEntries,
   getRegistryEntry,
   createRegistryEntry,
   updateRegistryEntry,
-  deleteRegistryEntry,
+  deleteRegistryEntryById, // Renamed for clarity
   getRegistryByType,
   searchRegistry,
-};
 
+  // Export new wrapper functions for agent compatibility
+  regGet,
+  regGetAll,
+  regSet,
+  regDelete,
+};

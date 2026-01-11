@@ -58,7 +58,16 @@ export async function fetchGuildRoles(guildId, token) {
     });
     const data = await res.json();
     console.log('[discord.js] Roles response:', res.status, data);
-    return data;
+    // Defensive: always return { success, roles }
+    if (Array.isArray(data)) {
+      return { success: true, roles: data };
+    } else if (data && Array.isArray(data.roles)) {
+      return { success: true, roles: data.roles };
+    } else if (data && data.error) {
+      return { success: false, error: data.error };
+    } else {
+      return { success: false, error: 'Unexpected roles response' };
+    }
   } catch (error) {
     console.error('[discord.js] Error fetching roles:', error);
     return { success: false, error: error.message };
@@ -83,7 +92,7 @@ export const postEmbed = async ({ guildId, channelId, embed, components }, token
             payload.components = components;
         }
         
-        const response = await fetch(`${API_GATEWAY_URL}/api/v1/guilds/${guildId}/channels/${channelId}/embed`, {
+        const response = await fetch(`${API_GATEWAY_URL}/api/v1/discord/guilds/${guildId}/channels/${channelId}/embed`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

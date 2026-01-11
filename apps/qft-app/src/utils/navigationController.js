@@ -31,7 +31,7 @@ export const BOT_MODULE_CATEGORIES = [
   {
     title: 'Automation',
     modules: [
-      { id: 'scheduled-embeds', label: 'Scheduled Embeds' },
+      // { id: 'scheduled-embeds', label: 'Scheduled Embeds' },
     ]
   },
   {
@@ -56,16 +56,8 @@ export const CONTROL_PANEL_SECTIONS = [
   {
     title: 'System',
     sections: [
-      { id: 'logs', label: 'System Logs' },
-      { id: 'module-manager', label: 'Module Manager' },
       { id: 'database', label: 'Database Manager' },
-    ]
-  },
-  {
-    title: 'Utilities',
-    sections: [
-      { id: 'analytics', label: 'Analytics' },
-      { id: 'tools', label: 'Tools' },
+      { id: 'logs', label: 'System Logs' },
     ]
   }
 ];

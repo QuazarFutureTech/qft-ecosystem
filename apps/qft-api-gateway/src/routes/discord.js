@@ -1,211 +1,165 @@
-// Discord data endpoints - fetch channels, roles, members
+
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const INTERNAL_BOT_SECRET = process.env.INTERNAL_BOT_SECRET;
+const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:3002'; // Bot Agent's internal API URL
+
+
 const authenticateToken = require('../middleware/auth');
+if (!INTERNAL_BOT_SECRET) {
+    console.error('CRITICAL ERROR: INTERNAL_BOT_SECRET is not defined in API Gateway. Cannot communicate with bot agent.');
+}
+// Middleware to ensure token authentication for external access
+router.use(authenticateToken);
 
-// RBAC middleware
-const rbacMiddleware = (requiredRole) => (req, res, next) => {
-    const userRole = req.user?.role || 'user';
-    const roles = { owner: 3, admin: 2, staff: 1, user: 0 };
-    if (roles[userRole] >= roles[requiredRole]) {
-        return next();
-    }
-    res.status(403).json({ error: 'Insufficient permissions' });
-};
-
-// Fetch guild channels
-router.get('/guilds/:guildId/channels', authenticateToken, rbacMiddleware('user'), async (req, res) => {
-  try {
+/**
+ * @route GET /api/v1/discord/guilds/:guildId/roles
+ * @description Fetches all roles for a guild from the bot agent.
+ */
+router.get('/guilds/:guildId/roles', async (req, res) => {
     const { guildId } = req.params;
-    const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-    const secret = process.env.INTERNAL_BOT_SECRET;
-    
-    if (!secret) {
-      console.error('[Discord Routes] INTERNAL_BOT_SECRET not set!');
-      return res.status(500).json({ success: false, error: 'Internal configuration error' });
+    if (!INTERNAL_BOT_SECRET) {
+        return res.status(500).json({ success: false, message: 'Internal bot secret is not configured.' });
     }
-    
-    const url = `${botUrl}/api/guilds/${guildId}/channels`;
-    console.log('[Discord Routes] Fetching channels from:', url);
-    
-    const response = await fetch(url, {
-      headers: { 'Internal-Secret': secret }
-    });
-    
-    console.log('[Discord Routes] Agent response status:', response.status);
-    const text = await response.text();
-    console.log('[Discord Routes] Agent response body:', text.substring(0, 200));
-    
-    let data;
     try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('[Discord Routes] Failed to parse JSON from agent:', text.substring(0, 500));
-      return res.status(500).json({ success: false, error: 'Invalid response from bot agent' });
-    }
-    
-    res.json(data);
-  } catch (error) {
-    console.error('[Discord Routes] Error fetching channels:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Fetch guild roles
-router.get('/guilds/:guildId/roles', authenticateToken, rbacMiddleware('user'), async (req, res) => {
-  try {
-    const { guildId } = req.params;
-    const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-    const secret = process.env.INTERNAL_BOT_SECRET;
-    
-    if (!secret) {
-      console.error('[Discord Routes] INTERNAL_BOT_SECRET not set!');
-      return res.status(500).json({ success: false, error: 'Internal configuration error' });
-    }
-    
-    const url = `${botUrl}/api/guilds/${guildId}/roles`;
-    console.log('[Discord Routes] Fetching roles from:', url);
-    
-    const response = await fetch(url, {
-      headers: { 'Internal-Secret': secret }
-    });
-    
-    console.log('[Discord Routes] Agent response status:', response.status);
-    const text = await response.text();
-    
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('[Discord Routes] Failed to parse JSON from agent:', text.substring(0, 500));
-      return res.status(500).json({ success: false, error: 'Invalid response from bot agent' });
-    }
-    
-    res.json(data);
-  } catch (error) {
-    console.error('[Discord Routes] Error fetching roles:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Fetch guild members (paginated)
-// Fetch all guilds the bot is a member of
-router.get('/guilds', authenticateToken, rbacMiddleware('user'), async (req, res) => {
-  try {
-    const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-    const secret = process.env.INTERNAL_BOT_SECRET;
-    
-    if (!secret) {
-      console.error('[Discord Routes] INTERNAL_BOT_SECRET not set!');
-      return res.status(500).json({ success: false, error: 'Internal configuration error' });
-    }
-    
-    const url = `${botUrl}/api/guilds`; // Calls the new qft-agent endpoint
-    console.log('[Discord Routes] Fetching all bot guilds from:', url);
-    
-    const response = await fetch(url, {
-      headers: { 'Internal-Secret': secret }
-    });
-    
-    console.log('[Discord Routes] Agent response status (all guilds):', response.status);
-    const text = await response.text();
-    console.log('[Discord Routes] Agent response body (all guilds):', text.substring(0, 200));
-    
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('[Discord Routes] Failed to parse JSON from agent (all guilds):', text.substring(0, 500));
-      return res.status(500).json({ success: false, error: 'Invalid response from bot agent' });
-    }
-    
-    res.json(data);
-  } catch (error) {
-    console.error('[Discord Routes] Error fetching all bot guilds:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Fetch guilds the logged-in user is a member of
-router.get('/user/guilds', authenticateToken, rbacMiddleware('user'), async (req, res) => {
-  const { qft_uuid } = req.user;
-
-  try {
-    const db = require('../db'); // Import db here to avoid circular dependency if db imports routes
-
-    // Retrieve user's discord_access_token from the database
-    const userResult = await db.query(
-      `SELECT discord_access_token FROM users WHERE qft_uuid = $1`,
-      [qft_uuid]
-    );
-
-    if (userResult.rows.length === 0 || !userResult.rows[0].discord_access_token) {
-      return res.status(404).json({ message: 'User or access token not found.' });
-    }
-
-    const userAccessToken = userResult.rows[0].discord_access_token;
-
-    // Make a request to the Discord API to get the user's guilds
-    const discordResponse = await fetch('https://discord.com/api/users/@me/guilds', {
-      headers: {
-        Authorization: `Bearer ${userAccessToken}`,
-      },
-    });
-
-    if (!discordResponse.ok) {
-      console.error(`Discord API error: ${discordResponse.status} - ${discordResponse.statusText}`);
-      return res.status(discordResponse.status).json({ message: 'Failed to fetch user guilds from Discord API.' });
-    }
-
-    const userGuilds = await discordResponse.json();
-    res.json(userGuilds);
-
-  } catch (error) {
-    console.error('[Discord Routes] Error fetching user guilds:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Route for Discord Rich Presence (RPC) updates
-router.post('/rpc', authenticateToken, rbacMiddleware('user'), async (req, res) => {
-    try {
-        const botUrl = process.env.BOT_API_URL || 'http://localhost:3002';
-        const secret = process.env.INTERNAL_BOT_SECRET;
-        const { discordId, activity } = req.body; // Expecting discordId and activity object
-
-        if (!secret) {
-            console.error('[Discord Routes] INTERNAL_BOT_SECRET not set!');
-            return res.status(500).json({ success: false, error: 'Internal configuration error' });
-        }
-        if (!discordId || !activity) {
-            return res.status(400).json({ success: false, error: 'Missing discordId or activity in request body.' });
-        }
-
-        const url = `${botUrl}/api/user/${discordId}/rpc`;
-        console.log(`[Discord Routes] Sending RPC update to bot agent for user ${discordId}`);
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 
-                'Internal-Secret': secret,
-                'Content-Type': 'application/json'
+        const botAgentResponse = await fetch(`${BOT_API_URL}/api/guilds/${guildId}/roles`, {
+            method: 'GET',
+            headers: {
+                'internal-secret': INTERNAL_BOT_SECRET,
             },
-            body: JSON.stringify(activity)
+        });
+        const responseData = await botAgentResponse.json();
+        if (!botAgentResponse.ok) {
+            return res.status(botAgentResponse.status).json(responseData);
+        }
+        res.json(responseData);
+    } catch (error) {
+        console.error(`[API Gateway] Error fetching roles for guild ${guildId} from bot agent:`, error);
+        res.status(500).json({ success: false, message: 'Failed to fetch roles from bot agent.' });
+    }
+});
+
+/**
+ * @route GET /api/v1/discord/guilds
+ * @description Fetches all guilds from the bot agent.
+ */
+router.get('/guilds', async (req, res) => {
+    if (!INTERNAL_BOT_SECRET) {
+        return res.status(500).json({ success: false, message: 'Internal bot secret is not configured.' });
+    }
+    try {
+        const botAgentResponse = await fetch(`${BOT_API_URL}/api/guilds`, {
+            method: 'GET',
+            headers: {
+                'internal-secret': INTERNAL_BOT_SECRET,
+            },
+        });
+        const responseData = await botAgentResponse.json();
+        if (!botAgentResponse.ok) {
+            return res.status(botAgentResponse.status).json(responseData);
+        }
+        res.json(responseData);
+    } catch (error) {
+        console.error(`[API Gateway] Error fetching guilds from bot agent:`, error);
+        res.status(500).json({ success: false, message: 'Failed to fetch guilds from bot agent.' });
+    }
+});
+
+/**
+ * @route GET /api/v1/discord/guilds/:guildId/channels
+ * @description Fetches all channels for a guild from the bot agent.
+ */
+router.get('/guilds/:guildId/channels', async (req, res) => {
+    const { guildId } = req.params;
+    if (!INTERNAL_BOT_SECRET) {
+        return res.status(500).json({ success: false, message: 'Internal bot secret is not configured.' });
+    }
+    try {
+        const botAgentResponse = await fetch(`${BOT_API_URL}/api/guilds/${guildId}/channels`, {
+            method: 'GET',
+            headers: {
+                'internal-secret': INTERNAL_BOT_SECRET,
+            },
+        });
+        const responseData = await botAgentResponse.json();
+        if (!botAgentResponse.ok) {
+            return res.status(botAgentResponse.status).json(responseData);
+        }
+        res.json(responseData);
+    } catch (error) {
+        console.error(`[API Gateway] Error fetching channels for guild ${guildId} from bot agent:`, error);
+        res.status(500).json({ success: false, message: 'Failed to fetch channels from bot agent.' });
+    }
+});
+
+/**
+ * @route POST /api/v1/discord/rpc
+ * @description Forwards an RPC activity request from the frontend to the bot agent.
+ * @access Authenticated Users (via JWT from frontend)
+ */
+router.post('/rpc', async (req, res) => {
+    if (!INTERNAL_BOT_SECRET) {
+        return res.status(500).json({ success: false, message: 'Internal bot secret is not configured.' });
+    }
+    try {
+        // Forward the request to the qft-agent's internal API
+        const botAgentResponse = await fetch(`${BOT_API_URL}/api/discord/rpc`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'internal-secret': INTERNAL_BOT_SECRET,
+            },
+            body: JSON.stringify(req.body),
+        });
+        const responseData = await botAgentResponse.json();
+        if (!botAgentResponse.ok) {
+            return res.status(botAgentResponse.status).json(responseData);
+        }
+        res.json(responseData);
+    } catch (error) {
+        console.error(`[API Gateway] Error forwarding RPC activity to bot agent:`, error);
+        res.status(500).json({ success: false, message: 'Failed to forward RPC activity to bot agent.' });
+    }
+});
+
+/**
+ * @route POST /api/v1/discord/guilds/:guildId/channels/:channelId/embed
+ * @description Forwards an embed posting request from the frontend to the bot agent.
+ * @access Authenticated Users (via JWT from frontend)
+ */
+router.post('/guilds/:guildId/channels/:channelId/embed', async (req, res) => {
+    const { guildId, channelId } = req.params;
+    const embedData = req.body; // This contains the embed object and components
+
+    if (!INTERNAL_BOT_SECRET) {
+        return res.status(500).json({ success: false, message: 'Internal bot secret is not configured.' });
+    }
+
+    try {
+        // Forward the request to the qft-agent's internal API
+        const botAgentResponse = await fetch(`${BOT_API_URL}/api/guilds/${guildId}/channels/${channelId}/embed`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'internal-secret': INTERNAL_BOT_SECRET, // Authenticate with the bot agent
+            },
+            body: JSON.stringify(embedData),
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`[Discord Routes] Bot agent RPC error: ${response.status} - ${errorText}`);
-            return res.status(response.status).json({ success: false, error: `Bot agent RPC failed: ${errorText}` });
+        const responseData = await botAgentResponse.json();
+
+        if (!botAgentResponse.ok) {
+            // If bot agent returns an error, propagate it back to the frontend
+            return res.status(botAgentResponse.status).json(responseData);
         }
 
-        const data = await response.json();
-        res.json(data);
+        // If successful, return the bot agent's response
+        res.json(responseData);
 
     } catch (error) {
-        console.error('[Discord Routes] Error sending RPC update:', error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error(`[API Gateway] Error forwarding embed to bot agent for guild ${guildId}, channel ${channelId}:`, error);
+        res.status(500).json({ success: false, message: 'Failed to forward embed request to bot agent.' });
     }
 });
 

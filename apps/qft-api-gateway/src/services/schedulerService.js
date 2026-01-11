@@ -9,14 +9,9 @@ class SchedulerService {
    * Start the scheduler - runs every minute to check for pending scheduled commands
    */
   start() {
-    console.log('[SchedulerService] Starting command scheduler...');
-    
-    // Run every minute
-    this.cronJob = cron.schedule('* * * * *', async () => {
-      await this.processScheduledCommands();
-    });
-    
-    console.log('[SchedulerService] Command scheduler started');
+    // Gateway no longer executes scheduled commands; the agent owns execution.
+    console.log('[SchedulerService] Gateway scheduler disabled. Delegating execution to the agent.');
+    return;
   }
 
   /**
@@ -33,68 +28,22 @@ class SchedulerService {
    * Process all pending scheduled commands that are due
    */
   async processScheduledCommands() {
-    try {
-      // Get all scheduled commands that are due and not yet executed
-      const result = await db.query(
-        `SELECT * FROM scheduled_commands 
-         WHERE executed = FALSE 
-         AND scheduled_time <= NOW() 
-         ORDER BY scheduled_time ASC 
-         LIMIT 50`
-      );
-
-      if (result.rows.length > 0) {
-        console.log(`[SchedulerService] Processing ${result.rows.length} scheduled commands`);
-      }
-
-      for (const scheduled of result.rows) {
-        await this.executeScheduledCommand(scheduled);
-      }
-    } catch (error) {
-      console.error('[SchedulerService] Error processing scheduled commands:', error);
-    }
+    console.warn('[SchedulerService] processScheduledCommands invoked, but execution is handled by the agent.');
   }
 
   /**
    * Execute a single scheduled command
    */
   async executeScheduledCommand(scheduled) {
-    const { id, command_code, context, guild_id } = scheduled;
-    
-    try {
-      console.log(`[SchedulerService] Executing scheduled command #${id}`);
-      
-      // Create template engine instance with stored context
-      const engine = new TemplateEngine(context || {});
-      
-      // Execute the command
-      const result = await engine.execute(command_code);
-      
-      // Mark as executed
-      await db.query(
-        `UPDATE scheduled_commands 
-         SET executed = TRUE, executed_at = NOW() 
-         WHERE id = $1`,
-        [id]
-      );
-
-      console.log(`[SchedulerService] Successfully executed scheduled command #${id}`);
-      
-      // TODO: Send result to Discord channel if channel_id is provided
-      // This would require integration with the agent/bot
-      
-      return result;
-    } catch (error) {
-      console.error(`[SchedulerService] Error executing scheduled command #${id}:`, error);
-      
-      // Update with error
-      await db.query(
-        `UPDATE scheduled_commands 
-         SET executed = TRUE, executed_at = NOW(), error = $2 
-         WHERE id = $1`,
-        [id, error.message]
-      );
-    }
+    const { id } = scheduled;
+    // Mark record to avoid repeated attempts but leave note for agent ownership
+    await db.query(
+      `UPDATE scheduled_commands 
+       SET executed = TRUE, executed_at = NOW(), error = $2 
+       WHERE id = $1`,
+      [id, 'Gateway scheduler disabled; execution handled by agent.']
+    );
+    console.warn(`[SchedulerService] Skipped execution for scheduled command #${id} (delegated to agent).`);
   }
 
   /**

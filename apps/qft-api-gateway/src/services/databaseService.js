@@ -1,4 +1,7 @@
+
 const db = require('../db');
+const path = require('path');
+const dbTableUtils = require('../../scripts/dbTableUtils');
 
 /**
  * Database Management Service
@@ -329,6 +332,8 @@ async function executeQuery(query) {
   };
 }
 
+
+// Export all existing and utility functions
 module.exports = {
   getAllTables,
   getTableSchema,
@@ -338,5 +343,12 @@ module.exports = {
   truncateTable,
   purgeDatabase,
   backupTable,
-  executeQuery
+  executeQuery,
+  // Utility functions from dbTableUtils
+  dbTableGet: dbTableUtils.dbTableGet,
+  dbTableSet: dbTableUtils.dbTableSet,
+  dbTableDel: dbTableUtils.dbTableDel,
+  dbSubGet: dbTableUtils.dbSubGet,
+  dbSubSet: dbTableUtils.dbSubSet,
+  dbSubDel: dbTableUtils.dbSubDel
 };

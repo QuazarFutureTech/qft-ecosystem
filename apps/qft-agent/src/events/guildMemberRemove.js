@@ -4,6 +4,20 @@ const logService = require('../services/logService');
 module.exports = {
     name: 'guildMemberRemove',
     async execute(member, client) {
+        // Custom Command: user_leave trigger
+        try {
+            const CustomCommandHandler = require('../services/customCommandHandler');
+            const handler = new CustomCommandHandler(client);
+            const allCommands = await handler.getGuildCommandsCached(member.guild.id);
+            const leaveCommands = allCommands.filter(cmd => cmd.trigger_type === 'leave');
+            console.log(`[guildMemberRemove] [DEBUG] Loaded ${leaveCommands.length} leave trigger commands for guild: ${member.guild.id}`);
+            for (const command of leaveCommands) {
+                await handler.executeCommand(command, { member, guild: member.guild, user: member.user }, [], {});
+                console.log(`[guildMemberRemove] [DEBUG] Executed leave trigger command: ${command.command_name} (${command.id}) for user: ${member.id}`);
+            }
+        } catch (err) {
+            console.error('[CustomCommandHandler] Error handling leave trigger:', err);
+        }
         const guildId = member.guild.id;
         const userId = member.id;
 

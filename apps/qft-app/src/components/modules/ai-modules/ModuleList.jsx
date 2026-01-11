@@ -20,14 +20,12 @@ const DISCORD_MODULE_CATEGORIES = [
       { id: 'custom-commands', label: 'Custom Commands', icon: FaCode },
       { id: 'welcome', label: 'Welcome Messages', icon: FaHandPaper },
       { id: 'embeds', label: 'Embeds', icon: FaEnvelope },
-      { id: 'command-toggle', label: 'Command Toggle', icon: FaToggleOn },
     ]
   },
   {
     title: 'Moderation',
     modules: [
       { id: 'automod', label: 'Auto Moderation', icon: FaShieldAlt },
-      { id: 'automod-tester', label: 'Automod Tester', icon: FaVial },
       { id: 'quick-actions', label: 'Quick Actions', icon: FaGavel },
       { id: 'role-permissions', label: 'Role Permissions', icon: FaUserShield },
     ]
@@ -35,7 +33,7 @@ const DISCORD_MODULE_CATEGORIES = [
   {
     title: 'Automation',
     modules: [
-      { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock },
+      // { id: 'scheduled-embeds', label: 'Scheduled Embeds', icon: FaClock },
       { id: 'workers', label: 'Workers', icon: FaRobot },
     ]
   },
@@ -59,6 +57,36 @@ function ModuleList({ platform, activeModule, onCloseSidebar, onModuleSelect }) 
   const { userGuilds } = useUser();
   const { selectedGuildId, setSelectedGuildId } = useSelectedGuild();
   const moduleCategories = PLATFORM_MODULE_LISTS[platform] || [];
+  const [availableGuilds, setAvailableGuilds] = React.useState([]);
+  const [checkingGuilds, setCheckingGuilds] = React.useState(false);
+  React.useEffect(() => {
+    let isMounted = true;
+    async function filterGuilds() {
+      setCheckingGuilds(true);
+      const token = localStorage.getItem('qft-token');
+      const { fetchGuildChannels } = await import('../../../services/discord');
+      console.log('[ModuleList] userGuilds:', userGuilds);
+      const checks = await Promise.all(
+        (Array.isArray(userGuilds) ? userGuilds : []).map(async (guild) => {
+          const result = await fetchGuildChannels(guild.id, token);
+          console.log(`[ModuleList] fetchGuildChannels(${guild.id}) result:`, result);
+          return result.success ? guild : null;
+        })
+      );
+      const filtered = checks.filter(Boolean);
+      console.log('[ModuleList] availableGuilds after filtering:', filtered);
+      if (isMounted) {
+        setAvailableGuilds(filtered);
+        setCheckingGuilds(false);
+        // Auto-select the first available guild if none is selected or current is not available
+        if (filtered.length > 0 && (!selectedGuildId || !filtered.some(g => g.id === selectedGuildId))) {
+          setSelectedGuildId(filtered[0].id);
+        }
+      }
+    }
+    filterGuilds();
+    return () => { isMounted = false; };
+  }, [userGuilds, selectedGuildId, setSelectedGuildId]);
 
   return (
     <nav className="sidebar-nav">
@@ -92,9 +120,10 @@ function ModuleList({ platform, activeModule, onCloseSidebar, onModuleSelect }) 
           value={selectedGuildId || ''}
           onChange={(e) => setSelectedGuildId(e.target.value)}
           style={{ width: '100%' }}
+          disabled={checkingGuilds}
         >
-          <option value="" disabled>Select a Server</option>
-          {userGuilds.map(guild => (
+          <option value="" disabled>{checkingGuilds ? 'Checking servers...' : 'Select a Server'}</option>
+          {availableGuilds.map(guild => (
             <option key={guild.id} value={guild.id}>
               {guild.name}
             </option>

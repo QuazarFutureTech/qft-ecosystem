@@ -14,6 +14,13 @@ const authenticateToken = async (req, res, next) => {
         return res.status(401).send({ message: 'Authentication required.' });
     }
 
+    // Allow agent to authenticate with QFT_AGENT_SECRET
+    const AGENT_SECRET = process.env.QFT_AGENT_SECRET;
+    if (AGENT_SECRET && token === AGENT_SECRET) {
+        req.user = { qft_uuid: 'agent', username: 'QFT Agent', qft_role: 'system' };
+        return next();
+    }
+
     // Since we are using a placeholder token (QFT_IDENTITY_UUID...), 
     // we skip full JWT verification for now.
     if (!token.startsWith('QFT_IDENTITY_')) {

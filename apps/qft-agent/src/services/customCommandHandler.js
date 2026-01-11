@@ -1,9 +1,6 @@
-// qft-agent/src/services/customCommandHandler.js
-// YAGPDB-style custom command execution handler
-
 const fetch = require('node-fetch');
 const logger = require('../utils/logger');
-const TemplateEngine = require('./templateEngine');
+const settingsService = require('./settingsService');
 
 const API_URL = process.env.API_GATEWAY_URL || 'http://localhost:3001';
 const INTERNAL_SECRET = process.env.INTERNAL_BOT_SECRET;
@@ -12,53 +9,110 @@ class CustomCommandHandler {
   constructor(client) {
     this.client = client;
     this.cooldowns = new Map(); // guildId:commandId -> Map(userId -> timestamp)
+    
+    // CACHE SYSTEM: Store commands to prevent API spam
+    this.commandCache = new Map();
+    this.CACHE_TTL = 60 * 1000; // 60 Seconds
   }
 
-  async handleMessage(message, prefix = '!') {
+  /**
+   * Main entry point for processing messages
+   */
+  async handleMessage(message) {
     const guildId = message.guildId;
-    if (!guildId) return;
+    if (!guildId || message.author.bot) return false;
+
+    // Fetch prefix from settings
+    const prefix = await settingsService.getGuildPrefix(guildId);
+
+    // Debug: print prefix and message content with char codes, type, and length (only once)
+    const prefixCodes = Array.from(prefix).map(c => c.charCodeAt(0));
+    const msgCodes = Array.from(message.content).map(c => c.charCodeAt(0));
+    console.log(`[CustomCommandHandler] Prefix debug: value='${prefix}', type=${typeof prefix}, length=${prefix.length}, codes=[${prefixCodes.join(', ')}] | Message: '${message.content}' codes=[${msgCodes.join(', ')}]`);
+        logger.info('[CustomCommandHandler] Reached prefix command matching block check.');
+      logger.info(`[CustomCommandHandler] handleMessage called for message: '${message.content}' from user: ${message.author?.id}`);
+
+    // Check if the custom commands module is enabled for this guild
+    const ConfigManager = require('../utils/ConfigManager');
+    const isEnabled = await ConfigManager.isCategoryEnabled(guildId, 'commands');
+    if (!isEnabled) {
+      // Module is disabled, reply with an embed and do not process custom commands
+      try {
+        await message.reply({
+          embeds: [{
+            title: 'Custom Commands Disabled',
+            description: 'This server has disabled the Custom Commands module. Enable it in the dashboard to use custom commands.',
+            color: 0xff5555
+          }],
+          allowedMentions: { repliedUser: true }
+        });
+      } catch (e) {
+        // Ignore errors (e.g., message deleted)
+      }
+      return false;
+    }
 
     try {
-      // Get all command trigger commands for this guild
-      const commands = await this.getCommands(guildId, 'command');
-      
-      // Check if message starts with prefix
+      // 1. Fetch ALL commands for this guild (Cached)
+      const allCommands = await this.getGuildCommandsCached(guildId);
+      logger.info(`[CustomCommandHandler] Loaded ${allCommands.length} commands for guild ${guildId}`);
+      if (allCommands.length > 0) {
+        logger.info('[CustomCommandHandler] Commands:', allCommands.map(c => ({ id: c.id, name: c.command_name, type: c.trigger_type, enabled: c.enabled })));
+      }
+      if (!allCommands || allCommands.length === 0) return false;
+
+      // 2. Separate commands by type locally
+      const prefixCommands = allCommands.filter(c => c.trigger_type === 'command');
+      const containsCommands = allCommands.filter(c => c.trigger_type === 'contains');
+      const regexCommands = allCommands.filter(c => c.trigger_type === 'regex');
+
+      // 3. Check PREFIX Commands (Most common, check first)
+          // Log result of startsWith
+          console.log(`[CustomCommandHandler] message.content.startsWith(prefix):`, message.content.startsWith(prefix));
+        logger.info(`[CustomCommandHandler] Checking prefix commands. Message content: '${message.content}'`);
       if (message.content.startsWith(prefix)) {
+          logger.info('[CustomCommandHandler] Message starts with prefix:', prefix);
         const args = message.content.slice(prefix.length).trim().split(/\s+/);
         const commandName = args[0].toLowerCase();
-        
-        const command = commands.find(cmd => 
-          cmd.case_sensitive ? cmd.command_name === commandName : cmd.command_name.toLowerCase() === commandName
-        );
-        
+        logger.info(`[CustomCommandHandler] Incoming commandName: '${commandName}' (from message: '${message.content}')`);
+        // Match against trigger_data.trigger for new commands, fallback to command_name for legacy
+        const command = prefixCommands.find(cmd => {
+          const trigger = cmd.trigger_data?.trigger || cmd.command_name || '';
+          const dbTrigger = cmd.case_sensitive ? trigger : trigger.toLowerCase();
+          const dbTriggerNoPrefix = dbTrigger.startsWith(prefix) ? dbTrigger.slice(prefix.length) : dbTrigger;
+          logger.info(`[CustomCommandHandler] Comparing trigger: '${dbTrigger}' and noPrefix: '${dbTriggerNoPrefix}' to incoming: '${commandName}'`);
+          return dbTrigger === commandName || dbTriggerNoPrefix === commandName;
+        });
         if (command) {
+          logger.info(`[CustomCommandHandler] Matched command: ${command.command_name || command.trigger_data?.trigger} (ID: ${command.id})`);
           await this.executeCommand(command, message, args.slice(1));
-          return true;
+          return true; // Stop processing if prefix match found
+        } else {
+          logger.info('[CustomCommandHandler] No prefix command matched for:', args[0]);
         }
       }
 
-      // Check for "contains" trigger type
-      const containsCommands = await this.getCommands(guildId, 'contains');
+      // 4. Check CONTAINS Commands
       for (const command of containsCommands) {
+        const trigger = command.trigger_data?.trigger || command.command_name || '';
         const content = command.case_sensitive ? message.content : message.content.toLowerCase();
-        const trigger = command.case_sensitive ? command.command_name : command.command_name.toLowerCase();
+        const triggerText = command.case_sensitive ? trigger : trigger.toLowerCase();
         
-        if (content.includes(trigger)) {
+        if (content.includes(triggerText)) {
           await this.executeCommand(command, message, []);
-          // Only trigger first matching contains command
-          break;
+          return true; // Stop after first match
         }
       }
 
-      // Check for regex trigger type
-      const regexCommands = await this.getCommands(guildId, 'regex');
+      // 5. Check REGEX Commands
       for (const command of regexCommands) {
         try {
-          const regex = new RegExp(command.command_name, command.case_sensitive ? '' : 'i');
+          const trigger = command.trigger_data?.trigger || command.command_name || '';
+          const regex = new RegExp(trigger, command.case_sensitive ? '' : 'i');
           if (regex.test(message.content)) {
             const matches = message.content.match(regex);
             await this.executeCommand(command, message, matches ? Array.from(matches).slice(1) : []);
-            break;
+            return true;
           }
         } catch (err) {
           logger.error(`[CustomCommandHandler] Invalid regex for command ${command.id}:`, err.message);
@@ -72,85 +126,250 @@ class CustomCommandHandler {
     return false;
   }
 
-  async executeCommand(command, message, args = []) {
+  /**
+   * Execution Logic
+   */
+  async executeCommand(command, eventContext, args = [], userVars = {}) {
     try {
-      // Check if command can be executed (cooldown, roles, channels)
-      const canExecute = await this.checkExecutionRules(command, message);
+      // 1. Rules Check
+      const canExecute = await this.checkExecutionRules(command, eventContext);
       if (!canExecute.allowed) {
         if (canExecute.reason === 'cooldown' && canExecute.remainingSeconds) {
-          await message.reply(`⏱️ Command on cooldown. Please wait ${canExecute.remainingSeconds}s.`).catch(() => {});
+           const msg = await eventContext.reply?.(`⏱️ Command on cooldown. Wait ${canExecute.remainingSeconds}s.`).catch(() => {});
+           setTimeout(() => msg?.delete?.().catch(() => {}), 5000);
         }
         return;
       }
 
-      // Delete trigger message if configured
-      if (command.delete_trigger) {
-        await message.delete().catch(() => {});
+      // 2. Delete Trigger?
+      if (command.delete_trigger && eventContext.delete) {
+        await eventContext.delete().catch(() => {});
       }
 
-      // Initialize template engine with context
-      const templateEngine = new TemplateEngine(this.client, null, message);
+      // 3. Execute template locally with Agent's TemplateEngine
+      const TemplateEngine = require('./templateEngine');
       
-      // Parse and execute the template
-      const output = await templateEngine.parse(command.command_code, args);
+      // Build context for template execution with lowercase and uppercase aliases
+      const templateContext = {
+        User: {
+          ID: eventContext.author?.id,
+          Username: eventContext.author?.username,
+          Discriminator: eventContext.author?.discriminator,
+          Avatar: eventContext.author?.avatar,
+          Bot: eventContext.author?.bot,
+          Mention: eventContext.author ? `<@${eventContext.author.id}>` : ''
+        },
+        user: {
+          ID: eventContext.author?.id,
+          Username: eventContext.author?.username,
+          Discriminator: eventContext.author?.discriminator,
+          Avatar: eventContext.author?.avatar,
+          Bot: eventContext.author?.bot,
+          Mention: eventContext.author ? `<@${eventContext.author.id}>` : ''
+        },
+        Member: {
+          ID: eventContext.member?.id,
+          DisplayName: eventContext.member?.displayName || eventContext.member?.nickname,
+          Nickname: eventContext.member?.nickname,
+          JoinedAt: eventContext.member?.joinedAt,
+        },
+        member: {
+          ID: eventContext.member?.id,
+          DisplayName: eventContext.member?.displayName || eventContext.member?.nickname,
+          Nickname: eventContext.member?.nickname,
+          JoinedAt: eventContext.member?.joinedAt,
+        },
+        Channel: {
+          ID: eventContext.channel?.id,
+          Name: eventContext.channel?.name,
+          Topic: eventContext.channel?.topic,
+        },
+        channel: {
+          ID: eventContext.channel?.id,
+          Name: eventContext.channel?.name,
+          Topic: eventContext.channel?.topic,
+        },
+        Guild: {
+          ID: eventContext.guild?.id,
+          Name: eventContext.guild?.name,
+          Icon: eventContext.guild?.icon,
+          MemberCount: eventContext.guild?.memberCount,
+        },
+        guild: {
+          ID: eventContext.guild?.id,
+          Name: eventContext.guild?.name,
+          Icon: eventContext.guild?.icon,
+          MemberCount: eventContext.guild?.memberCount,
+        },
+        Server: {
+          ID: eventContext.guild?.id,
+          Name: eventContext.guild?.name,
+          Icon: eventContext.guild?.icon,
+          MemberCount: eventContext.guild?.memberCount,
+        },
+        server: {
+          ID: eventContext.guild?.id,
+          Name: eventContext.guild?.name,
+          Icon: eventContext.guild?.icon,
+          MemberCount: eventContext.guild?.memberCount,
+        },
+        Message: {
+          ID: eventContext.id,
+          Content: eventContext.content,
+          Link: eventContext.url || `https://discord.com/channels/${eventContext.guild?.id || '@me'}/${eventContext.channel?.id}/${eventContext.id}`,
+        },
+        message: {
+          ID: eventContext.id,
+          Content: eventContext.content,
+          Link: eventContext.url || `https://discord.com/channels/${eventContext.guild?.id || '@me'}/${eventContext.channel?.id}/${eventContext.id}`,
+        },
+        BotUser: {
+          ID: this.client?.user?.id,
+          Username: this.client?.user?.username,
+        },
+        ...userVars // Merge reaction context and other custom vars
+      };
+
+      // Execute template locally with the Agent's TemplateEngine
+      const engine = new TemplateEngine(this.client, eventContext, templateContext);
+      const executeData = await engine.execute(command.command_code, args);
+      
+      if (!executeData.success) {
+        throw new Error(executeData.error || 'Template execution failed');
+      }
+
+      const output = executeData.output;
 
       if (output && output.trim()) {
-        // Send response
-        const responseMessage = await this.sendResponse(command, message, output);
-        
-        // Auto-delete response if configured
+        const responseMessage = await this.sendResponse(command, eventContext, output);
+        // Auto-Delete Response?
         if (command.delete_response > 0 && responseMessage) {
           setTimeout(() => {
-            responseMessage.delete().catch(() => {});
+            responseMessage.delete?.().catch(() => {});
           }, command.delete_response * 1000);
         }
-
-        // Update command execution stats
-        await this.updateStats(command.id);
-        
-        // Set cooldown
-        this.setCooldown(message.guildId, command.id, message.author.id, command.cooldown_seconds);
+        // Stats & Cooldown
+        this.updateStats(command.id); 
+        this.setCooldown(eventContext.guildId || eventContext.guild?.id, command.id, eventContext.author?.id, command.cooldown_seconds);
       }
-
     } catch (error) {
       logger.error('[CustomCommandHandler] Execution error:', error);
-      // Optionally send error message to user
-      await message.reply(`❌ Command execution failed: ${error.message}`).catch(() => {});
+      // Helpful error reply so you know what happened
+      if (eventContext.reply) await eventContext.reply(`❌ Execution Error: ${error.message}`).catch(() => {});
     }
   }
 
-  async sendResponse(command, message, output) {
-    try {
-      // Allowed mentions configuration to enable user/role pings
-      const allowedMentions = {
-        parse: ['users', 'roles'],
-        repliedUser: true
-      };
+  /**
+   * Smart Caching Wrapper
+   */
+  async getGuildCommandsCached(guildId) {
+    const now = Date.now();
+    const cached = this.commandCache.get(guildId);
 
+    // Return Cache if valid
+    if (cached && (now - cached.timestamp < this.CACHE_TTL)) {
+      return cached.commands;
+    }
+
+    // Otherwise Fetch New
+    const commands = await this.fetchAllCommands(guildId);
+    
+    // Update Cache
+    this.commandCache.set(guildId, {
+      timestamp: now,
+      commands: commands
+    });
+
+    return commands;
+  }
+
+  /**
+   * Fetch ALL commands for a guild from API
+   */
+  async fetchAllCommands(guildId) {
+    try {
+      // Include all supported trigger types
+      const types = [
+        'command', 'contains', 'regex', 'reaction', 'join', 'leave', 'edit', 'scheduled', 'role_add', 'role_remove', 'role_update'
+      ];
+      const promises = types.map(type =>
+        fetch(`${API_URL}/api/internal/commands?guildId=${guildId}&triggerType=${type}`, {
+          headers: { 'x-internal-secret': INTERNAL_SECRET },
+          timeout: 5000
+        }).then(res => {
+          if (res.status === 401) {
+            console.error('[CustomCommandHandler] 401 Unauthorized when fetching commands. INTERNAL_BOT_SECRET used:', INTERNAL_SECRET);
+          }
+          return res.ok ? res.json() : { commands: [] };
+        })
+        .catch(err => ({ commands: [] }))
+      );
+      const results = await Promise.all(promises);
+      return results.flatMap(r => r.commands || []);
+    } catch (error) {
+      logger.error('[CustomCommandHandler] API Fetch Error:', error);
+      return [];
+    }
+  }
+  
+  async sendResponse(command, message, output) {
+    const allowedMentions = { parse: ['users', 'roles'], repliedUser: true };
+
+    // Helper to send appropriately (DM, channel, or reply)
+    const sendPayload = async (payload) => {
+      if (command.response_in_dm) {
+        return message.author.send(payload);
+      }
+
+      // If trigger was deleted or message is gone, avoid replying with a message_reference
+      const shouldBypassReply = command.delete_trigger || message?.deleted;
+
+      if (shouldBypassReply) {
+        return message.channel.send(payload);
+      }
+
+      try {
+        return await message.reply(payload);
+      } catch (err) {
+        // Discord error: unknown message reference (likely deleted original). Fallback to channel.send
+        const isUnknownReference = err?.code === 50035 || err?.rawError?.errors?.message_reference;
+        if (isUnknownReference) {
+          try {
+            return await message.channel.send(payload);
+          } catch (secondaryErr) {
+            throw secondaryErr;
+          }
+        }
+        throw err;
+      }
+    };
+
+    try {
+      // Always try to parse as JSON for embed, fallback to text
       if (command.response_type === 'embed') {
-        // Parse output as embed JSON
         try {
           const embedData = typeof output === 'string' ? JSON.parse(output) : output;
-          if (command.response_in_dm) {
-            return await message.author.send({ embeds: [embedData], allowedMentions });
-          } else {
-            return await message.reply({ embeds: [embedData], allowedMentions });
-          }
+          const payload = { embeds: [embedData], allowedMentions };
+          return await sendPayload(payload);
         } catch {
-          // Fallback to text if embed parsing fails
-          if (command.response_in_dm) {
-            return await message.author.send({ content: String(output), allowedMentions });
-          } else {
-            return await message.reply({ content: String(output), allowedMentions });
-          }
+          // Fallback if JSON parse failed
+          const payload = { content: String(output), allowedMentions };
+          return await sendPayload(payload);
         }
       } else {
-        // Plain text response
-        if (command.response_in_dm) {
-          return await message.author.send({ content: String(output), allowedMentions });
-        } else {
-          return await message.reply({ content: String(output), allowedMentions });
+        // Try to parse as JSON, but fallback to text if not valid JSON
+        let payload;
+        try {
+          const embedData = typeof output === 'string' ? JSON.parse(output) : output;
+          if (embedData && typeof embedData === 'object' && embedData.title) {
+            payload = { embeds: [embedData], allowedMentions };
+          } else {
+            payload = { content: String(output), allowedMentions };
+          }
+        } catch {
+          payload = { content: String(output), allowedMentions };
         }
+        return await sendPayload(payload);
       }
     } catch (error) {
       logger.error('[CustomCommandHandler] Send response error:', error);
@@ -228,71 +447,20 @@ class CustomCommandHandler {
     const cooldownEnd = Date.now() + (cooldownSeconds * 1000);
     userCooldowns.set(userId, cooldownEnd);
     
-    // Clean up after cooldown expires
     setTimeout(() => {
       userCooldowns.delete(userId);
     }, cooldownSeconds * 1000);
-  }
-
-  async getCommands(guildId, triggerType) {
-    try {
-      const response = await fetch(`${API_URL}/api/internal/commands?guildId=${guildId}&triggerType=${triggerType}`, {
-        headers: {
-          'x-internal-secret': INTERNAL_SECRET
-        }
-      });
-      
-      if (!response.ok) {
-        logger.error(`[CustomCommandHandler] Failed to fetch commands: ${response.status}`);
-        return [];
-      }
-      
-      const data = await response.json();
-      return data.commands || [];
-    } catch (error) {
-      logger.error('[CustomCommandHandler] Get commands error:', error);
-      return [];
-    }
   }
 
   async updateStats(commandId) {
     try {
       await fetch(`${API_URL}/api/internal/commands/${commandId}/stats`, {
         method: 'POST',
-        headers: {
-          'x-internal-secret': INTERNAL_SECRET
-        }
+        headers: { 'x-internal-secret': INTERNAL_SECRET }
       });
     } catch (error) {
       logger.error('[CustomCommandHandler] Update stats error:', error);
     }
-  }
-
-  serializeContext(context) {
-    // Convert Discord.js objects to plain objects for API transfer
-    return {
-      author: context.author ? {
-        id: context.author.id,
-        username: context.author.username,
-        discriminator: context.author.discriminator,
-        bot: context.author.bot
-      } : null,
-      channel: context.channel ? {
-        id: context.channel.id,
-        name: context.channel.name,
-        type: context.channel.type
-      } : null,
-      guild: context.guild ? {
-        id: context.guild.id,
-        name: context.guild.name,
-        memberCount: context.guild.memberCount
-      } : null,
-      member: context.member ? {
-        id: context.member.id,
-        roles: context.member.roles.cache.map(r => r.id)
-      } : null,
-      args: context.args || []
-    };
   }
 }
 

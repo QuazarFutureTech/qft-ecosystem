@@ -26,11 +26,16 @@ class AutoMod {
     }
 
     async checkMessage(message) {
+
         if (!message.guild) return { action: 'ignore' };
         const guildId = message.guild.id;
 
-        // Check config toggles
-        if (!ConfigManager.isCategoryEnabled(guildId, 'automod')) return { action: 'disabled' };
+        // Check config toggles (async)
+        if (!(await ConfigManager.isCategoryEnabled(guildId, 'automod'))) return { action: 'disabled' };
+
+        // Check automod.enabled flag
+        const automodSettings = await ConfigManager.get(guildId, 'automod', {});
+        if (automodSettings.enabled === false) return { action: 'disabled' };
 
         const content = message.content || '';
 

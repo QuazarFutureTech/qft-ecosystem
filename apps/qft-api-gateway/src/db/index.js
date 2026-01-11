@@ -66,6 +66,12 @@ const syncDatabase = async () => {
       ADD COLUMN IF NOT EXISTS connections JSONB;
     `);
 
+    // Add snowflake_id column if it does not exist (user-facing ID, replacement for UUID display)
+    await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS snowflake_id TEXT UNIQUE;
+    `);
+
     // The 'posts' table for the feed
     await client.query(`
       CREATE TABLE IF NOT EXISTS posts (
@@ -78,6 +84,7 @@ const syncDatabase = async () => {
       );
     `);
     
+
     // The 'system_logs' table for admin monitoring
     await client.query(`
       CREATE TABLE IF NOT EXISTS system_logs (
@@ -87,7 +94,7 @@ const syncDatabase = async () => {
         message TEXT NOT NULL
       );
     `);
-    
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS embed_templates (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -100,8 +107,42 @@ const syncDatabase = async () => {
         UNIQUE(guild_id, template_name)
       );
     `);
-    
-    console.log('PostgreSQL database synchronized: QFT Identity Schema (users table) and posts table created/updated.');
+
+    // Ensure guild_modules table exists (self-healing)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guild_modules (
+        guild_id TEXT NOT NULL,
+        module_key TEXT NOT NULL,
+        enabled BOOLEAN NOT NULL DEFAULT true,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (guild_id, module_key)
+      );
+    `);
+
+    // Ensure guild_configs table exists (self-healing)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guild_configs (
+        guild_id TEXT PRIMARY KEY,
+        config JSONB NOT NULL DEFAULT '{}',
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_guild_configs_guild ON guild_configs(guild_id);
+    `);
+
+    // Ensure guild_settings has module_settings column for per-guild module toggles
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guild_settings (
+        guild_id TEXT PRIMARY KEY,
+        command_prefix TEXT DEFAULT '?',
+        module_settings JSONB DEFAULT '{}'::jsonb,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_guild_settings_guild ON guild_settings(guild_id);
+      ALTER TABLE guild_settings
+      ADD COLUMN IF NOT EXISTS module_settings JSONB DEFAULT '{}'::jsonb;
+    `);
+
+    console.log('PostgreSQL database synchronized: QFT Identity Schema (users table), posts, embed_templates, guild_modules, and guild_configs tables created/updated.');
 
     client.release();
   } catch (err) {
